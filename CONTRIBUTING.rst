@@ -52,9 +52,12 @@ need to add ``$HOME/.local/bin`` to your shell ``PATH``.
 Once you have ``pipenv``, run ``pipenv update -d`` to create a virtual
 environment and install all packages needed for MonkeyType development into it.
 
-Then you can run ``pipenv run pytest`` to run the tests and ``pipenv run
-flake8`` to lint (or activate a shell with ``pipenv shell``, then just run
-``pytest`` and ``flake8``.)
+Then you can run ``pipenv run pytest`` to run the tests, ``pipenv run flake8``
+to lint, and ``pipenv run mypy monkeytype`` to typecheck. All three must pass
+cleanly before your pull request can be merged.
+
+You can also activate a pipenv shell with ``pipenv shell``, then just run
+``pytest``, ``flake8``, and ``mypy monkeytype``.
 
 .. _pipenv: https://docs.pipenv.org/
 
