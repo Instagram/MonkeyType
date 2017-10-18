@@ -22,7 +22,7 @@ from monkeytype.typing import (
     get_type_str,
     shrink_types,
 )
-from .test_util import Dummy
+from .util import Dummy
 
 
 class TestShrinkType:
