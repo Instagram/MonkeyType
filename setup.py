@@ -38,6 +38,7 @@ setup(
     author_email='mpage@instagram.com',
     url='https://github.com/instagram/MonkeyType',
     packages=find_packages(exclude=['tests*']),
+    install_requires=['retype'],
     classifiers=[
         'Development Status :: 5 - Production/Stable',
         'Intended Audience :: Developers',
