@@ -130,6 +130,7 @@ class Oracle:
     def meaning_of_life(self) -> int:
         return 42
 
+
 @pytest.fixture
 def collector() -> TraceCollector:
     return TraceCollector()
