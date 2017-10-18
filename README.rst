@@ -48,5 +48,6 @@ arguments / return values / yield values.
 It generates stub files based on that data, and can use retype to apply those
 stub files directly to your code.
 
+.. _pip: https://pip.pypa.io/en/stable/
 .. _retype: https://pypi.python.org/pypi/retype
 .. _sys.setprofile: https://docs.python.org/3/library/sys.html#sys.setprofile
