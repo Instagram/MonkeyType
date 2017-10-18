@@ -17,6 +17,7 @@ from typing import (
     Any,
     Callable,
     Dict,
+    Iterator,
     Optional,
     Union,
     cast,
@@ -63,7 +64,7 @@ class CallTrace:
         self.return_type = return_type
         self.yield_type = yield_type
 
-    def __eq__(self, other):
+    def __eq__(self, other: object) -> bool:
         if isinstance(other, self.__class__):
             return self.__dict__ == other.__dict__
         return NotImplemented
@@ -92,7 +93,7 @@ class CallTraceLogger(metaclass=ABCMeta):
     """
 
     @abstractmethod
-    def log(self, trace: CallTrace):
+    def log(self, trace: CallTrace) -> None:
         pass
 
 
@@ -245,7 +246,7 @@ class CallTracer:
 
 
 @contextmanager
-def trace_calls(env: Env, logger: CallTraceLogger):
+def trace_calls(env: Env, logger: CallTraceLogger) -> Iterator[None]:
     """Enable call tracing for a block of code"""
     old_trace = sys.getprofile()
     sys.setprofile(CallTracer(env, logger))
