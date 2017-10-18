@@ -5,4 +5,14 @@
 # LICENSE file in the root directory of this source tree. An additional grant
 # of patent rights can be found in the PATENTS file in the same directory.
 
-__version__ = "17.10.0"
+
+class MonkeyTypeError(Exception):
+    pass
+
+
+class NameLookupError(MonkeyTypeError):
+    pass
+
+
+class InvalidTypeError(MonkeyTypeError):
+    pass
