@@ -4,8 +4,8 @@ Contributing to MonkeyType
 We want to make contributing to this project as easy and transparent as
 possible.
 
-Development Process
--------------------
+Development
+-----------
 
 MonkeyType development happens via GitHub issues and pull requests.
 
@@ -40,6 +40,23 @@ those cases, please go through the process outlined on that page and do not file
 a public issue.
 
 .. _bounty program: https://www.facebook.com/whitehat/
+
+Local Dev Environment
+---------------------
+
+To set up your local development environment, you will need `pipenv`_. You can
+install it with ``pip install --user pipenv``. After this, you should be able to
+run ``pipenv --help`` and get help output. If ``pipenv`` isn't found, you will
+need to add ``$HOME/.local/bin`` to your shell ``PATH``.
+
+Once you have ``pipenv``, run ``pipenv update -d`` to create a virtual
+environment and install all packages needed for MonkeyType development into it.
+
+Then you can run ``pipenv run pytest`` to run the tests and ``pipenv run
+flake8`` to lint (or activate a shell with ``pipenv shell``, then just run
+``pytest`` and ``flake8``.)
+
+.. _pipenv: https://docs.pipenv.org/
 
 Coding Style
 ------------

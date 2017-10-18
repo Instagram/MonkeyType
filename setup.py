@@ -28,6 +28,7 @@ def get_version(root_path):
             if line.startswith('__version__ ='):
                 return line.split('=')[1].strip().strip('"\'')
 
+
 setup(
     name='MonkeyType',
     version=get_version(HERE),
