@@ -48,6 +48,15 @@ arguments / return values / yield values.
 It generates stub files based on that data, and can use retype to apply those
 stub files directly to your code.
 
+Caveats
+-------
+
+MonkeyType uses the same `sys.setprofile`_ hook that `coverage.py`_ uses to
+measure Python code coverage, so you can't use MonkeyType and coverage
+measurement together. If you want to run your tests under MonkeyType tracing,
+disable coverage measurement, and vice versa.
+
+.. _coverage.py: https://coverage.readthedocs.io/
 .. _pip: https://pip.pypa.io/en/stable/
 .. _retype: https://pypi.python.org/pypi/retype
 .. _sys.setprofile: https://docs.python.org/3/library/sys.html#sys.setprofile
