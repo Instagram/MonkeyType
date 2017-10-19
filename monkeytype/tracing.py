@@ -253,4 +253,4 @@ def trace_calls(env: Env, logger: CallTraceLogger) -> Iterator[None]:
     try:
         yield
     finally:
-        sys.setprofile(old_trace)
+        sys.setprofile(old_trace)  # type: ignore  # https://github.com/python/typeshed/pull/1679

@@ -5,7 +5,7 @@ import inspect
 import logging
 import parser
 import re
-from typing import (  # type: ignore
+from typing import (  # type: ignore  # noqa
     Any,
     Callable,
     DefaultDict,
