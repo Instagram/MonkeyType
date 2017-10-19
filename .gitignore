@@ -2,3 +2,5 @@
 __pycache__
 .cache
 *~
+MonkeyType.egg-info
+htmlcov/

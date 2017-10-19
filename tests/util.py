@@ -8,6 +8,7 @@ import inspect
 from types import FrameType
 from typing import (
     Any,
+    List,
     Optional,
 )
 
@@ -35,3 +36,22 @@ class Dummy:
     @a_settable_property.setter
     def a_settable_property(self, unused) -> Optional[FrameType]:
         return inspect.currentframe()
+
+
+def transform_path(path: str) -> str:
+    """Transform tests/test_foo.py to monkeytype/foo.py"""
+    path = 'monkeytype/' + path[len('tests/'):]
+    *base, file_name = path.split('/')
+    file_name = file_name[len('test_'):]
+    return '/'.join(base + [file_name])
+
+
+def smartcov_paths_hook(paths: List[str]) -> List[str]:
+    """Given list of test files to run, return modules to measure coverage of."""
+    if not paths:
+        return ['monkeytype']
+    return [
+        transform_path(path)
+        for path
+        in paths
+    ]

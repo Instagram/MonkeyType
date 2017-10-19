@@ -10,6 +10,8 @@ name = "pypi"
 "flake8" = "*"
 pytest = "*"
 mypy = "*"
+pytest-smartcov = "*"
+"e1839a8" = {path = ".", editable = true}
 
 
 [requires]
