@@ -4,7 +4,6 @@
 # This source code is licensed under the BSD-style license found in the
 # LICENSE file in the root directory of this source tree. An additional grant
 # of patent rights can be found in the PATENTS file in the same directory.
-import enum
 import inspect
 import logging
 import opcode
@@ -36,27 +35,16 @@ from monkeytype.util import get_func_fqname
 logger = logging.getLogger(__name__)
 
 
-class Env(enum.Enum):
-    """Env represents where the types were captured. We'll end up capturing types both
-    in production and in unit tests. This gives us a way to compare types that are captured in
-    different environments.
-    """
-    TEST = 'test'
-    PROD = 'prod'
-
-
 class CallTrace:
     """CallTrace contains the types observed during a single invocation of a function"""
 
     def __init__(self,
-                 env: Env,
                  func: Callable,
                  arg_types: Dict[str, type],
                  return_type: type = None,
                  yield_type: type = None) -> None:
         """
         Args:
-            env: Where the trace was captured
             func: The function where the trace ocurred
             arg_types: The collected argument types
             return_type: The collected return type. This will be None if the called function returns
@@ -64,7 +52,6 @@ class CallTrace:
             yield_type: The collected yield type. This will be None if the called function never
                 yields. It will be NoneType if the function yields the value None.
         """
-        self.env = env
         self.func = func
         self.arg_types = arg_types
         self.return_type = return_type
@@ -76,11 +63,10 @@ class CallTrace:
         return NotImplemented
 
     def __repr__(self) -> str:
-        return "CallTrace(%s, %s, %s, %s, %s)" % (
-            self.env, self.func, self.arg_types, self.return_type, self.yield_type)
+        return "CallTrace(%s, %s, %s, %s)" % (self.func, self.arg_types, self.return_type, self.yield_type)
 
     def __hash__(self) -> int:
-        return hash((self.env, self.func, frozenset(self.arg_types.items()), self.return_type, self.yield_type))
+        return hash((self.func, frozenset(self.arg_types.items()), self.return_type, self.yield_type))
 
     def add_yield_type(self, typ: type) -> None:
         if self.yield_type is None:
@@ -172,7 +158,7 @@ class CallTracer:
 
     Use it like so:
 
-        sys.setprofile(CallTracer(Env.TEST, MyCallLogger()))
+        sys.setprofile(CallTracer(MyCallLogger()))
 
     """
 
@@ -180,8 +166,7 @@ class CallTracer:
     EVENT_RETURN = 'return'
     SUPPORTED_EVENTS = {EVENT_CALL, EVENT_RETURN}
 
-    def __init__(self, env: Env, logger: CallTraceLogger, sample_rate: int = 1) -> None:
-        self.env = env
+    def __init__(self, logger: CallTraceLogger, sample_rate: int = 1) -> None:
         self.logger = logger
         self.traces: Dict[FrameType, CallTrace] = {}
         self.sample_rate = sample_rate
@@ -209,7 +194,7 @@ class CallTracer:
         for name in arg_names:
             if name in frame.f_locals:
                 arg_types[name] = get_type(frame.f_locals[name])
-        self.traces[frame] = CallTrace(self.env, func, arg_types)
+        self.traces[frame] = CallTrace(func, arg_types)
 
     def handle_return(self, frame: FrameType, arg: Any) -> None:
         # In the case of a 'return' event, arg contains the return value, or None, if the
@@ -252,10 +237,10 @@ class CallTracer:
 
 
 @contextmanager
-def trace_calls(env: Env, logger: CallTraceLogger) -> Iterator[None]:
+def trace_calls(logger: CallTraceLogger) -> Iterator[None]:
     """Enable call tracing for a block of code"""
     old_trace = sys.getprofile()
-    sys.setprofile(CallTracer(env, logger))
+    sys.setprofile(CallTracer(logger))
     try:
         yield
     finally:

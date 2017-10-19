@@ -16,7 +16,6 @@ import pytest
 from monkeytype.tracing import (
     CallTrace,
     CallTraceLogger,
-    Env,
     get_func,
     trace_calls,
 )
@@ -128,7 +127,7 @@ def explicit_return_none() -> None:
 
 
 def call_trace(*args, **kwargs) -> CallTrace:
-    return CallTrace(Env.TEST, *args, **kwargs)
+    return CallTrace(*args, **kwargs)
 
 
 class Oracle:
@@ -144,12 +143,12 @@ def collector() -> TraceCollector:
 
 class TestCallTracer:
     def test_simple_call(self, collector):
-        with trace_calls(Env.TEST, collector):
+        with trace_calls(collector):
             simple_add(1, 2)
         assert collector.traces == [call_trace(simple_add, {'a': int, 'b': int}, int)]
 
     def test_callee_throws(self, collector):
-        with trace_calls(Env.TEST, collector):
+        with trace_calls(collector):
             try:
                 throw(should_recover=False)
             except Exception:
@@ -157,7 +156,7 @@ class TestCallTracer:
         assert collector.traces == [call_trace(throw, {'should_recover': bool})]
 
     def test_nested_callee_throws_caller_doesnt_recover(self, collector):
-        with trace_calls(Env.TEST, collector):
+        with trace_calls(collector):
             try:
                 nested_throw(should_recover=False)
             except Exception:
@@ -169,12 +168,12 @@ class TestCallTracer:
         assert collector.traces == expected
 
     def test_callee_throws_recovers(self, collector):
-        with trace_calls(Env.TEST, collector):
+        with trace_calls(collector):
             throw(should_recover=True)
         assert collector.traces == [call_trace(throw, {'should_recover': bool}, NoneType)]
 
     def test_nested_callee_throws_recovers(self, collector):
-        with trace_calls(Env.TEST, collector):
+        with trace_calls(collector):
             nested_throw(should_recover=True)
         expected = [
             call_trace(throw, {'should_recover': bool}, NoneType),
@@ -183,7 +182,7 @@ class TestCallTracer:
         assert collector.traces == expected
 
     def test_caller_handles_callee_exception(self, collector):
-        with trace_calls(Env.TEST, collector):
+        with trace_calls(collector):
             recover_from_nested_throw()
         expected = [
             call_trace(throw, {'should_recover': bool}),
@@ -192,14 +191,14 @@ class TestCallTracer:
         assert collector.traces == expected
 
     def test_generator_trace(self, collector):
-        with trace_calls(Env.TEST, collector):
+        with trace_calls(collector):
             for _ in squares(3):
                 pass
         assert collector.traces == [call_trace(squares, {'n': int}, NoneType, int)]
 
     def test_return_none(self, collector):
         """Ensure traces have a return_type of NoneType for functions that return a value of None"""
-        with trace_calls(Env.TEST, collector):
+        with trace_calls(collector):
             implicit_return_none()
             explicit_return_none()
         expected = [
@@ -211,6 +210,6 @@ class TestCallTracer:
     def test_access_property(self, collector):
         """Check that we correctly trace functions decorated with @property"""
         o = Oracle()
-        with trace_calls(Env.TEST, collector):
+        with trace_calls(collector):
             o.meaning_of_life
         assert collector.traces == [call_trace(Oracle.meaning_of_life.fget, {'self': Oracle}, int)]

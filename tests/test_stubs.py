@@ -38,10 +38,7 @@ from monkeytype.stubs import (
     update_signature_args,
     update_signature_return,
 )
-from monkeytype.tracing import (
-    CallTrace,
-    Env,
-)
+from monkeytype.tracing import CallTrace
 from monkeytype.typing import NoneType
 from .util import Dummy
 
@@ -313,12 +310,12 @@ def untyped_helper(x, y):
 class TestStubIndexBuilder:
     def test_ignore_non_matching_functions(self):
         b = StubIndexBuilder('foo.bar')
-        b.log(CallTrace(Env.TEST, untyped_helper, {'x': int, 'y': str}))
+        b.log(CallTrace(untyped_helper, {'x': int, 'y': str}))
         assert len(b.index) == 0
 
     def test_build_index(self):
         idxb = StubIndexBuilder('tests')
-        idxb.log(CallTrace(Env.TEST, untyped_helper, {'x': int, 'y': str}, str))
+        idxb.log(CallTrace(untyped_helper, {'x': int, 'y': str}, str))
         sig = Signature.from_callable(untyped_helper)
         sig = sig.replace(
             parameters=[
@@ -502,22 +499,22 @@ def tie_helper(a, b):
 class TestShrinkTracedTypes:
     def test_shrink_args(self):
         traces = [
-            CallTrace(Env.TEST, tie_helper, {'a': str, 'b': int}),
-            CallTrace(Env.TEST, tie_helper, {'a': str, 'b': NoneType}),
+            CallTrace(tie_helper, {'a': str, 'b': int}),
+            CallTrace(tie_helper, {'a': str, 'b': NoneType}),
         ]
         assert shrink_traced_types(traces) == ({'a': str, 'b': Optional[int]}, None, None)
 
     def test_shrink_return(self):
         traces = [
-            CallTrace(Env.TEST, tie_helper, {}, NoneType),
-            CallTrace(Env.TEST, tie_helper, {}, str),
+            CallTrace(tie_helper, {}, NoneType),
+            CallTrace(tie_helper, {}, str),
         ]
         assert shrink_traced_types(traces) == ({}, Optional[str], None)
 
     def test_shrink_yield(self):
         traces = [
-            CallTrace(Env.TEST, tie_helper, {}, yield_type=int),
-            CallTrace(Env.TEST, tie_helper, {}, yield_type=str),
+            CallTrace(tie_helper, {}, yield_type=int),
+            CallTrace(tie_helper, {}, yield_type=str),
         ]
         assert shrink_traced_types(traces) == ({}, None, Union[int, str])
 
@@ -581,6 +578,6 @@ class TestBuildModuleStubsFromTraces:
         During application, retype needs to parse the stubs that we give it. We
         use repr() to produce what is used for the default value.
         """
-        trace = CallTrace(Env.TEST, has_unparsable_default, {})
+        trace = CallTrace(has_unparsable_default, {})
         stubs = build_module_stubs_from_traces([trace])
         assert stubs == {}
