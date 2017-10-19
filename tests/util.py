@@ -5,6 +5,7 @@
 # LICENSE file in the root directory of this source tree. An additional grant
 # of patent rights can be found in the PATENTS file in the same directory.
 import inspect
+import os
 from types import FrameType
 from typing import (
     Any,
@@ -39,11 +40,11 @@ class Dummy:
 
 
 def transform_path(path: str) -> str:
-    """Transform tests/test_foo.py to monkeytype/foo.py"""
+    """Transform tests/test_foo.py to monkeytype.foo"""
     path = 'monkeytype/' + path[len('tests/'):]
-    *base, file_name = path.split('/')
-    file_name = file_name[len('test_'):]
-    return '/'.join(base + [file_name])
+    *basepath, file_name = path.split('/')
+    basename, _ext = os.path.splitext(file_name[len('test_'):])
+    return '.'.join(basepath + [basename])
 
 
 def smartcov_paths_hook(paths: List[str]) -> List[str]:
