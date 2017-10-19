@@ -253,5 +253,4 @@ def trace_calls(env: Env, logger: CallTraceLogger) -> Iterator[None]:
     try:
         yield
     finally:
-        if old_trace is not None:
-            sys.setprofile(old_trace)
+        sys.setprofile(old_trace)
