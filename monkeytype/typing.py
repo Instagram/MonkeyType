@@ -13,6 +13,7 @@ from typing import (
     Callable,
     Dict,
     Generator,
+    Iterable,
     Iterator,
     List,
     Set,
@@ -234,15 +235,12 @@ class RewriteLargeUnion(TypeRewriter):
         return Any
 
 
-class DefaultRewriter(TypeRewriter):
-    REWRITERS = [
-        RemoveEmptyContainers(),
-        RewriteConfigDict(),
-        RewriteLargeUnion(),
-    ]
+class ChainedRewriter(TypeRewriter):
+    def __init__(self, rewriters: Iterable[TypeRewriter]) -> None:
+        self.rewriters = rewriters
 
     def rewrite(self, typ):
-        for rw in self.REWRITERS:
+        for rw in self.rewriters:
             typ = rw.rewrite(typ)
         return typ
 
@@ -250,3 +248,10 @@ class DefaultRewriter(TypeRewriter):
 class NoOpRewriter(TypeRewriter):
     def rewrite(self, typ):
         return typ
+
+
+DEFAULT_REWRITER = ChainedRewriter((
+    RemoveEmptyContainers(),
+    RewriteConfigDict(),
+    RewriteLargeUnion(),
+))
