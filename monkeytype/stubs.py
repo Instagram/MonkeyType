@@ -62,7 +62,7 @@ class FunctionKind(enum.Enum):
 
 
 class FunctionDefinition:
-    _VIS_WITH_SELF = {
+    _KIND_WITH_SELF = {
         FunctionKind.CLASS,
         FunctionKind.INSTANCE,
         FunctionKind.PROPERTY,
@@ -72,26 +72,26 @@ class FunctionDefinition:
         self,
         module: str,
         qualname: str,
-        vis: FunctionKind,
+        kind: FunctionKind,
         sig: inspect.Signature,
         is_async: bool = False
     ) -> None:
         self.module = module
         self.qualname = qualname
-        self.visibility = vis
+        self.kind = kind
         self.signature = sig
         self.is_async = is_async
 
     @classmethod
-    def from_callable(cls, func: Callable, vis: FunctionKind = None) -> 'FunctionDefinition':
-        vis = FunctionKind.from_callable(func)
+    def from_callable(cls, func: Callable, kind: FunctionKind = None) -> 'FunctionDefinition':
+        kind = FunctionKind.from_callable(func)
         sig = inspect.Signature.from_callable(func)
         is_async = asyncio.iscoroutinefunction(func)
-        return FunctionDefinition(func.__module__, func.__qualname__, vis, sig, is_async)
+        return FunctionDefinition(func.__module__, func.__qualname__, kind, sig, is_async)
 
     @property
     def has_self(self) -> bool:
-        return self.visibility in self._VIS_WITH_SELF
+        return self.kind in self._KIND_WITH_SELF
 
     def __eq__(self, other: Any) -> bool:
         if isinstance(other, self.__class__):
@@ -100,7 +100,7 @@ class FunctionDefinition:
 
     def __repr__(self) -> str:
         return "FunctionDefinition('%s', '%s', %s, %s, %s)" % (
-            self.module, self.qualname, self.visibility, self.signature, self.is_async)
+            self.module, self.qualname, self.kind, self.signature, self.is_async)
 
 
 class ImportMap(collections.defaultdict):
@@ -235,7 +235,7 @@ def get_updated_definition(
     sig = defn.signature
     sig = update_signature_args(sig, arg_types, defn.has_self)
     sig = update_signature_return(sig, return_type, yield_type)
-    return FunctionDefinition(defn.module, defn.qualname, defn.visibility, sig, defn.is_async)
+    return FunctionDefinition(defn.module, defn.qualname, defn.kind, sig, defn.is_async)
 
 
 class Stub:
@@ -422,13 +422,13 @@ class FunctionStub(Stub):
             self,
             name: str,
             signature: inspect.Signature,
-            vis: FunctionKind,
+            kind: FunctionKind,
             strip_modules: Iterable[str] = None,
             is_async: bool = False
     ) -> None:
         self.name = name
         self.signature = signature
-        self.vis = vis
+        self.kind = kind
         self.strip_modules = strip_modules or []
         self.is_async = is_async
 
@@ -442,17 +442,17 @@ class FunctionStub(Stub):
         # specify the function that should be used to format annotations.
         for module in self.strip_modules:
             s = s.replace(module + '.', '')
-        if self.vis == FunctionKind.CLASS:
+        if self.kind == FunctionKind.CLASS:
             s = prefix + "@classmethod\n" + s
-        elif self.vis == FunctionKind.STATIC:
+        elif self.kind == FunctionKind.STATIC:
             s = prefix + "@staticmethod\n" + s
-        elif self.vis == FunctionKind.PROPERTY:
+        elif self.kind == FunctionKind.PROPERTY:
             s = prefix + "@property\n" + s
         return s
 
     def __repr__(self) -> str:
         return 'FunctionStub(%s, %s, %s, %s, %s)' % (
-            repr(self.name), repr(self.signature), repr(self.vis), repr(self.strip_modules), self.is_async)
+            repr(self.name), repr(self.signature), repr(self.kind), repr(self.strip_modules), self.is_async)
 
 
 class ClassStub(Stub):
@@ -517,7 +517,7 @@ def build_module_stubs(entries: Iterable[FunctionDefinition]) -> Dict[str, Modul
             mod_stubs[entry.module] = ModuleStub()
         mod_stub = mod_stubs[entry.module]
         imports = get_imports_for_signature(entry.signature)
-        func_stub = FunctionStub(name, entry.signature, entry.visibility, list(imports.keys()), entry.is_async)
+        func_stub = FunctionStub(name, entry.signature, entry.kind, list(imports.keys()), entry.is_async)
         # Don't need to import anything from the same module
         imports.pop(entry.module, None)
         mod_stub.imports_stub.imports.merge(imports)

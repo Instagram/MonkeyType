@@ -176,8 +176,8 @@ class TestFunctionStub:
         assert stub.render() == expected
 
     def test_simple(self):
-        for vis in [FunctionKind.MODULE, FunctionKind.INSTANCE]:
-            stub = FunctionStub('test', inspect.signature(simple_add), vis)
+        for kind in [FunctionKind.MODULE, FunctionKind.INSTANCE]:
+            stub = FunctionStub('test', inspect.signature(simple_add), kind)
             expected = 'def test%s: ...' % (render_signature(stub.signature),)
             assert stub.render() == expected
 
@@ -243,9 +243,9 @@ class TestFunctionStub:
 
 
 def _func_stub_from_callable(func: Callable, strip_modules: List[str] = None):
-    vis = FunctionKind.from_callable(func)
+    kind = FunctionKind.from_callable(func)
     sig = Signature.from_callable(func)
-    return FunctionStub(func.__name__, sig, vis, strip_modules)
+    return FunctionStub(func.__name__, sig, kind, strip_modules)
 
 
 class TestClassStub:
