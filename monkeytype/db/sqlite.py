@@ -31,7 +31,7 @@ DEFAULT_TABLE = 'monkeytype_call_traces'
 
 def create_call_trace_table(conn: sqlite3.Connection, table: str = DEFAULT_TABLE) -> None:
     query = """
-CREATE TABLE {table} (
+CREATE TABLE IF NOT EXISTS {table} (
   created_at  TEXT,
   module      TEXT,
   qualname    TEXT,
@@ -73,6 +73,12 @@ class SQLiteStore(CallTraceStore):
     def __init__(self, conn: sqlite3.Connection, table: str = DEFAULT_TABLE) -> None:
         self.conn = conn
         self.table = table
+
+    @classmethod
+    def make_store(cls, connection_string: str) -> 'CallTraceStore':
+        conn = sqlite3.connect(connection_string)
+        create_call_trace_table(conn)
+        return cls(conn)
 
     def add(self, traces: Iterable[CallTrace]) -> None:
         values = []

@@ -42,3 +42,11 @@ class CallTraceStore(metaclass=ABCMeta):
         event that decoding one or more call traces fails.
         """
         pass
+
+    @classmethod
+    def make_store(cls, connection_string: str) -> 'CallTraceStore':
+        """Create a new store instance.
+
+        This is a factory function that is intended to be used by the CLI.
+        """
+        pass
