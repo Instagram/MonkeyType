@@ -96,7 +96,8 @@ def get_func_in_mro(obj: Any, code: CodeType) -> Optional[Callable]:
 
     This looks in obj's mro manually and does not invoke any descriptors.
     """
-    # T17161244 FunctionType is incompatible with Callable
+    # FunctionType is incompatible with Callable
+    # https://github.com/python/typeshed/issues/1378
     val = inspect.getattr_static(obj, code.co_name, None)
     if val is None:
         return None
