@@ -279,7 +279,7 @@ def has_unparsable_defaults(sig: inspect.Signature) -> bool:
 
 
 def _is_optional(anno: Any) -> bool:
-    """Is the supplied annotation an instance of the 'virtual' Optional type.
+    """Is the supplied annotation an instance of the 'virtual' Optional type?
 
     Optional isn't really a type. It's an alias to Union[T, NoneType]
     """
@@ -290,7 +290,7 @@ def _is_optional(anno: Any) -> bool:
 
 
 def _get_optional_elem(anno: Any) -> Any:
-    """Get the non-null type from an optional"""
+    """Get the non-null type from an optional."""
     if not _is_optional(anno):
         raise TypeError("Supplied annotation isn't an optional")
     elems = tuple(e for e in anno.__args__ if e is not NoneType)
@@ -537,7 +537,7 @@ def build_module_stubs_from_traces(
     include_unparsable_defaults: bool = False,
     rewriter: Optional[TypeRewriter] = None
 ) -> Dict[str, ModuleStub]:
-    """Given an iterable of call traces, build the corresponding stubs"""
+    """Given an iterable of call traces, build the corresponding stubs."""
     index: DefaultDict[Callable, Set[CallTrace]] = collections.defaultdict(set)
     for trace in traces:
         index[trace.func].add(trace)
@@ -555,7 +555,7 @@ def build_module_stubs_from_traces(
 
 
 class StubIndexBuilder(CallTraceLogger):
-    """Builds type stubs from collected call traces"""
+    """Builds type stubs from collected call traces."""
 
     def __init__(self, module_re: str) -> None:
         self.re = re.compile(module_re)

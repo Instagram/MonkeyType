@@ -78,7 +78,7 @@ _HIDDEN_BUILTIN_TYPES: Dict[str, type] = {
 
 
 def type_from_dict(d: TypeDict) -> type:
-    """Given a dictionary produced by type_to_dict, return the equivalent type
+    """Given a dictionary produced by type_to_dict, return the equivalent type.
 
     Raises:
         NameLookupError if we can't reify the specified type
@@ -105,13 +105,13 @@ def type_from_dict(d: TypeDict) -> type:
 
 
 def type_to_json(typ: type) -> str:
-    """Encode the supplied type as json using type_to_dict"""
+    """Encode the supplied type as json using type_to_dict."""
     type_dict = type_to_dict(typ)
     return json.dumps(type_dict, sort_keys=True)
 
 
 def type_from_json(typ_json: str) -> type:
-    """Reify a type from the format produced by type_to_json"""
+    """Reify a type from the format produced by type_to_json."""
     type_dict = json.loads(typ_json)
     return type_from_dict(type_dict)
 
@@ -123,7 +123,7 @@ def arg_types_to_json(arg_types: Dict[str, type]) -> str:
 
 
 def arg_types_from_json(arg_types_json: str) -> Dict[str, type]:
-    """Reify the encoded argument types from the format produced by arg_types_to_json"""
+    """Reify the encoded argument types from the format produced by arg_types_to_json."""
     arg_types = json.loads(arg_types_json)
     return {name: type_from_dict(type_dict) for name, type_dict in arg_types.items()}
 
@@ -150,7 +150,7 @@ CallTraceRowT = TypeVar('CallTraceRowT', bound='CallTraceRow')
 
 
 class CallTraceRow(CallTraceThunk):
-    """A semi-structured call trace where each field has been json encoded"""
+    """A semi-structured call trace where each field has been json encoded."""
 
     def __init__(
         self,

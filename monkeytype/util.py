@@ -20,7 +20,7 @@ from monkeytype.exceptions import (
 
 
 def get_func_fqname(func: Callable) -> str:
-    """Return the fully qualified function name"""
+    """Return the fully qualified function name."""
     return func.__module__ + '.' + func.__qualname__
 
 
@@ -58,7 +58,7 @@ def get_name_in_module(
     qualname: str,
     attr_getter: Callable[[Any, str], Any] = None,
 ) -> Any:
-    """Return the python object specified by qualname in module
+    """Return the python object specified by qualname in module.
 
     Raises:
         NameLookupError if the module/qualname cannot be retrieved.

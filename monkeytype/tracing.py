@@ -121,7 +121,7 @@ def _has_code(func: Optional[Callable], code: CodeType) -> Optional[Callable]:
 
 
 def get_func(frame: FrameType) -> Optional[Callable]:
-    """Return the function whose code object corresponds to the supplied stack frame"""
+    """Return the function whose code object corresponds to the supplied stack frame."""
     code = frame.f_code
     if code.co_name is None:
         return None

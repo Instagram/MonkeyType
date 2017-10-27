@@ -13,7 +13,7 @@ from monkeytype.tracing import CallTrace
 
 
 class CallTraceThunk(metaclass=ABCMeta):
-    """A deferred computation that produces a CallTrace or raises an error"""
+    """A deferred computation that produces a CallTrace or raises an error."""
 
     @abstractmethod
     def to_trace(self) -> CallTrace:
@@ -22,7 +22,7 @@ class CallTraceThunk(metaclass=ABCMeta):
 
 
 class CallTraceStore(metaclass=ABCMeta):
-    """An interface that all concrete calltrace storage backends must implement"""
+    """An interface that all concrete calltrace storage backends must implement."""
 
     @abstractmethod
     def add(self, traces: Iterable[CallTrace]) -> None:
