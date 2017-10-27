@@ -1,3 +1,9 @@
+# Copyright (c) 2017-present, Facebook, Inc.
+# All rights reserved.
+#
+# This source code is licensed under the BSD-style license found in the
+# LICENSE file in the root directory of this source tree. An additional grant
+# of patent rights can be found in the PATENTS file in the same directory.
 import asyncio
 import collections
 import enum
@@ -5,7 +11,11 @@ import inspect
 import logging
 import parser
 import re
-from typing import (  # type: ignore  # noqa
+from abc import (
+    ABCMeta,
+    abstractmethod,
+)
+from typing import (  # type: ignore
     Any,
     Callable,
     DefaultDict,
@@ -238,11 +248,15 @@ def get_updated_definition(
     return FunctionDefinition(defn.module, defn.qualname, defn.kind, sig, defn.is_async)
 
 
-class Stub:
+class Stub(metaclass=ABCMeta):
     def __eq__(self, other: Any) -> bool:
         if isinstance(other, self.__class__):
             return self.__dict__ == other.__dict__
         return NotImplemented
+
+    @abstractmethod
+    def render(self) -> str:
+        pass
 
 
 class ImportBlockStub(Stub):

@@ -5,6 +5,11 @@
 # LICENSE file in the root directory of this source tree. An additional grant
 # of patent rights can be found in the PATENTS file in the same directory.
 import argparse
+import importlib
+import inspect
+import os.path
+import subprocess
+import tempfile
 
 from typing import (
     IO,
@@ -16,7 +21,10 @@ from typing import (
 
 from monkeytype.db.base import CallTraceStore
 from monkeytype.exceptions import MonkeyTypeError
-from monkeytype.stubs import build_module_stubs_from_traces
+from monkeytype.stubs import (
+    Stub,
+    build_module_stubs_from_traces,
+)
 from monkeytype.typing import (
     NoOpRewriter,
     TypeRewriter,
@@ -42,7 +50,7 @@ def module_path_with_qualname(path: str) -> Tuple[str, str]:
 
 
 def trace_store_class(class_path: str) -> Type[CallTraceStore]:
-    """Constructs a CallTraceStore using the class specified by class_path."""
+    """Retrieves the CallTraceStore subclass specified by class_path"""
     module, qualname = module_path_with_qualname(class_path)
     try:
         store_class = get_name_in_module(module, qualname)
@@ -65,7 +73,7 @@ def type_rewriter(instance_path: str) -> TypeRewriter:
     return rewriter
 
 
-def print_stub_handler(args: argparse.Namespace, stdout: IO, stderr: IO) -> None:
+def get_stub(args: argparse.Namespace, stdout: IO, stderr: IO) -> Optional[Stub]:
     trace_store = args.trace_store_class.make_store(args.trace_store_dsn)
     module, qualname = args.module_path
     thunks = trace_store.filter(module, qualname, args.limit)
@@ -76,13 +84,39 @@ def print_stub_handler(args: argparse.Namespace, stdout: IO, stderr: IO) -> None
         except MonkeyTypeError as mte:
             print(f'ERROR: Failed decoding trace: {mte}', file=stderr)
     if not traces:
-        print(f'No traces found', file=stderr)
-        return
+        return None
     rewriter = args.type_rewriter
     if args.disable_type_rewriting:
         rewriter = NoOpRewriter()
     stubs = build_module_stubs_from_traces(traces, args.include_unparsable_defaults, rewriter)
-    stub = stubs.get(module, None)
+    return stubs.get(module, None)
+
+
+def apply_stub_handler(args: argparse.Namespace, stdout: IO, stderr: IO) -> None:
+    stub = get_stub(args, stdout, stderr)
+    if stub is None:
+        print(f'No traces found', file=stderr)
+        return
+    module = args.module_path[0]
+    mod = importlib.import_module(module)
+    src_path = inspect.getfile(mod)
+    src_dir = os.path.dirname(src_path)
+    pyi_name = module.split('.')[-1] + '.pyi'
+    with tempfile.TemporaryDirectory(prefix='monkeytype') as pyi_dir:
+        pyi_path = os.path.join(pyi_dir, pyi_name)
+        with open(pyi_path, 'w+') as f:
+            f.write(stub.render())
+        cmd = ' '.join([
+            'retype',
+            '--pyi-dir ' + pyi_dir,
+            '--target-dir ' + src_dir,
+            src_path
+        ])
+        subprocess.run(cmd, shell=True, check=True, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
+
+
+def print_stub_handler(args: argparse.Namespace, stdout: IO, stderr: IO) -> None:
+    stub = get_stub(args, stdout, stderr)
     if stub is None:
         print(f'No traces found', file=stderr)
         return
@@ -120,6 +154,22 @@ def main(argv: List[str], stdout: IO, stderr: IO) -> int:
         default='monkeytype.typing:DEFAULT_REWRITER',
         help='The <module>:<qualname> of the type rewriter to use during stub generation.')
     subparsers = parser.add_subparsers()
+
+    apply_parser = subparsers.add_parser(
+        'apply',
+        help='Generate and apply a stub',
+        description='Generate and apply a stub')
+    apply_parser.add_argument(
+        'module_path',
+        type=module_path,
+        help="""A string of the form <module>[:<qualname>] (e.g.
+my.module:Class.method). This specifies the set of functions/methods for which
+we want to generate stubs.  For example, 'foo.bar' will generate stubs for
+anything in the module 'foo.bar', while 'foo.bar:Baz' will only generate stubs
+for methods attached to the class 'Baz' in module 'foo.bar'. See
+https://www.python.org/dev/peps/pep-3155/ for a detailed description of the
+qualname format.""")
+    apply_parser.set_defaults(handler=apply_stub_handler)
 
     stub_parser = subparsers.add_parser(
         'stub',
