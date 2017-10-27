@@ -126,10 +126,6 @@ def explicit_return_none() -> None:
     return
 
 
-def call_trace(*args, **kwargs) -> CallTrace:
-    return CallTrace(*args, **kwargs)
-
-
 class Oracle:
     @property
     def meaning_of_life(self) -> int:
@@ -145,7 +141,7 @@ class TestCallTracer:
     def test_simple_call(self, collector):
         with trace_calls(collector):
             simple_add(1, 2)
-        assert collector.traces == [call_trace(simple_add, {'a': int, 'b': int}, int)]
+        assert collector.traces == [CallTrace(simple_add, {'a': int, 'b': int}, int)]
 
     def test_callee_throws(self, collector):
         with trace_calls(collector):
@@ -153,7 +149,7 @@ class TestCallTracer:
                 throw(should_recover=False)
             except Exception:
                 pass
-        assert collector.traces == [call_trace(throw, {'should_recover': bool})]
+        assert collector.traces == [CallTrace(throw, {'should_recover': bool})]
 
     def test_nested_callee_throws_caller_doesnt_recover(self, collector):
         with trace_calls(collector):
@@ -162,22 +158,22 @@ class TestCallTracer:
             except Exception:
                 pass
         expected = [
-            call_trace(throw, {'should_recover': bool}),
-            call_trace(nested_throw, {'should_recover': bool}),
+            CallTrace(throw, {'should_recover': bool}),
+            CallTrace(nested_throw, {'should_recover': bool}),
         ]
         assert collector.traces == expected
 
     def test_callee_throws_recovers(self, collector):
         with trace_calls(collector):
             throw(should_recover=True)
-        assert collector.traces == [call_trace(throw, {'should_recover': bool}, NoneType)]
+        assert collector.traces == [CallTrace(throw, {'should_recover': bool}, NoneType)]
 
     def test_nested_callee_throws_recovers(self, collector):
         with trace_calls(collector):
             nested_throw(should_recover=True)
         expected = [
-            call_trace(throw, {'should_recover': bool}, NoneType),
-            call_trace(nested_throw, {'should_recover': bool}, str),
+            CallTrace(throw, {'should_recover': bool}, NoneType),
+            CallTrace(nested_throw, {'should_recover': bool}, str),
         ]
         assert collector.traces == expected
 
@@ -185,8 +181,8 @@ class TestCallTracer:
         with trace_calls(collector):
             recover_from_nested_throw()
         expected = [
-            call_trace(throw, {'should_recover': bool}),
-            call_trace(recover_from_nested_throw, {}, str),
+            CallTrace(throw, {'should_recover': bool}),
+            CallTrace(recover_from_nested_throw, {}, str),
         ]
         assert collector.traces == expected
 
@@ -194,7 +190,7 @@ class TestCallTracer:
         with trace_calls(collector):
             for _ in squares(3):
                 pass
-        assert collector.traces == [call_trace(squares, {'n': int}, NoneType, int)]
+        assert collector.traces == [CallTrace(squares, {'n': int}, NoneType, int)]
 
     def test_return_none(self, collector):
         """Ensure traces have a return_type of NoneType for functions that return a value of None"""
@@ -202,8 +198,8 @@ class TestCallTracer:
             implicit_return_none()
             explicit_return_none()
         expected = [
-            call_trace(implicit_return_none, {}, NoneType),
-            call_trace(explicit_return_none, {}, NoneType),
+            CallTrace(implicit_return_none, {}, NoneType),
+            CallTrace(explicit_return_none, {}, NoneType),
         ]
         assert collector.traces == expected
 
@@ -212,11 +208,11 @@ class TestCallTracer:
         o = Oracle()
         with trace_calls(collector):
             o.meaning_of_life
-        assert collector.traces == [call_trace(Oracle.meaning_of_life.fget, {'self': Oracle}, int)]
+        assert collector.traces == [CallTrace(Oracle.meaning_of_life.fget, {'self': Oracle}, int)]
 
     def test_filtering(self, collector):
         """If supplied, the code filter should decide which code objects are traced"""
         with trace_calls(collector, lambda code: code.co_name == 'simple_add'):
             simple_add(1, 2)
             explicit_return_none()
-        assert collector.traces == [call_trace(simple_add, {'a': int, 'b': int}, int)]
+        assert collector.traces == [CallTrace(simple_add, {'a': int, 'b': int}, int)]
