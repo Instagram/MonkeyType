@@ -4,41 +4,21 @@
 # This source code is licensed under the BSD-style license found in the
 # LICENSE file in the root directory of this source tree. An additional grant
 # of patent rights can be found in the PATENTS file in the same directory.
-from typing import (
-    Any,
-    Dict,
-    List,
-    Optional,
-    Set,
-    Tuple,
-    Type,
-    Union,
-)
-
 import pytest
 
 from monkeytype.exceptions import (
     InvalidTypeError,
     NameLookupError,
 )
-from monkeytype.typing import NoneType
 from monkeytype.util import (
     get_func_in_module,
     get_name_in_module,
-    type_from_dict,
-    type_to_dict,
 )
-from .util import Dummy
+from .util import Dummy, Outer
 
 
 def a_module_func():
     pass
-
-
-class Outer:
-    class Inner:
-        def f(self) -> None:
-            pass
 
 
 NOT_A_FUNCTION = "not_a_function"
@@ -86,50 +66,6 @@ class TestGetFuncInModule:
         """Raise an error if lookup returns something that isn't a function"""
         with pytest.raises(InvalidTypeError):
             get_func_in_module(__name__, 'NOT_A_FUNCTION')
-
-
-class TestTypeConversion:
-    @pytest.mark.parametrize(
-        'typ',
-        [
-            # Non-generics
-            NoneType,
-            int,
-            Outer,
-            Outer.Inner,
-            Any,
-            # Simple generics
-            Dict[Any, Any],
-            Dict[int, str],
-            List[str],
-            Optional[str],
-            Set[int],
-            Tuple[int, str, str],
-            Type[Outer],
-            Union[Outer.Inner, str, None],
-            # Nested generics
-            Dict[str, Union[str, int]],
-            List[Optional[str]],
-            # Let's get craaaazy
-            Dict[
-                str,
-                Union[
-                    Dict[str, int],
-                    Set[Outer.Inner],
-                    Optional[Dict[str, int]]
-                ]
-            ],
-        ],
-    )
-    def test_round_trip(self, typ):
-        assert type_from_dict(type_to_dict(typ)) == typ
-
-    def test_convert_non_type(self):
-        with pytest.raises(InvalidTypeError):
-            type_from_dict({
-                'module': Outer.Inner.f.__module__,
-                'qualname': Outer.Inner.f.__qualname__,
-            })
 
 
 class Derived(Dummy):

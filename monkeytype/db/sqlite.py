@@ -1,6 +1,11 @@
+# Copyright (c) 2017-present, Facebook, Inc.
+# All rights reserved.
+#
+# This source code is licensed under the BSD-style license found in the
+# LICENSE file in the root directory of this source tree. An additional grant
+# of patent rights can be found in the PATENTS file in the same directory.
 import datetime
 import logging
-import json
 import sqlite3
 
 from typing import (
@@ -8,77 +13,17 @@ from typing import (
     List,
     Optional,
     Tuple,
-    Type,
-    TypeVar,
     Union,
 )
 
 from monkeytype.db.base import (
-    CallTraceThunk,
     CallTraceStore,
+    CallTraceThunk,
 )
+from monkeytype.encoding import CallTraceRow
 from monkeytype.tracing import CallTrace
-from monkeytype.util import (
-    get_func_in_module,
-    type_from_dict,
-    type_to_dict,
-)
 
 logger = logging.getLogger(__name__)
-
-
-CallTraceRowT = TypeVar('CallTraceRowT', bound='CallTraceRow')
-
-
-def decode_type_field(typ_json: Optional[str]) -> Optional[type]:
-    """Reify an encoded type"""
-    typ: Optional[type] = None
-    if (typ_json is not None) and (typ_json != 'null'):
-        typ_dict = json.loads(typ_json)
-        typ = type_from_dict(typ_dict)
-    return typ
-
-
-class CallTraceRow(CallTraceThunk):
-    def __init__(
-        self,
-        module: str,
-        qualname: str,
-        arg_types: str,
-        return_type: Optional[str] = None,
-        yield_type: Optional[str] = None
-    ) -> None:
-        self.module = module
-        self.qualname = qualname
-        self.arg_types = arg_types
-        self.return_type = return_type
-        self.yield_type = yield_type
-
-    @classmethod
-    def from_trace(cls: Type[CallTraceRowT], trace: CallTrace) -> CallTraceRowT:
-        arg_types = {name: type_to_dict(typ) for name, typ in trace.arg_types.items()}
-        arg_types_json = json.dumps(arg_types, sort_keys=True)
-        return_type = None
-        if trace.return_type is not None:
-            return_type = json.dumps(type_to_dict(trace.return_type), sort_keys=True)
-        yield_type = None
-        if trace.yield_type is not None:
-            yield_type = json.dumps(type_to_dict(trace.yield_type), sort_keys=True)
-        return cls(
-            trace.func.__module__,
-            trace.func.__qualname__,
-            arg_types_json,
-            return_type,
-            yield_type
-        )
-
-    def to_trace(self) -> CallTrace:
-        func = get_func_in_module(self.module, self.qualname)
-        arg_types_dict = json.loads(self.arg_types)
-        arg_types = {name: type_from_dict(d) for name, d in arg_types_dict.items()}
-        return_type = decode_type_field(self.return_type)
-        yield_type = decode_type_field(self.yield_type)
-        return CallTrace(func, arg_types, return_type, yield_type)
 
 
 DEFAULT_TABLE = 'monkeytype_call_traces'

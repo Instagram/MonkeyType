@@ -39,6 +39,12 @@ class Dummy:
         return inspect.currentframe()
 
 
+class Outer:
+    class Inner:
+        def f(self) -> None:
+            pass
+
+
 def transform_path(path: str) -> str:
     """Transform tests/test_foo.py to monkeytype.foo"""
     path = 'monkeytype/' + path[len('tests/'):]
