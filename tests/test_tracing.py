@@ -301,6 +301,6 @@ class TestCallTracer:
         cython_test_obj = CythonTest()
         with trace_calls(collector):
             cython_test_obj.cython_testfunc()
-        print(collector.traces)
+
         trace = CallTrace(cython_test_obj.cython_testfunc.__wrapped__, {'self': CythonTest}, int)
         assert trace in collector.traces
