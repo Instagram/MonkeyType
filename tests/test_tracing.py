@@ -137,6 +137,40 @@ def collector() -> TraceCollector:
     return TraceCollector()
 
 
+class lazy_property:
+    def __init__(self, fget, doc=None):
+        self.fget = fget
+        self.__doc__ = doc or fget.__doc__
+        self.__name__ = fget.__name__
+
+    def get_target_obj(self, obj, cls):
+        return obj
+
+    def __get__(self, obj, cls):
+        target_obj = self.get_target_obj(obj, cls)
+        if target_obj is None:
+            return self
+        result = self.fget(target_obj)
+        setattr(target_obj, self.__name__, result)
+        return result
+
+
+class LazyValue:
+    def __init__(self, func, *args, **kwargs):
+        self.func = func
+        self.args = args
+        self.kwargs = kwargs
+
+    @lazy_property
+    def value(self):
+        result = self.func(*self.args, **self.kwargs)
+        # Clear the references
+        self.func = None
+        self.args = None
+        self.kwargs = None
+        return result
+
+
 class TestCallTracer:
     def test_simple_call(self, collector):
         with trace_calls(collector):
@@ -216,3 +250,26 @@ class TestCallTracer:
             simple_add(1, 2)
             explicit_return_none()
         assert collector.traces == [CallTrace(simple_add, {'a': int, 'b': int}, int)]
+
+    def test_lazy_value(self, collector):
+        """Check that function lookup does not invoke custom descriptors.
+
+        LazyValue is an interesting corner case. Internally, LazyValue stores a
+        function and its arguments. When LazyValue.value is accessed for the
+        first time, the stored function will be invoked, and its return value
+        will be set as the value of LazyValue.value. Additionally, and this is
+        important, the reference to the stored function and its arguments are
+        cleared.
+
+        When tracing, accessing LazyValue.value generates a 'call' event for a
+        function named 'value'.  At the point where we receive the call event,
+        the LazyValue.value function is about to begin execution. If we attempt
+        to find the called function using getattr, value will be invoked again,
+        and the reference to the stored function and its arguments will be
+        cleared.  At this point the original call to LazyValue.value will
+        resume execution, however, the stored arguments will have been cleared,
+        and the attempt to invoke the stored function will fail.
+        """
+        lazy_val = LazyValue(explicit_return_none)
+        with trace_calls(collector):
+            lazy_val.value
