@@ -333,7 +333,8 @@ def render_parameter(param: inspect.Parameter) -> str:
     if param.annotation is not inspect.Parameter.empty:
         anno = param.annotation
         if not _is_optional(anno) and param.default is None:
-            anno = Optional[anno]
+            # we're constructing types at runtime and mypy is very confused
+            anno = Optional[anno]  # type: ignore
         rendered = render_annotation(anno)
         formatted = '{}: {}'.format(formatted, rendered)
 
