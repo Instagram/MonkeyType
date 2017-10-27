@@ -38,11 +38,13 @@ logger = logging.getLogger(__name__)
 class CallTrace:
     """CallTrace contains the types observed during a single invocation of a function"""
 
-    def __init__(self,
-                 func: Callable,
-                 arg_types: Dict[str, type],
-                 return_type: type = None,
-                 yield_type: type = None) -> None:
+    def __init__(
+        self,
+        func: Callable,
+        arg_types: Dict[str, type],
+        return_type: Optional[type] = None,
+        yield_type: Optional[type] = None
+    ) -> None:
         """
         Args:
             func: The function where the trace ocurred
@@ -147,6 +149,14 @@ def get_func(frame: FrameType) -> Optional[Callable]:
 RETURN_VALUE_OPCODE = opcode.opmap['RETURN_VALUE']
 YIELD_VALUE_OPCODE = opcode.opmap['YIELD_VALUE']
 
+# A CodeFilter is a predicate that decides whether or not a the call for the
+# supplied code object should be traced.
+CodeFilter = Callable[[CodeType], bool]
+
+EVENT_CALL = 'call'
+EVENT_RETURN = 'return'
+SUPPORTED_EVENTS = {EVENT_CALL, EVENT_RETURN}
+
 
 class CallTracer:
     """CallTracer captures the concrete types involved in a function invocation.
@@ -162,15 +172,17 @@ class CallTracer:
 
     """
 
-    EVENT_CALL = 'call'
-    EVENT_RETURN = 'return'
-    SUPPORTED_EVENTS = {EVENT_CALL, EVENT_RETURN}
-
-    def __init__(self, logger: CallTraceLogger, sample_rate: int = 1) -> None:
+    def __init__(
+        self,
+        logger: CallTraceLogger,
+        code_filter: Optional[CodeFilter] = None,
+        sample_rate: Optional[int] = None
+    ) -> None:
         self.logger = logger
         self.traces: Dict[FrameType, CallTrace] = {}
         self.sample_rate = sample_rate
         self.cache: Dict[CodeType, Optional[Callable]] = {}
+        self.should_trace = code_filter
 
     def _get_func(self, frame: FrameType) -> Optional[Callable]:
         code = frame.f_code
@@ -179,14 +191,14 @@ class CallTracer:
         return self.cache[code]
 
     def handle_call(self, frame: FrameType) -> None:
-        if random.randrange(self.sample_rate) != 0:
+        if self.sample_rate and random.randrange(self.sample_rate) != 0:
             return
         func = self._get_func(frame)
         if func is None:
             return
         code = frame.f_code
-        # I can't figure out a way to access the value sent to a generator via send() from a stack frame. Thankfully, it
-        # doesn't look like anything in distillery is defined this way.
+        # I can't figure out a way to access the value sent to a generator via
+        # send() from a stack frame.
         if code.co_code[frame.f_lasti] == YIELD_VALUE_OPCODE:
             return
         arg_names = code.co_varnames[0:code.co_argcount]
@@ -197,10 +209,12 @@ class CallTracer:
         self.traces[frame] = CallTrace(func, arg_types)
 
     def handle_return(self, frame: FrameType, arg: Any) -> None:
-        # In the case of a 'return' event, arg contains the return value, or None, if the
-        # block returned because of an unhandled exception. We need to distinguish the exceptional
-        # case (not a valid return type) from a function returning (or yielding) None. In the latter case,
-        # the the last instruction that was executed should always be a return or a yield.
+        # In the case of a 'return' event, arg contains the return value, or
+        # None, if the block returned because of an unhandled exception. We
+        # need to distinguish the exceptional case (not a valid return type)
+        # from a function returning (or yielding) None. In the latter case, the
+        # the last instruction that was executed should always be a return or a
+        # yield.
         typ = get_type(arg)
         last_opcode = frame.f_code.co_code[frame.f_lasti]
         trace = self.traces.get(frame)
@@ -209,9 +223,6 @@ class CallTracer:
         elif last_opcode == YIELD_VALUE_OPCODE:
             trace.add_yield_type(typ)
         else:
-            # NB: In the event that a function returns exceptionally, its
-            # trace's return_type will be None.  If the function returns the
-            # value None, its trace's return_type will be NoneType.
             if last_opcode == RETURN_VALUE_OPCODE:
                 trace.return_type = typ
             del self.traces[frame]
@@ -220,14 +231,15 @@ class CallTracer:
     def __call__(self, frame: FrameType, event: str, arg: Any) -> 'CallTracer':
         code = frame.f_code
         if (
-            event not in self.SUPPORTED_EVENTS or
-            code.co_name == 'trace_types'
+            event not in SUPPORTED_EVENTS or
+            code.co_name == 'trace_types' or
+            self.should_trace and not self.should_trace(code)
         ):
             return self
         try:
-            if event == self.EVENT_CALL:
+            if event == EVENT_CALL:
                 self.handle_call(frame)
-            elif event == self.EVENT_RETURN:
+            elif event == EVENT_RETURN:
                 self.handle_return(frame, arg)
             else:
                 logger.error("Cannot handle event %s", event)
@@ -237,10 +249,14 @@ class CallTracer:
 
 
 @contextmanager
-def trace_calls(logger: CallTraceLogger) -> Iterator[None]:
+def trace_calls(
+    logger: CallTraceLogger,
+    code_filter: Optional[CodeFilter] = None,
+    sample_rate: Optional[int] = None,
+) -> Iterator[None]:
     """Enable call tracing for a block of code"""
     old_trace = sys.getprofile()
-    sys.setprofile(CallTracer(logger))
+    sys.setprofile(CallTracer(logger, code_filter, sample_rate))
     try:
         yield
     finally:

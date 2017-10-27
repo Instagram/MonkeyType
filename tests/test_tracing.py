@@ -213,3 +213,10 @@ class TestCallTracer:
         with trace_calls(collector):
             o.meaning_of_life
         assert collector.traces == [call_trace(Oracle.meaning_of_life.fget, {'self': Oracle}, int)]
+
+    def test_filtering(self, collector):
+        """If supplied, the code filter should decide which code objects are traced"""
+        with trace_calls(collector, lambda code: code.co_name == 'simple_add'):
+            simple_add(1, 2)
+            explicit_return_none()
+        assert collector.traces == [call_trace(simple_add, {'a': int, 'b': int}, int)]
