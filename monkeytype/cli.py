@@ -16,19 +16,16 @@ from typing import (
     List,
     Optional,
     Tuple,
-    Type,
 )
 
-from monkeytype.db.base import CallTraceStore
+from monkeytype.config import Config
 from monkeytype.exceptions import MonkeyTypeError
 from monkeytype.stubs import (
     Stub,
     build_module_stubs_from_traces,
 )
-from monkeytype.typing import (
-    NoOpRewriter,
-    TypeRewriter,
-)
+from monkeytype.typing import NoOpRewriter
+
 
 from monkeytype.util import get_name_in_module
 
@@ -49,34 +46,19 @@ def module_path_with_qualname(path: str) -> Tuple[str, str]:
     return module, qualname
 
 
-def trace_store_class(class_path: str) -> Type[CallTraceStore]:
-    """Retrieves the CallTraceStore subclass specified by class_path"""
+def monkeytype_config(class_path: str) -> Config:
+    """Constructs an instance of the config class specified by class_path"""
     module, qualname = module_path_with_qualname(class_path)
     try:
-        store_class = get_name_in_module(module, qualname)
+        config = get_name_in_module(module, qualname)
     except MonkeyTypeError as mte:
         raise argparse.ArgumentTypeError(f'cannot import {class_path}: {mte}')
-    if not issubclass(store_class, CallTraceStore):
-        raise argparse.ArgumentTypeError(f'not a subclass of monkeytype.db.base.CallTraceStore')
-    return store_class
-
-
-def type_rewriter(instance_path: str) -> TypeRewriter:
-    """Fetches the TypeRewriter specified by instance_path."""
-    module, qualname = module_path_with_qualname(instance_path)
-    try:
-        rewriter = get_name_in_module(module, qualname)
-    except MonkeyTypeError as mte:
-        raise argparse.ArgumentTypeError(f'cannot import {instance_path}: {mte}')
-    if not isinstance(rewriter, TypeRewriter):
-        raise argparse.ArgumentTypeError(f'not an instance of monkeytype.typing.TypeRewriter')
-    return rewriter
+    return config
 
 
 def get_stub(args: argparse.Namespace, stdout: IO, stderr: IO) -> Optional[Stub]:
-    trace_store = args.trace_store_class.make_store(args.trace_store_dsn)
     module, qualname = args.module_path
-    thunks = trace_store.filter(module, qualname, args.limit)
+    thunks = args.config.trace_store().filter(module, qualname, args.limit)
     traces = []
     for thunk in thunks:
         try:
@@ -85,7 +67,7 @@ def get_stub(args: argparse.Namespace, stdout: IO, stderr: IO) -> Optional[Stub]
             print(f'ERROR: Failed decoding trace: {mte}', file=stderr)
     if not traces:
         return None
-    rewriter = args.type_rewriter
+    rewriter = args.config.type_rewriter()
     if args.disable_type_rewriting:
         rewriter = NoOpRewriter()
     stubs = build_module_stubs_from_traces(traces, args.include_unparsable_defaults, rewriter)
@@ -140,19 +122,10 @@ def main(argv: List[str], stdout: IO, stderr: IO) -> int:
         type=int, default=2000,
         help='How many traces to return from storage')
     parser.add_argument(
-        '--trace-store-class',
-        type=trace_store_class,
-        default='monkeytype.db.sqlite:SQLiteStore',
-        help='The <module>:<qualname> of the call trace store to use to retrieve traces.')
-    parser.add_argument(
-        '--trace-store-dsn',
-        default='monkeytype.sqlite3',
-        help='The connection string for the call trace store.')
-    parser.add_argument(
-        '--type-rewriter',
-        type=type_rewriter,
-        default='monkeytype.typing:DEFAULT_REWRITER',
-        help='The <module>:<qualname> of the type rewriter to use during stub generation.')
+        '--config',
+        type=monkeytype_config,
+        default='monkeytype.config:DEFAULT_CONFIG',
+        help='The <module>:<qualname> of the config to use.')
     subparsers = parser.add_subparsers()
 
     apply_parser = subparsers.add_parser(

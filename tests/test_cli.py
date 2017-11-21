@@ -5,11 +5,16 @@
 # LICENSE file in the root directory of this source tree. An additional grant
 # of patent rights can be found in the PATENTS file in the same directory.
 import io
+import os
 import pytest
 import sqlite3
 import tempfile
 
+from unittest import mock
+
+
 from monkeytype import cli
+from monkeytype.config import DefaultConfig
 from monkeytype.db.sqlite import (
     create_call_trace_table,
     SQLiteStore,
@@ -51,7 +56,8 @@ def test_generate_stub(store_data, stdout, stderr):
         CallTrace(func2, {'a': int, 'b': int}, NoneType),
     ]
     store.add(traces)
-    ret = cli.main(['--trace-store-dsn', db_file.name, 'stub', func.__module__], stdout, stderr)
+    with mock.patch.dict(os.environ, {DefaultConfig.DB_PATH_VAR: db_file.name}):
+        ret = cli.main(['stub', func.__module__], stdout, stderr)
     expected = """def func(a: int, b: str) -> None: ...
 
 
@@ -64,7 +70,8 @@ def func2(a: int, b: int) -> None: ...
 
 def test_no_traces(store_data, stdout, stderr):
     store, db_file = store_data
-    ret = cli.main(['--trace-store-dsn', db_file.name, 'stub', func.__module__], stdout, stderr)
+    with mock.patch.dict(os.environ, {DefaultConfig.DB_PATH_VAR: db_file.name}):
+        ret = cli.main(['stub', func.__module__], stdout, stderr)
     assert stderr.getvalue() == "No traces found\n"
     assert stdout.getvalue() == ''
     assert ret == 0

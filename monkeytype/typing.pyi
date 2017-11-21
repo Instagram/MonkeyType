@@ -70,3 +70,6 @@ class IGRewriter(TypeRewriter):
 
 class NoOpRewriter(TypeRewriter):
     ...
+
+
+DEFAULT_REWRITER: TypeRewriter = ...
