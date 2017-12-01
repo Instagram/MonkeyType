@@ -9,6 +9,7 @@ import importlib
 import inspect
 import os.path
 import subprocess
+import sys
 import tempfile
 
 from typing import (
@@ -167,3 +168,8 @@ qualname format.""")
         return 1
     handler(args, stdout, stderr)
     return 0
+
+
+def entry_point_main():
+    """Wrapper for main() for setuptools console_script entry point."""
+    sys.exit(main(sys.argv[1:], sys.stdout, sys.stderr))
