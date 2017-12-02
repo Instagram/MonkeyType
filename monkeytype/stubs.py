@@ -338,7 +338,7 @@ def render_parameter(param: inspect.Parameter) -> str:
     NB: This is copied almost entirely from https://github.com/python/cpython/blob/3.6/Lib/inspect.py
     with the modification that it calls our own rendering functions for annotations.
 
-    TODO: push a patch upstream so we don't have to do this on Python 3.7.
+    TODO: push a patch upstream so we don't have to do this on Python 3.x.
     """
     kind = param.kind
     formatted = param.name
@@ -373,7 +373,7 @@ def render_signature(
     NB: This is copied almost entirely from https://github.com/python/cpython/blob/3.6/Lib/inspect.py
     with the modification that it calls our own rendering functions for annotations.
 
-    TODO: push a patch upstream so we don't have to do this on Python 3.7.
+    TODO: push a patch upstream so we don't have to do this on Python 3.x.
     """
     formatted_params = []
     render_pos_only_separator = False
@@ -569,7 +569,7 @@ def build_module_stubs_from_traces(
 
 
 class StubIndexBuilder(CallTraceLogger):
-    """Builds type stubs from collected call traces."""
+    """Builds type stub index directly from collected call traces."""
 
     def __init__(self, module_re: str) -> None:
         self.re = re.compile(module_re)

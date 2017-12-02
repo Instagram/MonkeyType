@@ -15,6 +15,7 @@ import tempfile
 from typing import (
     IO,
     List,
+    NoReturn,
     Optional,
     Tuple,
 )
@@ -170,6 +171,6 @@ qualname format.""")
     return 0
 
 
-def entry_point_main():
+def entry_point_main() -> NoReturn:
     """Wrapper for main() for setuptools console_script entry point."""
     sys.exit(main(sys.argv[1:], sys.stdout, sys.stderr))

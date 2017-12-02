@@ -15,7 +15,7 @@ from typing import (
 )
 
 
-from monkeytype.tracing import CallTrace
+from monkeytype.tracing import CallTrace, CallTraceLogger
 
 
 class CallTraceThunk(metaclass=ABCMeta):
@@ -56,3 +56,17 @@ class CallTraceStore(metaclass=ABCMeta):
         This is a factory function that is intended to be used by the CLI.
         """
         pass
+
+
+class CallTraceStoreLogger(CallTraceLogger):
+    """A CallTraceLogger that stores logged traces in a CallTraceStore."""
+    def __init__(self, store: CallTraceStore) -> None:
+        self.store = store
+        self.traces: List[CallTrace] = []
+
+    def log(self, trace: CallTrace) -> None:
+        self.traces.append(trace)
+
+    def flush(self) -> None:
+        self.store.add(self.traces)
+        self.traces = []
