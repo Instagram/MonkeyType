@@ -26,6 +26,7 @@ from monkeytype.tracing import (
 )
 from monkeytype.typing import (
     DEFAULT_REWRITER,
+    NoOpRewriter,
     TypeRewriter,
 )
 
@@ -34,11 +35,6 @@ class Config(metaclass=ABCMeta):
     """A Config ties together concrete implementations of the diffrent abstractions
     that make up a typical deployment of MonkeyType.
     """
-    @abstractmethod
-    def type_rewriter(self) -> TypeRewriter:
-        """Return the type rewriter for use when generating stubs."""
-        pass
-
     @abstractmethod
     def trace_store(self) -> CallTraceStore:
         """Return the CallTraceStore for storage/retrieval of call traces."""
@@ -68,6 +64,10 @@ class Config(metaclass=ABCMeta):
         set, 1/N calls will be traced.
         """
         return None
+
+    def type_rewriter(self) -> TypeRewriter:
+        """Return the type rewriter for use when generating stubs."""
+        return NoOpRewriter()
 
 
 lib_paths = {sysconfig.get_path(n) for n in ['stdlib', 'purelib', 'platlib']}
