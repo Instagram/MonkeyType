@@ -11,7 +11,6 @@ The Details
 
 .. toctree::
    :maxdepth: 2
-   :caption: Contents:
 
    configuration
    commandline
@@ -20,7 +19,6 @@ The Details
    filters
    rewriters
    faq
-
 
 
 Indices and tables

@@ -103,6 +103,8 @@ html_static_path = ['_static']
 # refs: http://alabaster.readthedocs.io/en/latest/installation.html#sidebars
 html_sidebars = {
     '**': [
+        'about.html',
+        'navigation.html',
         'relations.html',  # needs 'show_related': True theme option to display
         'searchbox.html',
     ]
@@ -166,3 +168,8 @@ texinfo_documents = [
 ]
 
 primary_domain = 'py'
+html_theme_options = {
+    'github_button': True,
+    'github_user': 'instagram',
+    'github_repo': 'MonkeyType',
+}
