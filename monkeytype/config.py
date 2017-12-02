@@ -13,10 +13,7 @@ from abc import (
     abstractmethod,
 )
 from types import CodeType
-from typing import (
-    Optional,
-    Set,
-)
+from typing import Optional
 
 from monkeytype.db.base import (
     CallTraceStore,
