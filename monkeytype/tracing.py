@@ -82,12 +82,20 @@ class CallTrace:
 
 
 class CallTraceLogger(metaclass=ABCMeta):
-    """CallTraceLogger logs (e.g. prints to stdout, logs to scuba) records that are
-    collected by a CallTracer.
-    """
+    """Log and store/print records collected by a CallTracer."""
 
     @abstractmethod
     def log(self, trace: CallTrace) -> None:
+        """Log a single call trace."""
+        pass
+
+    def flush(self) -> None:
+        """Flush all logged traces to output / database.
+
+        Not an abstractmethod because it's OK to leave it as a no-op; for very
+        simple loggers it may not be necessary to batch-flush traces, and `log`
+        can handle everything.
+        """
         pass
 
 
@@ -262,3 +270,4 @@ def trace_calls(
         yield
     finally:
         sys.setprofile(old_trace)  # type: ignore  # https://github.com/python/typeshed/pull/1679
+        logger.flush()

@@ -32,9 +32,13 @@ class TraceCollector(CallTraceLogger):
     def __init__(self):
         super(TraceCollector, self).__init__()
         self.traces = []
+        self.flushed = False
 
     def log(self, trace: CallTrace):
         self.traces.append(trace)
+
+    def flush(self):
+        self.flushed = True
 
 
 def simple_add(a: int, b: int) -> int:
@@ -189,11 +193,17 @@ class LazyValue:
         return result
 
 
-class TestCallTracer:
+class TestTraceCalls:
     def test_simple_call(self, collector):
         with trace_calls(collector):
             simple_add(1, 2)
         assert collector.traces == [CallTrace(simple_add, {'a': int, 'b': int}, int)]
+
+    def test_flushes(self, collector):
+        with trace_calls(collector):
+            pass
+
+        assert collector.flushed
 
     def test_callee_throws(self, collector):
         with trace_calls(collector):
