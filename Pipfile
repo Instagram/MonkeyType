@@ -13,6 +13,7 @@ mypy = "*"
 pytest-smartcov = "*"
 "e1839a8" = {path = ".", editable = true}
 cython = "*"
+sphinx = "*"
 
 
 [requires]

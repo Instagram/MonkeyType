@@ -5,3 +5,4 @@ __pycache__
 MonkeyType.egg-info
 htmlcov/
 .coverage
+doc/_build
