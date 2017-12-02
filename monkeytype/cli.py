@@ -120,11 +120,11 @@ def main(argv: List[str], stdout: IO, stderr: IO) -> int:
         action='store_true', default=False,
         help="Include functions whose default values aren't valid Python expressions")
     parser.add_argument(
-        '--limit',
+        '--limit', '-l',
         type=int, default=2000,
         help='How many traces to return from storage')
     parser.add_argument(
-        '--config',
+        '--config', '-c',
         type=monkeytype_config,
         default='monkeytype.config:DEFAULT_CONFIG',
         help='The <module>:<qualname> of the config to use.')
