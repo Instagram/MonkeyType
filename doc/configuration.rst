@@ -1,7 +1,7 @@
-.. py:module:: monkeytype.config
+.. module:: monkeytype.config
 
-Configuring MonkeyType
-----------------------
+Configuration
+-------------
 
 Most of the useful ways to configure MonkeyType require writing Python code to
 implement your preferred behavior, so MonkeyType's configuration is done in
@@ -25,7 +25,7 @@ Subclassing ``Config`` or ``DefaultConfig``
 
   .. method:: trace_store()
 
-    Should return the :class:`~monkeytype.tracing.CallTraceStore` subclass you
+    Should return the :class:`~monkeytype.db.base.CallTraceStore` subclass you
     want to use to store your call traces.
 
     This is the one method you must override if you subclass the empty
