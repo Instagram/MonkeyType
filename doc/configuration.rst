@@ -42,7 +42,7 @@ Subclassing ``Config`` or ``DefaultConfig``
 
   .. method:: code_filter() -> CodeFilter
 
-    Should return the :doc:`code filter <filters>` that categorizes traced
+    Should return the :ref:`code filter <codefilters>` that categorizes traced
     functions into ones you are interested in (so their traces should be stored)
     and ones you aren't (their traces will be ignored).
 
@@ -118,7 +118,7 @@ just pass your config object to it::
   with trace(my_config):
       # ... run some code you want to trace here ...
 
-When running :doc:`the command line utility <commandline>`, use the ``--config``
+When running :doc:`the command line utility <generation>`, use the ``--config``
 or ``-c`` option to point MonkeyType to your config, e.g.::
 
   $ monkeytype -c mtconfig:my_config stub some.module

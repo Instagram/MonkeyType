@@ -1,12 +1,12 @@
-Call-trace stores
------------------
+Storing call traces
+-------------------
 
-MonkeyType operates in two phases: call tracing and stub generation. You first
-run some code under MonkeyType tracing and store the traced calls. You can do
-this repeatedly, maybe even sampled in production continually so you always have
-up-to-date traces available. Then whenever you need, you run ``monkeytype stub``
-or ``monkeytype apply`` to generate annotations based on types from the recorded
-traces.
+MonkeyType operates in two phases: :doc:`call tracing <tracing>` and :doc:`stub
+generation <generation>`. You first run some code under MonkeyType tracing and
+store the traced calls. You can do this repeatedly, maybe even sampled in
+production continually so you always have up-to-date traces available. Then
+whenever you need, you run ``monkeytype stub`` or ``monkeytype apply`` to
+generate annotations based on types from the recorded traces.
 
 In order to do this, MonkeyType needs a backing store for the recorded call
 traces. By default it will use :class:`~monkeytype.db.sqlite.SQLiteStore`, which

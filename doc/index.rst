@@ -14,9 +14,8 @@ The Details
 
    configuration
    tracing
-   commandline
+   generation
    stores
-   filters
    rewriters
    faq
 

@@ -1,7 +1,7 @@
 .. program:: monkeytype
 
-Command-line usage
-------------------
+Generating type annotations
+---------------------------
 
 MonkeyType comes with a ``monkeytype`` command-line script for generating and
 applying stub files based on recorded call traces.
