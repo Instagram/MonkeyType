@@ -48,13 +48,23 @@ def module_path_with_qualname(path: str) -> Tuple[str, str]:
     return module, qualname
 
 
-def monkeytype_config(class_path: str) -> Config:
-    """Constructs an instance of the config class specified by class_path"""
-    module, qualname = module_path_with_qualname(class_path)
+def monkeytype_config(path: str) -> Config:
+    """Imports the config instance specified by path.
+
+    Path should be in the form module:qualname. Optionally, path may end with (),
+    in which case we will call/instantiate the given class/function.
+    """
+    should_call = False
+    if path.endswith('()'):
+        should_call = True
+        path = path[:-2]
+    module, qualname = module_path_with_qualname(path)
     try:
         config = get_name_in_module(module, qualname)
     except MonkeyTypeError as mte:
-        raise argparse.ArgumentTypeError(f'cannot import {class_path}: {mte}')
+        raise argparse.ArgumentTypeError(f'cannot import {path}: {mte}')
+    if should_call:
+        config = config()
     return config
 
 
@@ -126,7 +136,7 @@ def main(argv: List[str], stdout: IO, stderr: IO) -> int:
     parser.add_argument(
         '--config', '-c',
         type=monkeytype_config,
-        default='monkeytype.config:DEFAULT_CONFIG',
+        default='monkeytype.config:get_default_config()',
         help='The <module>:<qualname> of the config to use.')
     subparsers = parser.add_subparsers()
 

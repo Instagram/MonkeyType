@@ -10,7 +10,7 @@ Python code. To customize MonkeyType, you:
 1. subclass :class:`monkeytype.config.Config` or :class:`monkeytype.config.DefaultConfig`,
 2. override one or more methods in your subclass,
 3. instantiate your subclass, and
-4. point MonkeyType to your custom ``Config`` instance.
+4. point MonkeyType to your custom :class:`Config` instance.
 
 Let's look at those steps in more detail.
 
@@ -96,10 +96,13 @@ Using your custom config subclass
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Once you've written a :class:`Config` or :class:`DefaultConfig` subclass, you
-need to tell MonkeyType to use it. To do this, you instantiate it, and then
-point MonkeyType to that instance. For example, let's say you mostly like the
-default config, but you want to add a sampling rate, so you put this
-configuration code in a file ``mtconfig.py``::
+need to instantiate it and point MonkeyType to that instance. The easiest way to
+do this is to create a file named ``monkeytype_config.py`` and create a
+:class:`~Config` instance in it named ``CONFIG``; MonkeyType will find and use
+this config automatically.
+
+For example, let's say you mostly like the default config, but you want to add a
+sampling rate, so you put this code in the file ``monkeytype_config.py``::
 
   from monkeytype.config import DefaultConfig
 
@@ -107,13 +110,21 @@ configuration code in a file ``mtconfig.py``::
       def sample_rate(self):
           return 1000
 
-  my_config = MyConfig()
+  CONFIG = MyConfig()
 
-When tracing calls using the :func:`monkeytype.trace` context manager, you can
-just pass your config object to it::
+All of MonkeyType (the :func:`~monkeytype.trace` function and :doc:`the CLI
+<generation>`) will automatically find and use this config (as long as
+``monkeytype_config.py`` is on the Python path).
+
+Specifying a config
+'''''''''''''''''''
+
+You can also explicitly specify the config instance to use. For instance, when
+tracing calls using the :func:`monkeytype.trace` context manager, you can just
+pass your config object to it::
 
   from monkeytype import trace
-  from mtconfig import my_config
+  from some.module import my_config
 
   with trace(my_config):
       # ... run some code you want to trace here ...
@@ -121,4 +132,4 @@ just pass your config object to it::
 When running :doc:`the command line utility <generation>`, use the ``--config``
 or ``-c`` option to point MonkeyType to your config, e.g.::
 
-  $ monkeytype -c mtconfig:my_config stub some.module
+  $ monkeytype -c some.module:my_config stub some.module

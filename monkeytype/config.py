@@ -105,4 +105,14 @@ class DefaultConfig(Config):
         return default_code_filter
 
 
-DEFAULT_CONFIG = DefaultConfig()
+def get_default_config() -> Config:
+    """Use monkeytype_config.CONFIG if it exists, otherwise DefaultConfig().
+
+    monkeytype_config is not a module that is part of the monkeytype
+    distribution, it must be created by the user.
+    """
+    try:
+        import monkeytype_config  # type: ignore
+    except ImportError:
+        return DefaultConfig()
+    return monkeytype_config.CONFIG

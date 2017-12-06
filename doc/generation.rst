@@ -48,7 +48,15 @@ options:
   ``some.module:name``, where ``name`` is the variable in ``some.module``
   containing your config instance.
 
-  Default: ``monkeytype.config:DEFAULT_CONFIG``
+  Optionally, the value can also include a ``()`` suffix, and MonkeyType will
+  call/instantiate the imported function/class with no arguments to get the
+  actual config instance.
+
+  The default value is ``monkeytype.config:get_default_config()``, which tries
+  the config path ``monkeytype_config:CONFIG`` and falls back to
+  ``monkeytype.config:DefaultConfig()`` if there is no ``monkeytype_config``
+  module. This allows creating a custom config that will be used by default just
+  by creating ``monkeytype_config.py`` with a ``CONFIG`` instance in it.
 
 .. option:: -l <limit>, --limit <limit>
 
