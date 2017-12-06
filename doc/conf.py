@@ -47,7 +47,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = 'MonkeyType'
-copyright = '2017, Matt Page & Carl Meyer'
+copyright = '2017, Facebook'
 author = 'Matt Page & Carl Meyer'
 
 # The version info for the project you're documenting, acts as replacement for
