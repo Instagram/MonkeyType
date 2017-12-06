@@ -6,6 +6,11 @@ Generating type annotations
 MonkeyType comes with a ``monkeytype`` command-line script for generating and
 applying stub files based on recorded call traces.
 
+The script must be able to import your code. It automatically adds the current
+working directory to the Python path, so ensuring that you run ``monkeytype``
+from the root of your code is usually sufficient. Alternatively, you can set the
+``PYTHONPATH`` environment variable.
+
 monkeytype stub
 ~~~~~~~~~~~~~~~
 

@@ -183,4 +183,9 @@ qualname format.""")
 
 def entry_point_main() -> NoReturn:
     """Wrapper for main() for setuptools console_script entry point."""
+    # Since monkeytype needs to import the user's code (and possibly config
+    # code), the user's code must be on the Python path. But when running the
+    # CLI script, it won't be. So we add the current working directory to the
+    # Python path ourselves.
+    sys.path.insert(0, os.getcwd())
     sys.exit(main(sys.argv[1:], sys.stdout, sys.stderr))
