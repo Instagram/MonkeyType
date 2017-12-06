@@ -60,7 +60,7 @@ options:
 
 .. option:: --disable-type-rewriting
 
-  Don't apply your configured :doc:`rewriters` to the output types.
+  Don't apply your configured :ref:`rewriters` to the output types.
 
 .. option:: --include-unparsable-defaults
 
@@ -79,3 +79,66 @@ options:
   output, in order to ensure a valid stub file. Provide this option to instead
   include these functions, invalid syntax and all; you'll have to manually fix
   them up before the stub file will be usable.
+
+.. module:: monkeytype.typing
+
+.. _rewriters:
+
+Type rewriters
+~~~~~~~~~~~~~~
+
+MonkeyType's built-in type generation is quite simple: it just makes a ``Union``
+of all the types seen in traces for a given argument or return value, and
+shrinks that ``Union`` to remove redundancy. All additional type transformations
+are performed through configured type rewriters.
+
+.. class:: TypeRewriter()
+
+  The :class:`TypeRewriter` class provides a type-visitor that can be subclassed
+  to easily implement custom type transformations.
+
+  Subclasses can implement arbitrary ``rewrite_Foo`` methods for rewriting a
+  type named ``Foo``. :class:`TypeRewriter` itself implements only
+  ``rewrite_Dict``, ``rewrite_List``, ``rewrite_Set``, ``rewrite_Tuple``,
+  ``rewrite_Union`` (in addition to the methods listed below). These methods
+  just recursively rewrite all type arguments of the container types.
+
+  For example type rewriter implementations, see the source code of the
+  subclasses listed below.
+
+  .. method:: rewrite(typ: type) -> type
+
+    Public entry point to rewrite given type; return rewritten type.
+
+  .. method:: generic_rewrite(typ: type) -> type
+
+    Fallback method when no specific ``rewrite_Foo`` method is available for a
+    visited type.
+
+.. class:: RemoveEmptyContainers()
+
+  Rewrites e.g. ``Union[List[Any], List[int]]`` to ``List[int]``. The former
+  type frequently occurs when a method that takes ``List[int]`` also sometimes
+  receives the empty list, which will be typed as ``List[Any]``.
+
+.. class:: RewriteConfigDict()
+
+  Takes a generated type like ``Union[Dict[K, V1], Dict[K, V2]]`` and rewrites
+  it to ``Dict[K, Union[V1, V2]]``.
+
+.. class:: RewriteLargeUnion(max_union_len: int = 5)
+
+  Rewrites large unions (by default, more than 5 elements) to simply `Any`, for
+  better readability of functions that aren't well suited to static typing.
+
+.. class:: ChainedRewriter(rewriters: Iterable[TypeRewriter])
+
+  Accepts a list of rewriter instances and applies each in order. Useful for
+  composing rewriters, since the
+  :class:`~monkeytype.config.Config.type_rewriter` config method only allows
+  returning a single rewriter.
+
+.. class:: NoOpRewriter()
+
+  Does nothing. The default type rewriter in the base
+  :class:`~monkeytype.config.Config`.

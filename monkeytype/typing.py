@@ -200,7 +200,7 @@ class RewriteConfigDict(TypeRewriter):
 class RewriteLargeUnion(TypeRewriter):
     """Rewrite Union[T1, ..., TN] as Any for large N."""
 
-    def __init__(self, max_union_len=5):
+    def __init__(self, max_union_len: int = 5):
         super().__init__()
         self.max_union_len = max_union_len
 

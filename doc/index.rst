@@ -16,7 +16,6 @@ The Details
    tracing
    generation
    stores
-   rewriters
    faq
 
 
