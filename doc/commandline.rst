@@ -27,8 +27,7 @@ monkeytype apply
 If you prefer inline type annotations, ``monkeytype apply some.module`` will
 generate annotations for ``some.module`` internally (in exactly the same way as
 ``monkeytype stub`` would), but rather than printing the annotations in stub
-syntax, it will apply them directly to the code file as Python 3.6+ style type
-annotations, modifying the file in-place.
+syntax, it will apply them directly to the code file, modifying it in-place.
 
 Obviously this is best used when the file is tracked in a version-control
 system, so you can easily see the changes made by MonkeyType and accept or
@@ -70,7 +69,7 @@ options:
   via the ``inspect`` standard library module, and then turns this introspected
   signature back into a code string when generating a stub.
 
-  Some function arguments may have complex default values whose ```repr()`` is
+  Some function arguments may have complex default values whose ``repr()`` is
   not a valid Python expression. These cannot round-trip successfully through
   the introspection process, since importing your code does not give MonkeyType
   access to the original expression for the default value, as a string of Python

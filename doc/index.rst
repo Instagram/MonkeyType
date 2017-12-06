@@ -13,9 +13,9 @@ The Details
    :maxdepth: 2
 
    configuration
+   tracing
    commandline
    stores
-   loggers
    filters
    rewriters
    faq

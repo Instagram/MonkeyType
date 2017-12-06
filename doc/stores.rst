@@ -1,18 +1,20 @@
 Call-trace stores
 -----------------
 
-MonkeyType operates in a two-phase style: you run some code under MonkeyType
-tracing, and it stores the traced calls. You can do this repeatedly, maybe even
-sampled in production continually so you always have up-to-date traces
-available. Then whenever you need, you run ``monkeytype stub`` or ``monkeytype
-apply`` to generate annotations based on types from the recorded traces.
+MonkeyType operates in two phases: call tracing and stub generation. You first
+run some code under MonkeyType tracing and store the traced calls. You can do
+this repeatedly, maybe even sampled in production continually so you always have
+up-to-date traces available. Then whenever you need, you run ``monkeytype stub``
+or ``monkeytype apply`` to generate annotations based on types from the recorded
+traces.
 
-In order to do this, MonkeyType needs to have a data store available for the
-recorded call traces. By default it will use
-:class:`~monkeytype.db.sqlite.SQLiteStore`, which stores traces in a local
-SQLite database file. But you can write your own
+In order to do this, MonkeyType needs a backing store for the recorded call
+traces. By default it will use :class:`~monkeytype.db.sqlite.SQLiteStore`, which
+stores traces in a local SQLite database file. But you can write your own
 :class:`~monkeytype.db.base.CallTraceStore` subclass to store traces in whatever
-data store works best for you.
+data store works best for you, and return an instance of your custom store from
+the :meth:`~monkeytype.config.Config.trace_store` method of your
+:class:`~monkeytype.config.Config` class.
 
 .. module:: monkeytype.db.base
 
@@ -100,7 +102,7 @@ CallTraceRow
 
 The :class:`CallTraceRow` class implements serialization/deserialization of
 :class:`~monkeytype.tracing.CallTrace` instances to/from JSON. See the
-implementation of :class:`monkeytype.db.sqlite.SQLiteStore` for example usage.
+implementation of :class:`~monkeytype.db.sqlite.SQLiteStore` for example usage.
 
 It is not required for a custom store to use :class:`CallTraceRow`; a store may
 choose to implement its own alternative (de)serialization.
@@ -141,7 +143,7 @@ choose to implement its own alternative (de)serialization.
     A JSON-serialized representation of the actual yield type for this traced
     call, or ``None`` if this call did not yield (i.e. returned instead).
 
-.. module:: monkeytype.db.base
+.. currentmodule:: monkeytype.db.base
 
 CallTraceThunk
 ~~~~~~~~~~~~~~

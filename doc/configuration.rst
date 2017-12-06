@@ -17,13 +17,13 @@ Let's look at those steps in more detail.
 Subclassing ``Config`` or ``DefaultConfig``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. class:: Config
+.. class:: Config()
 
   ``Config`` is the "empty" config; it's not usable out of the box, and requires
   your subclass to fill in some blanks in order to get useful behavior. It has
   the following methods:
 
-  .. method:: trace_store()
+  .. method:: trace_store() -> CallTraceStore
 
     Should return the :class:`~monkeytype.db.base.CallTraceStore` subclass you
     want to use to store your call traces.
@@ -31,7 +31,7 @@ Subclassing ``Config`` or ``DefaultConfig``
     This is the one method you must override if you subclass the empty
     ``Config``.
 
-  .. method:: trace_logger()
+  .. method:: trace_logger() -> CallTraceLogger
 
     Should return the :class:`~monkeytype.tracing.CallTraceLogger` subclass you
     want to use to log your call traces.
@@ -40,9 +40,9 @@ Subclassing ``Config`` or ``DefaultConfig``
     :class:`~monkeytype.db.base.CallTraceStoreLogger` initialized with your
     :meth:`trace_store`.
 
-  .. method:: code_filter()
+  .. method:: code_filter() -> CodeFilter
 
-    Should return the :ref:`code filter` function that categorizes traced
+    Should return the :doc:`code filter <filters>` that categorizes traced
     functions into ones you are interested in (so their traces should be stored)
     and ones you aren't (their traces will be ignored).
 
@@ -50,7 +50,7 @@ Subclassing ``Config`` or ``DefaultConfig``
     This will probably include a lot of standard-library and third-party
     functions!
 
-  .. method:: sample_rate()
+  .. method:: sample_rate() -> int
 
     Should return the integer sampling rate for your logged call traces. If you
     return an integer N from this method, 1/N function calls will be traced and
@@ -59,7 +59,7 @@ Subclassing ``Config`` or ``DefaultConfig``
     If you don't override, returns ``None``, which disables sampling; all
     function calls will be traced and logged.
 
-  .. method:: type_rewriter()
+  .. method:: type_rewriter() -> TypeRewriter
 
     Should return the :class:`~monkeytype.typing.TypeRewriter` which will be
     applied to all your types when stubs are generated.
@@ -67,25 +67,25 @@ Subclassing ``Config`` or ``DefaultConfig``
     If you don't override, returns :class:`~monkeytype.typing.NoOpRewriter`,
     which doesn't rewrite any types.
 
-.. class:: DefaultConfig
+.. class:: DefaultConfig()
 
   ``DefaultConfig`` is the config MonkeyType uses if you don't provide your own;
   it's usable as-is, and you can inherit it if you just want to make some tweaks
   to the default setup. ``DefaultConfig`` overrides the following methods from
   :class:`Config`:
 
-  .. method:: trace_store()
+  .. method:: trace_store() -> SQLiteStore
 
     Returns an instance of :class:`~monkeytype.db.sqlite.SQLiteStore`, which
     stores call traces in a local SQLite database, in the file
     ``monkeytype.sqlite`` in the current directory.
 
-  .. method:: code_filter()
+  .. method:: code_filter() -> CodeFilter
 
     Returns a predicate function that excludes code in the Python standard
     library and installed third-party packages from call trace logging.
 
-  .. method:: type_rewriter()
+  .. method:: type_rewriter() -> ChainedRewriter
 
     Returns an instance of :class:`~monkeytype.typing.ChainedRewriter`
     initialized with the :class:`~monkeytype.typing.RemoveEmptyContainers`,
@@ -118,7 +118,7 @@ just pass your config object to it::
   with trace(my_config):
       # ... run some code you want to trace here ...
 
-When running :ref:`the command line utility`, use the ``--config`` or ``-c``
-option to point MonkeyType to your config, e.g.::
+When running :doc:`the command line utility <commandline>`, use the ``--config``
+or ``-c`` option to point MonkeyType to your config, e.g.::
 
   $ monkeytype -c mtconfig:my_config stub some.module
