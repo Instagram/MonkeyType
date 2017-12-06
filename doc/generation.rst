@@ -66,8 +66,8 @@ options:
 .. option:: -l <limit>, --limit <limit>
 
   The maximum number of call traces to query from your call trace store.
-  Increasing this number may give more accurate results, at the cost of longer
-  runtime.
+
+  See the :meth:`~monkeytype.config.Config.query_limit` config method.
 
   Default: 2000
 
@@ -77,21 +77,19 @@ options:
 
 .. option:: --include-unparsable-defaults
 
-  In order to introspect function arguments and existing annotations and apply
-  new annotations, MonkeyType imports your code and inspects function signatures
-  via the ``inspect`` standard library module, and then turns this introspected
-  signature back into a code string when generating a stub.
+  Include stubs for functions with argument defaults whose reprs are not valid
+  Python syntax.
 
-  Some function arguments may have complex default values whose ``repr()`` is
-  not a valid Python expression. These cannot round-trip successfully through
-  the introspection process, since importing your code does not give MonkeyType
-  access to the original expression for the default value, as a string of Python
-  code.
+  See the :meth:`~monkeytype.config.Config.include_unparsable_defaults` config
+  method.
 
-  By default MonkeyType will simply exclude such functions from stub file
-  output, in order to ensure a valid stub file. Provide this option to instead
-  include these functions, invalid syntax and all; you'll have to manually fix
-  them up before the stub file will be usable.
+.. option:: --exclude-unparsable-defaults
+
+  Exclude stubs for functions with argument defaults whose reprs are not valid
+  Python syntax.
+
+  See the :meth:`~monkeytype.config.Config.include_unparsable_defaults` config
+  method.
 
 .. module:: monkeytype.typing
 

@@ -67,6 +67,38 @@ Subclassing ``Config`` or ``DefaultConfig``
     If you don't override, returns :class:`~monkeytype.typing.NoOpRewriter`,
     which doesn't rewrite any types.
 
+  .. method:: query_limit() -> int
+
+    The maximum number of call traces to query from the trace store when
+    generating stubs. If you have recorded a lot of traces, increasing this
+    limit may improve stub accuracy, at the cost of slower stub generation.
+
+    On the other hand, if some of your recorded traces are out of date because
+    the code has changed, and you haven't purged your trace store, increasing
+    this limit could make stubs worse by including more outdated traces.
+
+    Defaults to 2000.
+
+  .. method:: include_unparsable_defaults() -> bool
+
+    In order to output complete and correct stubs, MonkeyType imports your code
+    and inspects function signatures via the ``inspect`` standard library
+    module, and then turns this introspected signature back into a code string
+    when generating a stub.
+
+    Some function arguments may have complex default values whose ``repr()`` is
+    not a valid Python expression. These cannot round-trip successfully through
+    the introspection process, since importing your code does not give
+    MonkeyType access to the original expression for the default value, as a
+    string of Python code.
+
+    By default MonkeyType will simply exclude such functions from stub file
+    output, in order to ensure a valid stub file. Return ``True`` from this
+    config method to instead include these functions, invalid syntax and all;
+    you'll have to manually fix them up before the stub file will be usable.
+
+    Defaults to ``False``.
+
 .. class:: DefaultConfig()
 
   ``DefaultConfig`` is the config MonkeyType uses if you don't provide your own;

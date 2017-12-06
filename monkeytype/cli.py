@@ -117,27 +117,58 @@ def print_stub_handler(args: argparse.Namespace, stdout: IO, stderr: IO) -> None
     print(stub.render(), file=stdout)
 
 
+def update_args_from_config(args: argparse.Namespace) -> None:
+    """Pull values from config for unspecified arguments."""
+    if args.limit is None:
+        args.limit = args.config.query_limit()
+    if args.include_unparsable_defaults is None:
+        args.include_unparsable_defaults = args.config.include_unparsable_defaults()
+
+
 def main(argv: List[str], stdout: IO, stderr: IO) -> int:
     parser = argparse.ArgumentParser(
         description='Generate and apply stub files from collected type information.',
-        formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    )
     parser.add_argument(
         '--disable-type-rewriting',
         action='store_true', default=False,
-        help='Show types without rewrite rules applied')
-    parser.add_argument(
+        help="Show types without rewrite rules applied (default: False)",
+    )
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument(
         '--include-unparsable-defaults',
-        action='store_true', default=False,
-        help="Include functions whose default values aren't valid Python expressions")
+        action='store_true', default=None,
+        help=(
+            "Include functions whose default values aren't valid Python expressions"
+            " (default: False, unless changed in your config)"
+        ),
+    )
+    group.add_argument(
+        '--exclude-unparsable-defaults',
+        action='store_false', default=None, dest='include_unparsable_defaults',
+        help=(
+            "Exclude functions whose default values aren't valid Python expressions"
+            " (default: True, unless changed in your config)"
+        ),
+    )
     parser.add_argument(
         '--limit', '-l',
-        type=int, default=2000,
-        help='How many traces to return from storage')
+        type=int, default=None,
+        help=(
+            "How many traces to return from storage"
+            " (default: 2000, unless changed in your config)"
+        ),
+    )
     parser.add_argument(
         '--config', '-c',
         type=monkeytype_config,
         default='monkeytype.config:get_default_config()',
-        help='The <module>:<qualname> of the config to use.')
+        help=(
+            "The <module>:<qualname> of the config to use"
+            " (default: monkeytype_config:CONFIG if it exists, "
+            "else monkeytype.config:DefaultConfig())"
+        ),
+    )
     subparsers = parser.add_subparsers()
 
     apply_parser = subparsers.add_parser(
@@ -173,6 +204,7 @@ qualname format.""")
     stub_parser.set_defaults(handler=print_stub_handler)
 
     args = parser.parse_args(argv)
+    update_args_from_config(args)
     handler = getattr(args, 'handler', None)
     if handler is None:
         parser.print_help(file=stderr)
