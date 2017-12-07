@@ -118,8 +118,14 @@ def print_stub_handler(args: argparse.Namespace, stdout: IO, stderr: IO) -> None
 
 
 def run_handler(args: argparse.Namespace, stdout: IO, stderr: IO) -> None:
-    with trace(args.config):
-        runpy.run_path(args.script_path, run_name='__main__')
+    # remove initial `monkeytype run`
+    old_argv = sys.argv.copy()
+    sys.argv = sys.argv[2:]
+    try:
+        with trace(args.config):
+            runpy.run_path(args.script_path, run_name='__main__')
+    finally:
+        sys.argv = old_argv
 
 
 def update_args_from_config(args: argparse.Namespace) -> None:
