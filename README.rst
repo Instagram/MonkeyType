@@ -58,3 +58,8 @@ stub files directly to your code.
 .. end-here
 
 See the full documentation for details.
+
+LICENSE
+-------
+
+MonkeyType is BSD licensed. We also provide an additional patent grant.
