@@ -7,27 +7,42 @@ The core data type in MonkeyType is the :class:`CallTrace`. A :class:`CallTrace`
 instance represents a single traced call of a single function or method,
 including the concrete type of each argument and the return or yield type.
 
-A :class:`CallTrace` is recorded by the :func:`~monkeytype.trace` context
-manager (or by direct use of a :class:`CallTracer`), logged via a
-:class:`~CallTraceLogger`, probably stored in a
-:class:`~monkeytype.db.base.CallTraceStore`, and later queried from that store
-by the :doc:`monkeytype CLI <generation>` and combined with many other traces of
-the same function in order to generate a stub or type annotation for that
-function.
+A :class:`CallTrace` is recorded by :ref:`monkeytype-run` or the
+:func:`~monkeytype.trace` context manager (or direct use of a
+:class:`CallTracer`), logged via a :class:`~CallTraceLogger`, probably stored in
+a :class:`~monkeytype.db.base.CallTraceStore`, and later queried from that store
+by :ref:`monkeytype-stub` or :ref:`monkeytype-apply` and combined with all other
+traces of the same function in order to generate a stub or type annotation for
+that function.
+
+.. program:: monkeytype run
+
+.. _monkeytype-run:
+
+monkeytype run
+~~~~~~~~~~~~~~
+
+The simplest way to trace some function calls with MonkeyType is to run a Python
+script under MonkeyType tracing using ``monkeytype run`` at the command line::
+
+  $ monkeytype run myscript.py
+
+``monkeytype run`` accepts the same :option:`monkeytype -c` option to point
+MonkeyType to the config it should use.
 
 .. module:: monkeytype
 
 trace context manager
 ~~~~~~~~~~~~~~~~~~~~~
 
-The simplest way to trace function calls with MonkeyType is to wrap a section of
-code inside the :func:`trace` context manager::
+You can also trace calls by wrapping a section of code inside the :func:`trace`
+context manager::
 
   import monkeytype
 
   with monkeytype.trace():
       # argument and yield/return types for all function calls will be traced
-      # and stored to `monkeytype.sqlite`
+      # and stored to `monkeytype.sqlite3`
 
 You can pass a :class:`~monkeytype.config.Config` object to :func:`trace` to
 customize its behavior::
@@ -54,7 +69,7 @@ CallTracer
 For more complex tracing cases where you can't easily wrap the code to trace in
 a context manager, you can also use a :class:`CallTracer` directly.
 :class:`CallTracer` doesn't accept a :class:`~monkeytype.config.Config` object;
-instead you directly pass it a logger, filter, and sample rate.
+instead you pass it a logger, filter, and sample rate.
 
 If you have a config, you can easily pull those from it::
 
@@ -75,7 +90,7 @@ suitable for passing to ``sys.setprofile`` as a profiler::
 
   # run some code to be traced
 
-  sys.setprofile(None) # remove the tracer
+  sys.setprofile(None)  # remove the tracer
 
 If your :class:`CallTraceLogger` requires flushing, you should also do this
 after completing tracing::

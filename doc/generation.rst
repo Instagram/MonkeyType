@@ -3,13 +3,15 @@
 Generating type annotations
 ---------------------------
 
-MonkeyType comes with a ``monkeytype`` command-line script for generating and
-applying stub files based on recorded call traces.
+Use the ``monkeytype`` command-line script to generate and apply stub files
+based on recorded call traces.
 
 The script must be able to import your code. It automatically adds the current
 working directory to the Python path, so ensuring that you run ``monkeytype``
 from the root of your code is usually sufficient. Alternatively, you can set the
 ``PYTHONPATH`` environment variable.
+
+.. _monkeytype-stub:
 
 monkeytype stub
 ~~~~~~~~~~~~~~~
@@ -25,6 +27,8 @@ some/module.pyi``).
 
 You can also run e.g. ``monkeytype stub some.module:SomeClass`` or ``monkeytype
 stub some.module:somefunc`` to generate a stub for just one class or function.
+
+.. _monkeytype-apply:
 
 monkeytype apply
 ~~~~~~~~~~~~~~~~

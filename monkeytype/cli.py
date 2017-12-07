@@ -8,6 +8,7 @@ import argparse
 import importlib
 import inspect
 import os.path
+import runpy
 import subprocess
 import sys
 import tempfile
@@ -20,6 +21,7 @@ from typing import (
     Tuple,
 )
 
+from monkeytype import trace
 from monkeytype.config import Config
 from monkeytype.exceptions import MonkeyTypeError
 from monkeytype.stubs import (
@@ -27,8 +29,6 @@ from monkeytype.stubs import (
     build_module_stubs_from_traces,
 )
 from monkeytype.typing import NoOpRewriter
-
-
 from monkeytype.util import get_name_in_module
 
 
@@ -117,6 +117,11 @@ def print_stub_handler(args: argparse.Namespace, stdout: IO, stderr: IO) -> None
     print(stub.render(), file=stdout)
 
 
+def run_handler(args: argparse.Namespace, stdout: IO, stderr: IO) -> None:
+    with trace(args.config):
+        runpy.run_path(args.script_path, run_name='__main__')
+
+
 def update_args_from_config(args: argparse.Namespace) -> None:
     """Pull values from config for unspecified arguments."""
     if args.limit is None:
@@ -170,6 +175,16 @@ def main(argv: List[str], stdout: IO, stderr: IO) -> int:
         ),
     )
     subparsers = parser.add_subparsers()
+
+    run_parser = subparsers.add_parser(
+        'run',
+        help='Run a Python script under MonkeyType tracing',
+        description='Run a Python script under MonkeyType tracing')
+    run_parser.add_argument(
+        'script_path',
+        type=str,
+        help="""Filesystem path to a Python script file to run under tracing""")
+    run_parser.set_defaults(handler=run_handler)
 
     apply_parser = subparsers.add_parser(
         'apply',

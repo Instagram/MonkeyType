@@ -109,8 +109,9 @@ Subclassing ``Config`` or ``DefaultConfig``
   .. method:: trace_store() -> SQLiteStore
 
     Returns an instance of :class:`~monkeytype.db.sqlite.SQLiteStore`, which
-    stores call traces in a local SQLite database, in the file
-    ``monkeytype.sqlite`` in the current directory.
+    stores call traces in a local SQLite database, by default in the file
+    ``monkeytype.sqlite3`` in the current directory. You can override the path
+    to the SQLite database by setting the ``MT_DB_PATH`` environment variable.
 
   .. method:: code_filter() -> CodeFilter
 
@@ -144,8 +145,7 @@ sampling rate, so you put this code in the file ``monkeytype_config.py``::
 
   CONFIG = MyConfig()
 
-All of MonkeyType (the :func:`~monkeytype.trace` function and :doc:`the CLI
-<generation>`) will automatically find and use this config (as long as
+MonkeyType will automatically find and use this config (as long as
 ``monkeytype_config.py`` is on the Python path).
 
 Specifying a config

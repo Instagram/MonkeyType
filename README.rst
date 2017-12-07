@@ -8,7 +8,11 @@ directly to your Python code based on the types collected at runtime.
 Examples
 --------
 
-Enable call-trace logging for a block of code::
+Run a script under call-trace logging::
+
+  $ monkeytype run myscript.py
+
+Or enable call-trace logging for a block of code::
 
   import monkeytype
 
@@ -16,7 +20,7 @@ Enable call-trace logging for a block of code::
       ...
 
 By default this will dump call traces into a sqlite database in the file
-``monkeytype.sqlite`` in the current working directory. You can then use the
+``monkeytype.sqlite3`` in the current working directory. You can then use the
 ``monkeytype`` command to generate a stub file for a module, or apply the type
 annotations directly to your code::
 
