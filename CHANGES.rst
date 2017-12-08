@@ -1,7 +1,7 @@
 Changelog
 =========
 
-17.10.0
+17.12.0
 -------
 
 * Initial public version.
