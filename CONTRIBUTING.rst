@@ -17,10 +17,10 @@ We welcome your pull requests.
 1. Fork the repo and create your branch from `master`.
 2. If you've added code that should be tested, add tests.
 3. If you've changed APIs, update the documentation and ensure it builds
-   (``cd docs && pipenv run make html``).
+   (``cd doc && pipenv run make html``).
 4. Ensure the test suite passes (``pipenv run pytest``).
 5. Make sure your code lints (``pipenv run flake8``) and typechecks
-   (``pipenv run mypy``).
+   (``pipenv run mypy monkeytype``).
 6. If you haven't already, complete the Contributor License Agreement ("CLA").
 
 Contributor License Agreement ("CLA")
