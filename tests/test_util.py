@@ -33,11 +33,11 @@ class TestGetNameInModule:
         obj = get_name_in_module(Outer.__module__, Outer.Inner.f.__qualname__)
         assert obj == Outer.Inner.f
 
-    def test_get_nonexistant_module(self):
+    def test_get_nonexistent_module(self):
         with pytest.raises(NameLookupError):
             get_name_in_module('xxx.dontexist', 'foo')
 
-    def test_get_nonexistant_qualname(self):
+    def test_get_nonexistent_qualname(self):
         with pytest.raises(NameLookupError):
             get_name_in_module(
                 a_module_func.__module__, 'Outer.xxx_i_dont_exist_xxx')
@@ -45,7 +45,7 @@ class TestGetNameInModule:
 
 class TestGetFuncInModule:
     def test_get_method(self):
-        """Make sure we return the underyling function for boundmethods"""
+        """Make sure we return the underlying function for boundmethods"""
         meth = Dummy.a_class_method
         obj = get_func_in_module(meth.__module__, meth.__qualname__)
         assert obj == meth.__func__

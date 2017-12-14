@@ -32,7 +32,7 @@ from monkeytype.typing import (
 
 
 class Config(metaclass=ABCMeta):
-    """A Config ties together concrete implementations of the diffrent abstractions
+    """A Config ties together concrete implementations of the different abstractions
     that make up a typical deployment of MonkeyType.
     """
     @abstractmethod

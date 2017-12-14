@@ -218,7 +218,7 @@ class TestFunctionStub:
         assert stub.render() == expected
 
     def test_split_parameters_across_multiple_lines(self):
-        """When single-line length exceeds 120 characters, parameters should be splitted into multiple lines."""
+        """When single-line length exceeds 120 characters, parameters should be split into multiple lines."""
         stub = FunctionStub('has_length_exceeds_120_chars',
                             inspect.signature(has_length_exceeds_120_chars),
                             FunctionKind.MODULE)
