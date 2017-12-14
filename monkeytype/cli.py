@@ -16,9 +16,9 @@ import tempfile
 from typing import (
     IO,
     List,
-    NoReturn,
     Optional,
     Tuple,
+    TYPE_CHECKING,
 )
 
 from monkeytype import trace
@@ -30,6 +30,11 @@ from monkeytype.stubs import (
 )
 from monkeytype.typing import NoOpRewriter
 from monkeytype.util import get_name_in_module
+
+
+if TYPE_CHECKING:
+    # This is not present in Python 3.6.1, so not safe for runtime import
+    from typing import NoReturn  # noqa
 
 
 def module_path(path: str) -> Tuple[str, Optional[str]]:
@@ -234,7 +239,7 @@ qualname format.""")
     return 0
 
 
-def entry_point_main() -> NoReturn:
+def entry_point_main() -> 'NoReturn':
     """Wrapper for main() for setuptools console_script entry point."""
     # Since monkeytype needs to import the user's code (and possibly config
     # code), the user's code must be on the Python path. But when running the
