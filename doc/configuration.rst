@@ -25,16 +25,16 @@ Subclassing ``Config`` or ``DefaultConfig``
 
   .. method:: trace_store() -> CallTraceStore
 
-    Should return the :class:`~monkeytype.db.base.CallTraceStore` subclass you
-    want to use to store your call traces.
+    Return the :class:`~monkeytype.db.base.CallTraceStore` subclass you want to
+    use to store your call traces.
 
     This is the one method you must override if you subclass the empty
     ``Config``.
 
   .. method:: trace_logger() -> CallTraceLogger
 
-    Should return the :class:`~monkeytype.tracing.CallTraceLogger` subclass you
-    want to use to log your call traces.
+    Return the :class:`~monkeytype.tracing.CallTraceLogger` subclass you want
+    to use to log your call traces.
 
     If you don't override, this returns an instance of
     :class:`~monkeytype.db.base.CallTraceStoreLogger` initialized with your
@@ -42,9 +42,9 @@ Subclassing ``Config`` or ``DefaultConfig``
 
   .. method:: code_filter() -> CodeFilter
 
-    Should return the :ref:`code filter <codefilters>` that categorizes traced
-    functions into ones you are interested in (so their traces should be stored)
-    and ones you aren't (their traces will be ignored).
+    Return the :ref:`code filter <codefilters>` that categorizes traced
+    functions into ones you are interested in (so their traces should be
+    stored) and ones you aren't (their traces will be ignored).
 
     If you don't override, returns ``None``, meaning all traces will be stored.
     This will probably include a lot of standard-library and third-party
@@ -52,8 +52,8 @@ Subclassing ``Config`` or ``DefaultConfig``
 
   .. method:: sample_rate() -> int
 
-    Should return the integer sampling rate for your logged call traces. If you
-    return an integer N from this method, 1/N function calls will be traced and
+    Return the integer sampling rate for your logged call traces. If you return
+    an integer N from this method, 1/N function calls will be traced and
     logged.
 
     If you don't override, returns ``None``, which disables sampling; all
@@ -61,8 +61,8 @@ Subclassing ``Config`` or ``DefaultConfig``
 
   .. method:: type_rewriter() -> TypeRewriter
 
-    Should return the :class:`~monkeytype.typing.TypeRewriter` which will be
-    applied to all your types when stubs are generated.
+    Return the :class:`~monkeytype.typing.TypeRewriter` which will be applied
+    to all your types when stubs are generated.
 
     If you don't override, returns :class:`~monkeytype.typing.NoOpRewriter`,
     which doesn't rewrite any types.
