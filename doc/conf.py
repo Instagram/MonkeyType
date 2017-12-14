@@ -27,6 +27,8 @@
 # import sys
 # sys.path.insert(0, os.path.abspath('.'))
 
+import os
+
 
 # -- General configuration ------------------------------------------------
 
@@ -60,8 +62,6 @@ author = 'Matt Page & Carl Meyer'
 # |version| and |release|, also used in various other places throughout the
 # built documents.
 #
-
-import os
 
 with open(os.path.join(os.path.dirname(os.path.abspath('.')), 'monkeytype', '__init__.py')) as f:
     for line in f:
