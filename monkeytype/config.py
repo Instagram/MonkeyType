@@ -80,7 +80,7 @@ class Config(metaclass=ABCMeta):
 
 lib_paths = {sysconfig.get_path(n) for n in ['stdlib', 'purelib', 'platlib']}
 # if in a virtualenv, also exclude the real stdlib location
-venv_real_prefix = getattr(sys, 'real_prefix')
+venv_real_prefix = getattr(sys, 'real_prefix', None)
 if venv_real_prefix:
     lib_paths.add(
         sysconfig.get_path('stdlib', vars={'installed_base': venv_real_prefix})
