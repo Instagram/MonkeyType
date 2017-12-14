@@ -7,3 +7,4 @@ htmlcov/
 .coverage
 doc/_build
 dist/
+build/
