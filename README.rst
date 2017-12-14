@@ -30,8 +30,9 @@ annotations directly to your code::
 Requirements
 ------------
 
-MonkeyType requires Python 3.6+ and the `retype`_ library (for applying
-type stubs to code files).
+MonkeyType requires Python 3.6+ and the `retype`_ library (for applying type
+stubs to code files). It generates only Python 3 type annotations (no type
+comments).
 
 Installing
 ----------

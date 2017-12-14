@@ -27,8 +27,9 @@ script under MonkeyType tracing using ``monkeytype run`` at the command line::
 
   $ monkeytype run myscript.py
 
-``monkeytype run`` accepts the same :option:`monkeytype -c` option to point
-MonkeyType to the config it should use.
+``monkeytype run`` accepts the same :option:`monkeytype -c` option as
+``monkeytype stub`` and ``monkeytype apply``, to point MonkeyType to the config
+it should use.
 
 .. module:: monkeytype
 
