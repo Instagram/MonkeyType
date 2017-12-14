@@ -1,0 +1,63 @@
+# Python CircleCI 2.0 configuration file
+#
+# Check https://circleci.com/docs/2.0/language-python/ for more details
+#
+version: 2
+jobs:
+  build:
+    docker:
+      - image: circleci/python:3.6.1
+    environment:
+      - WORKON_HOME: "~/.venvs"
+    working_directory: ~/repo
+
+    steps:
+      - checkout
+
+      # Download and cache dependencies
+      - restore_cache:
+          keys:
+          - v2-dependencies-{{ checksum "Pipfile.lock" }}
+          # fallback to using the latest cache if no exact match is found
+          - v2-dependencies-
+
+      - run:
+          name: add user installs to PATH
+          command: |
+            echo 'export PATH=$HOME/.local/bin:$PATH' >> $BASH_ENV
+
+      - run:
+          name: install dependencies
+          command: |
+            pip install --user pipenv
+            pipenv install -d
+
+      - save_cache:
+          paths:
+            - ~/.venvs
+          key: v2-dependencies-{{ checksum "Pipfile.lock" }}
+
+      - run:
+          name: lint
+          command: |
+            pipenv run flake8
+
+      - run:
+          name: typecheck
+          command: |
+            pipenv run mypy monkeytype
+
+      - run:
+          name: run tests
+          command: |
+            pipenv run pytest
+
+      - run:
+          name: build docs
+          command: |
+            cd doc
+            pipenv run make html
+
+      - store_artifacts:
+          path: test-reports
+          destination: test-reports
