@@ -6,3 +6,4 @@ MonkeyType.egg-info
 htmlcov/
 .coverage
 doc/_build
+dist/
