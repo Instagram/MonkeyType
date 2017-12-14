@@ -60,5 +60,5 @@ jobs:
             pipenv run make html
 
       - store_artifacts:
-          path: test-reports
-          destination: test-reports
+          path: htmlcov
+          destination: htmlcov
