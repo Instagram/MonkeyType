@@ -269,5 +269,5 @@ def trace_calls(
     try:
         yield
     finally:
-        sys.setprofile(old_trace)  # type: ignore  # https://github.com/python/typeshed/pull/1679
+        sys.setprofile(old_trace)
         logger.flush()
