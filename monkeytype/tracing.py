@@ -47,7 +47,7 @@ class CallTrace:
     ) -> None:
         """
         Args:
-            func: The function where the trace ocurred
+            func: The function where the trace occurred
             arg_types: The collected argument types
             return_type: The collected return type. This will be None if the called function returns
                 due to an unhandled exception. It will be NoneType if the function returns the value None.
