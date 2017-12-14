@@ -57,7 +57,9 @@ stub files directly to your code.
 
 .. end-here
 
-See the full documentation for details.
+See `the full documentation`_ for details.
+
+.. _the full documentation: http://monkeytype.readthedocs.io/en/latest/
 
 LICENSE
 -------
