@@ -53,6 +53,10 @@ jobs:
           command: |
             pipenv run pytest
 
+      - store_artifacts:
+          path: htmlcov
+          destination: htmlcov
+
       - run:
           name: build docs
           command: |
@@ -60,5 +64,5 @@ jobs:
             pipenv run make html
 
       - store_artifacts:
-          path: htmlcov
-          destination: htmlcov
+          path: doc/_build/html
+          destination: doc
