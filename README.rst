@@ -8,7 +8,7 @@ directly to your Python code based on the types collected at runtime.
 Examples
 --------
 
-Run a script uner call-trace logging of functions and methods in all imported
+Run a script under call-trace logging of functions and methods in all imported
 modules::
 
   $ monkeytype run myscript.py
