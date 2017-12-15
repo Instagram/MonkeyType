@@ -31,6 +31,12 @@ script under MonkeyType tracing using ``monkeytype run`` at the command line::
 ``monkeytype stub`` and ``monkeytype apply``, to point MonkeyType to the config
 it should use.
 
+Because of the way Python treats scripts and modules differently, MonkeyType
+will record usable traces for modules imported and used by ``myscript.py``; not
+for ``myscript.py`` itself. If you want to annotate ``myscript.py``, treat it
+as a module and write another short script that imports and calls its
+function(s), and run that script with ``monkeytype run``.
+
 .. module:: monkeytype
 
 trace context manager
