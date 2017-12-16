@@ -4,6 +4,7 @@ Changelog
 master
 ------
 
+* Exclude "frozen importlib" functions in default code filter.
 * Fix passing args to script run with ``monkeytype run`` (#18; merge of #21).
 
 
