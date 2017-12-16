@@ -195,6 +195,10 @@ def main(argv: List[str], stdout: IO, stderr: IO) -> int:
         'script_path',
         type=str,
         help="""Filesystem path to a Python script file to run under tracing""")
+    run_parser.add_argument(
+        'script_args',
+        nargs=argparse.REMAINDER,
+    )
     run_parser.set_defaults(handler=run_handler)
 
     apply_parser = subparsers.add_parser(
