@@ -319,6 +319,8 @@ def render_annotation(anno: Any) -> str:
         elem_type = _get_optional_elem(anno)
         rendered = render_annotation(elem_type)
         return 'Optional[' + rendered + ']'
+    elif hasattr(anno, '__supertype__'):
+        return anno.__name__
     elif getattr(anno, '__module__', None) == 'typing':
         return repr(anno).replace('typing.', '')
     elif anno is NoneType:
