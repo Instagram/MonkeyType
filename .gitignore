@@ -8,3 +8,4 @@ htmlcov/
 doc/_build
 dist/
 build/
+.idea/
