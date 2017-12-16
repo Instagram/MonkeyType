@@ -4,7 +4,6 @@ Changelog
 master
 ------
 
-
 17.12.2
 -------
 
