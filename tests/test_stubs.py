@@ -11,6 +11,7 @@ from typing import (
     Generator,
     Iterator,
     List,
+    NewType,
     Optional,
     Set,
     Tuple,
@@ -41,6 +42,8 @@ from monkeytype.stubs import (
 from monkeytype.tracing import CallTrace
 from monkeytype.typing import NoneType
 from .util import Dummy
+
+UserId = NewType('UserId', int)
 
 
 class TestImportMap:
@@ -131,6 +134,10 @@ def has_length_exceeds_120_chars(
     very_long_name_parameter_2: float
 ) -> Optional[float]:
     return None
+
+
+def has_newtype_param(user_id: UserId) -> None:
+    pass
 
 
 class TestHasUnparsableDefaults:
@@ -239,6 +246,11 @@ class TestFunctionStub:
     def test_default_none_parameter_annotation(self):
         stub = FunctionStub('test', inspect.signature(default_none_parameter), FunctionKind.MODULE)
         expected = 'def test(x: Optional[int] = None) -> None: ...'
+        assert stub.render() == expected
+
+    def test_newtype_parameter_annotation(self):
+        stub = FunctionStub('test', inspect.signature(has_newtype_param), FunctionKind.MODULE)
+        expected = 'def test(user_id: UserId) -> None: ...'
         assert stub.render() == expected
 
 
