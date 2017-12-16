@@ -85,6 +85,8 @@ if venv_real_prefix:
     lib_paths.add(
         sysconfig.get_path('stdlib', vars={'installed_base': venv_real_prefix})
     )
+# exclude code objects from frozen importlib, which have a bogus co_filename
+lib_paths.add('<frozen importlib.')
 LIB_PATHS = tuple(p for p in lib_paths if p is not None)
 
 

@@ -4,6 +4,7 @@
 # This source code is licensed under the BSD-style license found in the
 # LICENSE file in the root directory of this source tree. An additional grant
 # of patent rights can be found in the PATENTS file in the same directory.
+import _frozen_importlib
 import sysconfig
 
 import pytest
@@ -20,3 +21,6 @@ class TestDefaultCodeFilter:
 
     def test_includes_otherwise(self):
         assert config.default_code_filter(config.default_code_filter.__code__)
+
+    def test_excludes_frozen_importlib(self):
+        assert not config.default_code_filter(_frozen_importlib.spec_from_loader.__code__)
