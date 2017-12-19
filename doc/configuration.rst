@@ -101,30 +101,31 @@ Subclassing ``Config`` or ``DefaultConfig``
 
   .. method:: cli_context(command: str) -> Iterator[None]
 
-    A context manager which wraps the execution of the CLI command. Use it to
-    perform any initialization or cleanup required by your codebase.
+    A context manager which wraps the execution of the CLI command.
 
-    ``command`` is the command passed to the monkeytype cli: ``'run'``,
-    ``'apply'``, etc.
+    MonkeyType has to import your code in order to generate stubs for it. In
+    some cases, like if you're using Django, setup is required before your code
+    can be imported. Use this method to define the necessary setup or teardown
+    for your codebase.
 
-    Since :meth:`cli_context` is used as a context manager, any :class:`Config`
-    subclass that implements this method needs to decorate it with a context
-    decorator like :meth:`contextlib.contextmanager`, and needs to yield in
-    the body of the method exactly once. Code that comes before the yield will
-    run before the command starts, and code that comes afterward will run when
-    the command finishes but before the CLI exits.
+    This method must return a `context manager`_ instance. In most cases, the
+    simplest way to do this will be with the `contextlib.contextmanager`_
+    decorator. For example, if you run MonkeyType against a Django codebase,
+    you can setup Django before the command runs::
 
-    For example, if you run MonkeyType against a Django codebase, you can use
-    this method to setup Django before the command runs::
-
-      @contextmanager()
+      @contextmanager
       def cli_context(self, command: str) -> Iterator[None]:
           import django
           django.setup()
           yield
 
-    The default implementation of this method just calls ``yield`` to let the
-    command run.
+    ``command`` is the name of the command passed to the monkeytype cli:
+    ``'run'``, ``'apply'``, etc.
+
+    The default implementation of this method returns a no-op context manager.
+
+    .. _context manager: https://docs.python.org/3/reference/datamodel.html#with-statement-context-managers
+    .. _contextlib.contextmanager: https://docs.python.org/3/library/contextlib.html#contextlib.contextmanager
 
 .. class:: DefaultConfig()
 

@@ -241,31 +241,8 @@ qualname format.""")
         parser.print_help(file=stderr)
         return 1
 
-    handler_exception: Optional[Exception] = None
-    try:
-        with args.config.cli_context(args.command):
-            # Capture the handler exception so it doesn't inadvertently trigger the cli_context() helper errors.
-            try:
-                handler(args, stdout, stderr)
-            except Exception as e:
-                handler_exception = e
-    except (AttributeError, RuntimeError, TypeError) as e:
-        config_class = args.config.__class__.__name__
-
-        # Provide helpful error messages for common context manager mistakes.
-        if isinstance(e, AttributeError):
-            error_msg = f"{config_class}.cli_context() needs to be decorated with `@contextmanager()` or another " \
-                        f"context decorator, but it is not."
-        elif isinstance(e, RuntimeError):
-            error_msg = f"{config_class}.cli_context() should only yield once, but it yielded multiple times."
-        elif isinstance(e, TypeError):
-            error_msg = f"{config_class}.cli_context() needs to yield once, but it did not yield."
-
-        error_msg = f"{error_msg}\nSee: https://docs.python.org/3/library/contextlib.html#contextlib.contextmanager"
-        raise RuntimeError(error_msg) from e
-
-    if handler_exception:
-        raise handler_exception
+    with args.config.cli_context(args.command):
+        handler(args, stdout, stderr)
 
     return 0
 
