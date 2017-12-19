@@ -4,7 +4,7 @@ Changelog
 master
 ------
 
-* Add setup/teardown CLI lifecycle hooks.
+* Add Config.cli_context() as a hook for custom CLI initialization and cleanup logic (#28; merge of #29).
 
 17.12.2
 -------
