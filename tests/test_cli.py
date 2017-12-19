@@ -76,7 +76,7 @@ def test_no_traces(store_data, stdout, stderr):
     assert ret == 0
 
 
-def test_lifecycle_hooks_called(capsys, stdout, stderr):
+def test_cli_context_manager_activated(stdout, stderr):
     with mock.patch.object(DefaultConfig, 'cli_context') as mock_context:
         ret = cli.main(['-c', f'{__name__}:DefaultConfig()', 'stub', 'some.module'], stdout, stderr)
 
