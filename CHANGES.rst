@@ -4,6 +4,8 @@ Changelog
 master
 ------
 
+* Add setup/teardown CLI lifecycle hooks.
+
 17.12.2
 -------
 

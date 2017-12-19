@@ -99,6 +99,32 @@ Subclassing ``Config`` or ``DefaultConfig``
 
     Defaults to ``False``.
 
+  .. method:: cli_setup(command: str) -> None
+
+    A lifecycle hook which gets called once, right after the CLI starts. Use it
+    to perform any initialization required by your codebase.
+
+    ``command`` is the command passed to the ``monkeytype`` cli: ``'run'``,
+    ``'apply'``, etc.
+
+    For example, if you run MonkeyType against a Django codebase, you can use
+    this hook to call::
+
+      import django
+      django.setup()
+
+    The default implementation of this method does nothing.
+
+  .. method:: cli_teardown(command: str) -> None
+
+    A lifecycle hook which gets called once, right before the CLI exits. Use it
+    to undo side effects from :meth:`cli_setup`, if applicable.
+
+    ``command`` is the command passed to the ``monkeytype`` cli: ``'run'``,
+    ``'apply'``, etc.
+
+    The default implementation of this method does nothing.
+
 .. class:: DefaultConfig()
 
   ``DefaultConfig`` is the config MonkeyType uses if you don't provide your own;
