@@ -3,6 +3,7 @@
 #
 # This source code is licensed under the BSD-style license found in the
 # LICENSE file in the root directory of this source tree.
+from contextlib import contextmanager
 import os
 import sys
 import sysconfig
@@ -12,7 +13,7 @@ from abc import (
     abstractmethod,
 )
 from types import CodeType
-from typing import Optional
+from typing import Optional, Iterator
 
 from monkeytype.db.base import (
     CallTraceStore,
@@ -39,23 +40,15 @@ class Config(metaclass=ABCMeta):
         """Return the CallTraceStore for storage/retrieval of call traces."""
         pass
 
-    def cli_setup(self, command: str) -> None:
+    @contextmanager
+    def cli_context(self, command: str) -> Iterator[None]:
         """Lifecycle hook that is called once right after the CLI
         starts.
 
         `command` is the name of the command passed to monkeytype
         ('run', 'apply', etc).
         """
-        pass
-
-    def cli_teardown(self, command: str) -> None:
-        """Lifecycle hook that is called once right before the CLI
-        exits.
-
-        `command` is the name of the command passed to monkeytype
-        ('run', 'apply', etc).
-        """
-        pass
+        yield
 
     def trace_logger(self) -> CallTraceLogger:
         """Return the CallTraceLogger for logging call traces.

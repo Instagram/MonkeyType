@@ -77,10 +77,8 @@ def test_no_traces(store_data, stdout, stderr):
 
 
 def test_lifecycle_hooks_called(capsys, stdout, stderr):
-    with mock.patch.object(DefaultConfig, 'cli_setup') as mock_setup, \
-            mock.patch.object(DefaultConfig, 'cli_teardown') as mock_teardown:
+    with mock.patch.object(DefaultConfig, 'cli_context') as mock_context:
         ret = cli.main(['-c', f'{__name__}:DefaultConfig()', 'stub', 'some.module'], stdout, stderr)
 
-        mock_setup.assert_called_once_with('stub')
-        mock_teardown.assert_called_once_with('stub')
+        mock_context.assert_called_once_with('stub')
         assert ret == 0

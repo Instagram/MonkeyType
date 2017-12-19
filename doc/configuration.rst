@@ -99,31 +99,32 @@ Subclassing ``Config`` or ``DefaultConfig``
 
     Defaults to ``False``.
 
-  .. method:: cli_setup(command: str) -> None
+  .. method:: cli_context(command: str) -> Iterator[None]
 
-    A lifecycle hook which gets called once, right after the CLI starts. Use it
-    to perform any initialization required by your codebase.
+    A context manager which wraps the execution of the CLI command. Use it to
+    perform any initialization or cleanup required by your codebase.
 
-    ``command`` is the command passed to the ``monkeytype`` cli: ``'run'``,
+    ``command`` is the command passed to the monkeytype cli: ``'run'``,
     ``'apply'``, etc.
+
+    Since :meth:`cli_context` is used as a context manager, any :class:`Config`
+    subclass that implements this method needs to decorate it with a context
+    decorator like :meth:`contextlib.contextmanager`, and needs to yield in
+    the body of the method exactly once. Code that comes before the yield will
+    run before the command starts, and code that comes afterward will run when
+    the command finishes but before the CLI exits.
 
     For example, if you run MonkeyType against a Django codebase, you can use
-    this hook to call::
+    this method to setup Django before the command runs::
 
-      import django
-      django.setup()
+      @contextmanager()
+      def cli_context(self, command: str) -> Iterator[None]:
+          import django
+          django.setup()
+          yield
 
-    The default implementation of this method does nothing.
-
-  .. method:: cli_teardown(command: str) -> None
-
-    A lifecycle hook which gets called once, right before the CLI exits. Use it
-    to undo side effects from :meth:`cli_setup`, if applicable.
-
-    ``command`` is the command passed to the ``monkeytype`` cli: ``'run'``,
-    ``'apply'``, etc.
-
-    The default implementation of this method does nothing.
+    The default implementation of this method just calls ``yield`` to let the
+    command run.
 
 .. class:: DefaultConfig()
 
