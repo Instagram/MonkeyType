@@ -39,6 +39,24 @@ class Config(metaclass=ABCMeta):
         """Return the CallTraceStore for storage/retrieval of call traces."""
         pass
 
+    def cli_setup(self, command: str) -> None:
+        """Lifecycle hook that is called once right after the CLI
+        starts.
+
+        `command` is the name of the command passed to monkeytype
+        ('run', 'apply', etc).
+        """
+        pass
+
+    def cli_teardown(self, command: str) -> None:
+        """Lifecycle hook that is called once right before the CLI
+        exits.
+
+        `command` is the name of the command passed to monkeytype
+        ('run', 'apply', etc).
+        """
+        pass
+
     def trace_logger(self) -> CallTraceLogger:
         """Return the CallTraceLogger for logging call traces.
 
