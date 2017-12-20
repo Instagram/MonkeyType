@@ -183,6 +183,7 @@ texinfo_documents = [
 # Theme options
 html_theme_options = {
     'github_button': True,
+    'github_type': 'star',
     'github_user': 'instagram',
     'github_repo': 'MonkeyType',
 }
