@@ -66,4 +66,4 @@ See `the full documentation`_ for details.
 LICENSE
 -------
 
-MonkeyType is BSD licensed. We also provide an additional patent grant.
+MonkeyType is BSD licensed.
