@@ -99,6 +99,34 @@ Subclassing ``Config`` or ``DefaultConfig``
 
     Defaults to ``False``.
 
+  .. method:: cli_context(command: str) -> Iterator[None]
+
+    A context manager which wraps the execution of the CLI command.
+
+    MonkeyType has to import your code in order to generate stubs for it. In
+    some cases, like if you're using Django, setup is required before your code
+    can be imported. Use this method to define the necessary setup or teardown
+    for your codebase.
+
+    This method must return a `context manager`_ instance. In most cases, the
+    simplest way to do this will be with the `contextlib.contextmanager`_
+    decorator. For example, if you run MonkeyType against a Django codebase,
+    you can setup Django before the command runs::
+
+      @contextmanager
+      def cli_context(self, command: str) -> Iterator[None]:
+          import django
+          django.setup()
+          yield
+
+    ``command`` is the name of the command passed to the monkeytype cli:
+    ``'run'``, ``'apply'``, etc.
+
+    The default implementation of this method returns a no-op context manager.
+
+    .. _context manager: https://docs.python.org/3/reference/datamodel.html#with-statement-context-managers
+    .. _contextlib.contextmanager: https://docs.python.org/3/library/contextlib.html#contextlib.contextmanager
+
 .. class:: DefaultConfig()
 
   ``DefaultConfig`` is the config MonkeyType uses if you don't provide your own;

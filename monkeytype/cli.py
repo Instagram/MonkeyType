@@ -184,7 +184,8 @@ def main(argv: List[str], stdout: IO, stderr: IO) -> int:
             "else monkeytype.config:DefaultConfig())"
         ),
     )
-    subparsers = parser.add_subparsers()
+
+    subparsers = parser.add_subparsers(title="commands", dest="command")
 
     run_parser = subparsers.add_parser(
         'run',
@@ -234,11 +235,15 @@ qualname format.""")
 
     args = parser.parse_args(argv)
     update_args_from_config(args)
+
     handler = getattr(args, 'handler', None)
     if handler is None:
         parser.print_help(file=stderr)
         return 1
-    handler(args, stdout, stderr)
+
+    with args.config.cli_context(args.command):
+        handler(args, stdout, stderr)
+
     return 0
 
 
