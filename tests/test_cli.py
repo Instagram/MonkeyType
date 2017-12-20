@@ -3,11 +3,13 @@
 #
 # This source code is licensed under the BSD-style license found in the
 # LICENSE file in the root directory of this source tree.
+from contextlib import contextmanager
 import io
 import os
 import pytest
 import sqlite3
 import tempfile
+from typing import Iterator
 
 from unittest import mock
 
@@ -28,6 +30,14 @@ def func(a, b):
 
 def func2(a, b):
     pass
+
+
+class LoudContextConfig(DefaultConfig):
+    @contextmanager
+    def cli_context(self, command: str) -> Iterator[None]:
+        print(f"IN SETUP: {command}")
+        yield
+        print(f"IN TEARDOWN: {command}")
 
 
 @pytest.fixture
@@ -76,9 +86,9 @@ def test_no_traces(store_data, stdout, stderr):
     assert ret == 0
 
 
-def test_cli_context_manager_activated(stdout, stderr):
-    with mock.patch.object(DefaultConfig, 'cli_context') as mock_context:
-        ret = cli.main(['-c', f'{__name__}:DefaultConfig()', 'stub', 'some.module'], stdout, stderr)
-
-        mock_context.assert_called_once_with('stub')
-        assert ret == 0
+def test_cli_context_manager_activated(capsys, stdout, stderr):
+    ret = cli.main(['-c', f'{__name__}:LoudContextConfig()', 'stub', 'some.module'], stdout, stderr)
+    out, err = capsys.readouterr()
+    assert out == "IN SETUP: stub\nIN TEARDOWN: stub\n"
+    assert err == ""
+    assert ret == 0
