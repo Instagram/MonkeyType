@@ -267,6 +267,8 @@ class ImportBlockStub(Stub):
         imports = []
         for module in sorted(self.imports.keys()):
             names = sorted(self.imports[module])
+            if module == '_io':
+                module = module[1:]
             if len(names) == 1:
                 imports.append("from %s import %s" % (module, names[0]))
             else:
