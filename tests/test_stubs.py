@@ -73,6 +73,16 @@ class TestImportBlockStub:
             'from another.module import AnotherClass',
         ])
         assert stub.render() == expected
+    
+    def test_io_import_single(self):
+        """Single _io imports should convert to io"""
+        imports = ImportMap()
+        imports['_io'] = {'BytesIO'}
+        stub = ImportBlockStub(imports)
+        expected = "\n".join([
+            'from io import BytesIO',
+        ])
+        assert stub.render() == expected
 
     def test_multiple_imports(self):
         """Multiple imports from a single module should each be on their own line"""
@@ -87,7 +97,19 @@ class TestImportBlockStub:
             ')',
         ])
         assert stub.render() == expected
-
+      
+    def test_multiple_io_imports(self):
+       """Multiple imports from single _io module should be convert to io import"""
+       imports = ImportMap()
+       imports['_io'] = {'BytesIO','FileIO'}
+       stub = ImportBlockStub(imports)
+       expected = "\n".join([
+           'from io import (',
+           '    BytesIO,',
+           '    FileIO,',
+           ')',
+       ])
+       assert stub.render() == expected
 
 def simple_add(a: int, b: int) -> int:
     return a + b
