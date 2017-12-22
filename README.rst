@@ -28,6 +28,36 @@ annotations directly to your code::
   $ monkeytype stub some.module
   $ monkeytype apply some.module
 
+If ``some/module.py`` originally contained::
+
+  def add(a, b):
+      return a + b
+
+And ``myscript.py`` contains::
+
+  from some.module import add
+
+  add(1, 2)
+
+Then you'd get a stub like this from ``monkeytype stub some.module``::
+
+  def add(a: int, b: int) -> int: ...
+
+And if you run ``monkeytype apply some.module``, ``some/module.py`` will be
+modified to::
+
+  def add(a: int, b: int) -> int:
+      return a + b
+
+This example demonstrates both the value and the limitations of
+MonkeyType. With MonkeyType, it's very easy to add type annotations that
+reflect the concrete types you use at runtime, but those annotations may not
+always match the full intended capability of the functions (e.g. this `add`
+function is capable of handling many more types than just integers, or
+MonkeyType may generate a `List` annotation where `Sequence` or `Iterable`
+would be more appropriate). MonkeyType's annotations are intended as a first
+draft, to be checked and corrected by a developer.
+
 Requirements
 ------------
 
