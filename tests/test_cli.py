@@ -239,3 +239,12 @@ def test_cli_context_manager_activated(capsys, stdout, stderr):
     assert out == "IN SETUP: stub\nIN TEARDOWN: stub\n"
     assert err == ""
     assert ret == 0
+
+
+def test_pathlike_parameter(store_data, capsys):
+    store, db_file = store_data
+    with mock.patch.dict(os.environ, {DefaultConfig.DB_PATH_VAR: db_file.name}):
+        with pytest.raises(SystemExit):
+            cli.main(['stub', 'test/foo.py:bar'], stdout, stderr)
+        out, err = capsys.readouterr()
+        assert "test/foo.py does not look like a valid Python import path" in err

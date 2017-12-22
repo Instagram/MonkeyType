@@ -8,6 +8,7 @@ import collections
 import difflib
 import importlib
 import inspect
+import os
 import os.path
 import runpy
 import subprocess
@@ -44,6 +45,11 @@ def module_path(path: str) -> Tuple[str, Optional[str]]:
     parts = path.split(':', 1)
     module = parts.pop(0)
     qualname = parts[0] if parts else None
+    if os.sep in module:  # Smells like a path
+        raise argparse.ArgumentTypeError(
+            f'{module} does not look like a valid Python import path'
+        )
+
     return module, qualname
 
 
