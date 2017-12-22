@@ -4,6 +4,7 @@
 # This source code is licensed under the BSD-style license found in the
 # LICENSE file in the root directory of this source tree.
 import json
+import logging
 
 # _Any and _Union aren't visible from stubs
 from typing import (  # type: ignore
@@ -11,6 +12,7 @@ from typing import (  # type: ignore
     Callable,
     Dict,
     GenericMeta,
+    Iterable,
     Optional,
     Type,
     TypeVar,
@@ -26,6 +28,9 @@ from monkeytype.util import (
     get_func_in_module,
     get_name_in_module,
 )
+
+
+logger = logging.getLogger(__name__)
 
 
 # Types are converted to dictionaries of the following form before
@@ -180,3 +185,34 @@ class CallTraceRow(CallTraceThunk):
         return_type = maybe_decode_type(type_from_json, self.return_type)
         yield_type = maybe_decode_type(type_from_json, self.yield_type)
         return CallTrace(function, arg_types, return_type, yield_type)
+
+    def __eq__(self, other):
+        if isinstance(other, CallTraceRow):
+            return (
+                self.module,
+                self.qualname,
+                self.arg_types,
+                self.return_type,
+                self.yield_type,
+            ) == (
+                other.module,
+                other.qualname,
+                other.arg_types,
+                other.return_type,
+                other.yield_type,
+            )
+        return NotImplemented
+
+
+def serialize_traces(traces: Iterable[CallTrace]) -> Iterable[CallTraceRow]:
+    """Serialize an iterable of CallTraces to an iterable of CallTraceRow.
+
+    Catches and logs exceptions, so a failure to serialize one CallTrace doesn't
+    lose all traces.
+
+    """
+    for trace in traces:
+        try:
+            yield CallTraceRow.from_trace(trace)
+        except Exception:
+            logger.exception("Failed to serialize trace")

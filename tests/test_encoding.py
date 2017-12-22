@@ -24,6 +24,7 @@ from monkeytype.encoding import (
     type_from_json,
     type_to_dict,
     type_to_json,
+    serialize_traces,
 )
 from monkeytype.exceptions import InvalidTypeError
 from monkeytype.tracing import CallTrace
@@ -96,7 +97,6 @@ class TestTypeConversion:
         ret = maybe_encode_type(encoder, typ)
         if should_call_encoder:
             encoder.assert_called_with(typ)
-
         else:
             encoder.assert_not_called()
         assert ret == expected
@@ -117,3 +117,19 @@ class TestTypeConversion:
         else:
             encoder.assert_not_called()
         assert ret == expected
+
+
+class TestSerializeTraces:
+    def test_log_failure_and_continue(self, caplog):
+        traces = [
+            CallTrace(dummy_func, {'a': int, 'b': int}, int),
+            CallTrace(object(), {}),  # object() will fail to serialize
+            CallTrace(dummy_func, {'a': str, 'b': str}, str),
+        ]
+        rows = list(serialize_traces(traces))
+        expected = [
+            CallTraceRow.from_trace(traces[0]),
+            CallTraceRow.from_trace(traces[2]),
+        ]
+        assert rows == expected
+        assert [r.msg for r in caplog.records] == ["Failed to serialize trace"]
