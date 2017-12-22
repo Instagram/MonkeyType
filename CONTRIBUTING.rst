@@ -21,7 +21,10 @@ We welcome your pull requests.
 4. Ensure the test suite passes (``pipenv run pytest``).
 5. Make sure your code lints (``pipenv run flake8``) and typechecks
    (``pipenv run mypy monkeytype``).
-6. If you haven't already, complete the Contributor License Agreement ("CLA").
+6. If your change is a user-visible feature or bugfix, add an entry to
+   ``CHANGES.rst`` (see format of previous entries). Yes, you should add a
+   thanks to yourself :)
+7. If you haven't already, complete the Contributor License Agreement ("CLA").
 
 Contributor License Agreement ("CLA")
 -------------------------------------
