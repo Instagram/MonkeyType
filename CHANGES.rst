@@ -4,6 +4,9 @@ Changelog
 master
 ------
 
+* Fix bug in default code filter when Python lib paths are symlinked. Merge of
+  #40. Thanks Simon Gomizelj.
+
 17.12.3
 -------
 
