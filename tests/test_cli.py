@@ -171,11 +171,15 @@ def test_get_diff2(store_data, stdout, stderr):
     assert ret == 0
 
 
-def test_no_traces(store_data, stdout, stderr):
+@pytest.mark.parametrize('arg, error', [
+    (func.__module__, f"No traces found for module {func.__module__}\n"),
+    (func.__module__ + ':foo', f"No traces found for specifier {func.__module__}:foo\n"),
+])
+def test_no_traces(store_data, stdout, stderr, arg, error):
     store, db_file = store_data
     with mock.patch.dict(os.environ, {DefaultConfig.DB_PATH_VAR: db_file.name}):
-        ret = cli.main(['stub', func.__module__], stdout, stderr)
-    assert stderr.getvalue() == "No traces found\n"
+        ret = cli.main(['stub', arg], stdout, stderr)
+    assert stderr.getvalue() == error
     assert stdout.getvalue() == ''
     assert ret == 0
 

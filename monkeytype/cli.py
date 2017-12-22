@@ -55,6 +55,14 @@ def module_path_with_qualname(path: str) -> Tuple[str, str]:
     return module, qualname
 
 
+def complain_about_no_traces(args: argparse.Namespace, stderr: IO) -> None:
+    module, qualname = args.module_path
+    if qualname:
+        print(f'No traces found for specifier {module}:{qualname}', file=stderr)
+    else:
+        print(f'No traces found for module {module}', file=stderr)
+
+
 def monkeytype_config(path: str) -> Config:
     """Imports the config instance specified by path.
 
@@ -115,7 +123,7 @@ def apply_stub_handler(args: argparse.Namespace, stdout: IO, stderr: IO) -> None
     args.ignore_existing_annotations = False
     stub = get_stub(args, stdout, stderr)
     if stub is None:
-        print(f'No traces found', file=stderr)
+        complain_about_no_traces(args, stderr)
         return
     module = args.module_path[0]
     mod = importlib.import_module(module)
@@ -164,7 +172,8 @@ def print_stub_handler(args: argparse.Namespace, stdout: IO, stderr: IO) -> None
         if stub is not None:
             output = stub.render()
     if output is None:
-        output, file = 'No traces found', stderr
+        complain_about_no_traces(args, stderr)
+        return
     print(output, file=file)
 
 
