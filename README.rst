@@ -52,11 +52,11 @@ modified to::
 This example demonstrates both the value and the limitations of
 MonkeyType. With MonkeyType, it's very easy to add type annotations that
 reflect the concrete types you use at runtime, but those annotations may not
-always match the full intended capability of the functions (e.g. this `add`
+always match the full intended capability of the functions (e.g. this ``add``
 function is capable of handling many more types than just integers, or
-MonkeyType may generate a `List` annotation where `Sequence` or `Iterable`
-would be more appropriate). MonkeyType's annotations are intended as a first
-draft, to be checked and corrected by a developer.
+MonkeyType may generate a ``List`` annotation where ``Sequence`` or
+``Iterable`` would be more appropriate). MonkeyType's annotations are intended
+as a first draft, to be checked and corrected by a developer.
 
 Requirements
 ------------
