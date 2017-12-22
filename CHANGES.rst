@@ -1,8 +1,8 @@
 Changelog
 =========
 
-master
-------
+17.12.3
+-------
 
 * Rewrite imports from _io module to io. (#1, merge of #32). Thanks Radhans
   Jadhao.

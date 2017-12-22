@@ -14,7 +14,7 @@ from monkeytype.config import (
 )
 from monkeytype.tracing import trace_calls
 
-__version__ = "17.12.3.dev1"
+__version__ = "17.12.3"
 
 
 def trace(config: Optional[Config] = None) -> ContextManager:
