@@ -63,6 +63,13 @@ See `the full documentation`_ for details.
 
 .. _the full documentation: http://monkeytype.readthedocs.io/en/latest/
 
+Troubleshooting
+---------------
+
+Check if your issue is mentioned in `the frequently asked questions`_ list.
+
+.. _the frequently asked questions: http://monkeytype.readthedocs.io/en/stable/faq.html
+
 LICENSE
 -------
 
