@@ -58,6 +58,9 @@ def type_to_dict(typ: type) -> TypeDict:
         qualname = 'Union'
     elif isinstance(typ, _Any):
         qualname = 'Any'
+    # TODO: typeshed stub for TypeVar is object() instead of a type
+    elif isinstance(typ, TypeVar):  # type: ignore
+        qualname = 'TypeVar'
     else:
         qualname = typ.__qualname__
     d: TypeDict = {
