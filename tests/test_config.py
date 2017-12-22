@@ -19,7 +19,7 @@ class TestDefaultCodeFilter:
         assert not config.default_code_filter(pytest.skip.__code__)
 
     def test_includes_otherwise(self):
-        assert config.default_code_filter(config.default_code_filter.__code__)
+        assert config.default_code_filter(config.default_code_filter.__wrapped__.__code__)
 
     def test_excludes_frozen_importlib(self):
         assert not config.default_code_filter(_frozen_importlib.spec_from_loader.__code__)
