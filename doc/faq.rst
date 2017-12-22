@@ -1,6 +1,15 @@
 Frequently asked questions
 ==========================
 
+I'm using Django 1.11+ and ``monkeytype run manage.py test`` generates no traces.
+---------------------------------------------------------------------------------
+
+Django 1.11 enabled parallel test runs by default. This means your tests run in
+separate subprocesses; MonkeyType is tracing only the main supervisor process,
+which runs only Django code (that is excluded from tracing by the default code
+filter). To get traces, use `--parallel 1` when running your tests under
+MonkeyType tracing.
+
 I'm using Django, and I get an AppRegistryNotReady exception when I run monkeytype.
 -----------------------------------------------------------------------------------
 
