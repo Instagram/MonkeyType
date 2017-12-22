@@ -5,6 +5,7 @@
 # LICENSE file in the root directory of this source tree.
 from contextlib import contextmanager
 import os
+import pathlib
 import sys
 import sysconfig
 
@@ -95,14 +96,24 @@ if venv_real_prefix:
     lib_paths.add(
         sysconfig.get_path('stdlib', vars={'installed_base': venv_real_prefix})
     )
-# exclude code objects from frozen importlib, which have a bogus co_filename
-lib_paths.add('<frozen importlib.')
-LIB_PATHS = tuple(p for p in lib_paths if p is not None)
+LIB_PATHS = tuple(pathlib.Path(p).resolve() for p in lib_paths if p is not None)
+
+
+def _startswith(a: pathlib.Path, b: pathlib.Path) -> bool:
+    try:
+        return bool(a.relative_to(b))
+    except ValueError:
+        return False
 
 
 def default_code_filter(code: CodeType) -> bool:
     """A CodeFilter to exclude stdlib and site-packages."""
-    return bool(code.co_filename and not code.co_filename.startswith(LIB_PATHS))
+    # Filter code without a source file
+    if not code.co_filename or code.co_filename[0] == '<':
+        return False
+
+    filename = pathlib.Path(code.co_filename).resolve()
+    return not any(_startswith(filename, lib_path) for lib_path in LIB_PATHS)
 
 
 class DefaultConfig(Config):
