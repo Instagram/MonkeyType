@@ -9,3 +9,4 @@ doc/_build
 dist/
 build/
 .idea/
+monkeytype.sqlite3
