@@ -4,6 +4,7 @@
 # This source code is licensed under the BSD-style license found in the
 # LICENSE file in the root directory of this source tree.
 from contextlib import contextmanager
+import functools
 import os
 import pathlib
 import sys
@@ -106,6 +107,7 @@ def _startswith(a: pathlib.Path, b: pathlib.Path) -> bool:
         return False
 
 
+@functools.lru_cache()
 def default_code_filter(code: CodeType) -> bool:
     """A CodeFilter to exclude stdlib and site-packages."""
     # Filter code without a source file
