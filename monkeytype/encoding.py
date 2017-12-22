@@ -186,7 +186,7 @@ class CallTraceRow(CallTraceThunk):
         yield_type = maybe_decode_type(type_from_json, self.yield_type)
         return CallTrace(function, arg_types, return_type, yield_type)
 
-    def __eq__(self, other):
+    def __eq__(self, other: object) -> bool:
         if isinstance(other, CallTraceRow):
             return (
                 self.module,
