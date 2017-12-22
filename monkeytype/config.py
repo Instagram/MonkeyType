@@ -107,7 +107,7 @@ def _startswith(a: pathlib.Path, b: pathlib.Path) -> bool:
         return False
 
 
-@functools.lru_cache()
+@functools.lru_cache(maxsize=8192)
 def default_code_filter(code: CodeType) -> bool:
     """A CodeFilter to exclude stdlib and site-packages."""
     # Filter code without a source file
