@@ -124,10 +124,14 @@ def print_stub_handler(args: argparse.Namespace, stdout: IO, stderr: IO) -> None
 def run_handler(args: argparse.Namespace, stdout: IO, stderr: IO) -> None:
     # remove initial `monkeytype run`
     old_argv = sys.argv.copy()
-    sys.argv = sys.argv[2:]
     try:
         with trace(args.config):
-            runpy.run_path(args.script_path, run_name='__main__')
+            if args.m:
+                sys.argv = sys.argv[3:]
+                runpy.run_module(args.script_path, run_name='__main__', alter_sys=True)
+            else:
+                sys.argv = sys.argv[2:]
+                runpy.run_path(args.script_path, run_name='__main__')
     finally:
         sys.argv = old_argv
 
@@ -195,6 +199,11 @@ def main(argv: List[str], stdout: IO, stderr: IO) -> int:
         'script_path',
         type=str,
         help="""Filesystem path to a Python script file to run under tracing""")
+    run_parser.add_argument(
+        '-m',
+        action='store_true',
+        help="Run a library module as a script"
+    )
     run_parser.add_argument(
         'script_args',
         nargs=argparse.REMAINDER,
