@@ -8,27 +8,9 @@ directly to your Python code based on the types collected at runtime.
 Examples
 --------
 
-Run a script under call-trace logging of functions and methods in all imported
-modules::
+In the example, we have two files: ``some/module.py`` and ``myscript.py``.
 
-  $ monkeytype run myscript.py
-
-Or enable call-trace logging for a block of code::
-
-  import monkeytype
-
-  with monkeytype.trace():
-      ...
-
-By default this will dump call traces into a sqlite database in the file
-``monkeytype.sqlite3`` in the current working directory. You can then use the
-``monkeytype`` command to generate a stub file for a module, or apply the type
-annotations directly to your code::
-
-  $ monkeytype stub some.module
-  $ monkeytype apply some.module
-
-If ``some/module.py`` originally contained::
+Say ``some/module.py`` originally contained::
 
   def add(a, b):
       return a + b
@@ -38,6 +20,29 @@ And ``myscript.py`` contains::
   from some.module import add
 
   add(1, 2)
+
+Now we want to infer the type annotation of ``add`` in ``some/module.py`` by
+running ``myscript.py`` with ``MonkeyType``. This is supported in two ways:
+
+Run a script under call-trace logging of functions and methods in all imported
+modules::
+
+  $ monkeytype run myscript.py
+
+Or enable call-trace logging for a block of code in ``myscript.py``::
+
+  import monkeytype
+
+  with monkeytype.trace():
+      ...a block of code in myscript.py
+
+By default this will dump call traces into a sqlite database in the file
+``monkeytype.sqlite3`` in the current working directory. You can then use the
+``monkeytype`` command to generate a stub file for a module, or apply the type
+annotations directly to your code::
+
+  $ monkeytype stub some.module
+  $ monkeytype apply some.module
 
 Then you'd get a stub like this from ``monkeytype stub some.module``::
 
