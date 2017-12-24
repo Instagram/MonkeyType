@@ -41,10 +41,7 @@ interface.
     Store one or more :class:`~monkeytype.typing.CallTrace` instances.
 
     Implementations of this method will probably find the
-    :class:`~monkeytype.encoding.CallTraceRow` class and its
-    :meth:`~monkeytype.encoding.CallTraceRow.from_trace` classmethod useful; it
-    implements a standardized serialization of
-    :class:`~monkeytype.typing.CallTrace` instances to JSON.
+    :func:`~monkeytype.encoding.serialize_traces` function useful.
 
   .. method:: filter(module: str, qualname_prefix: Optional[str] = None, limit: int = 2000) -> List[CallTraceThunk]
 
@@ -96,6 +93,15 @@ call traces in a SQLite database in a local file.
 .. _sqlite module: https://docs.python.org/3/library/sqlite3.html
 
 .. module:: monkeytype.encoding
+
+serialize_traces
+~~~~~~~~~~~~~~~~
+
+.. function:: serialize_traces(traces: Iterable[CallTrace]) -> Iterable[CallTraceRow]
+
+  Serialize an iterable of :class:`~monkeytype.tracing.CallTrace` to an iterable
+  of :class:`CallTraceRow` (via :meth:`CallTraceRow.from_trace`). If any trace
+  fails to serialize, the exception is logged and serialization continues.
 
 CallTraceRow
 ~~~~~~~~~~~~

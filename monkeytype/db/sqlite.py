@@ -19,7 +19,10 @@ from monkeytype.db.base import (
     CallTraceStore,
     CallTraceThunk,
 )
-from monkeytype.encoding import CallTraceRow
+from monkeytype.encoding import (
+    CallTraceRow,
+    serialize_traces,
+)
 from monkeytype.tracing import CallTrace
 
 logger = logging.getLogger(__name__)
@@ -81,8 +84,7 @@ class SQLiteStore(CallTraceStore):
 
     def add(self, traces: Iterable[CallTrace]) -> None:
         values = []
-        for trace in traces:
-            row = CallTraceRow.from_trace(trace)
+        for row in serialize_traces(traces):
             values.append((datetime.datetime.now(), row.module, row.qualname,
                            row.arg_types, row.return_type, row.yield_type))
         with self.conn:

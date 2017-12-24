@@ -4,6 +4,9 @@ Changelog
 master
 ------
 
+* Catch and log serialization exceptions instead of crashing. Fixes #38, merge
+  of #39.
+
 * Fix bug in default code filter when Python lib paths are symlinked. Merge of
   #40. Thanks Simon Gomizelj.
 
