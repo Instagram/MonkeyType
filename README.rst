@@ -34,7 +34,7 @@ Or enable call-trace logging for a block of code in ``myscript.py``::
   import monkeytype
 
   with monkeytype.trace():
-      ...a block of code in myscript.py
+      ...
 
 By default this will dump call traces into a sqlite database in the file
 ``monkeytype.sqlite3`` in the current working directory. You can then use the
