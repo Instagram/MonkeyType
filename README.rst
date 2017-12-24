@@ -22,46 +22,23 @@ And ``myscript.py`` contains::
   add(1, 2)
 
 Now we want to infer the type annotation of ``add`` in ``some/module.py`` by
-running ``myscript.py`` with ``MonkeyType``. This is supported in two ways:
-
-Run a script under call-trace logging of functions and methods in all imported
-modules::
+running ``myscript.py`` with ``MonkeyType``. One way is to run::
 
   $ monkeytype run myscript.py
-
-Or enable call-trace logging for a block of code in ``myscript.py``::
-
-  import monkeytype
-
-  with monkeytype.trace():
-      ...
 
 By default this will dump call traces into a sqlite database in the file
 ``monkeytype.sqlite3`` in the current working directory. You can then use the
 ``monkeytype`` command to generate a stub file for a module, or apply the type
-annotations directly to your code::
+annotations directly to your code.
 
-  $ monkeytype stub some.module
-  $ monkeytype apply some.module
-
-Then you'd get a stub like this from ``monkeytype stub some.module``::
+Run ``monkeytype stub some.module`` will give a stub::
 
   def add(a: int, b: int) -> int: ...
 
-And if you run ``monkeytype apply some.module``, ``some/module.py`` will be
-modified to::
+Run  ``monkeytype apply some.module`` will modify ``some/module.py`` to
 
   def add(a: int, b: int) -> int:
       return a + b
-
-This example demonstrates both the value and the limitations of
-MonkeyType. With MonkeyType, it's very easy to add type annotations that
-reflect the concrete types you use at runtime, but those annotations may not
-always match the full intended capability of the functions (e.g. this ``add``
-function is capable of handling many more types than just integers, or
-MonkeyType may generate a ``List`` annotation where ``Sequence`` or
-``Iterable`` would be more appropriate). MonkeyType's annotations are intended
-as a first draft, to be checked and corrected by a developer.
 
 Requirements
 ------------
@@ -97,6 +74,18 @@ stub files directly to your code.
 See `the full documentation`_ for details.
 
 .. _the full documentation: http://monkeytype.readthedocs.io/en/latest/
+
+Limitations
+-----------
+
+The example above demonstrates both the value and the limitations of
+MonkeyType. With MonkeyType, it's very easy to add type annotations that
+reflect the concrete types you use at runtime, but those annotations may not
+always match the full intended capability of the functions (e.g. this ``add``
+function is capable of handling many more types than just integers, or
+MonkeyType may generate a ``List`` annotation where ``Sequence`` or
+``Iterable`` would be more appropriate). MonkeyType's annotations are intended
+as a first draft, to be checked and corrected by a developer.
 
 Troubleshooting
 ---------------
