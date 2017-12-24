@@ -35,7 +35,7 @@ Run ``monkeytype stub some.module`` will give a stub::
 
   def add(a: int, b: int) -> int: ...
 
-Run  ``monkeytype apply some.module`` will modify ``some/module.py`` to
+Run  ``monkeytype apply some.module`` will modify ``some/module.py`` to::
 
   def add(a: int, b: int) -> int:
       return a + b
