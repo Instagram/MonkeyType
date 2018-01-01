@@ -5,12 +5,10 @@ MonkeyType collects runtime types of function arguments and return values, and
 can automatically generate stub files or even add draft type annotations
 directly to your Python code based on the types collected at runtime.
 
-Examples
---------
+Example
+-------
 
-In the example, we have two files: ``some/module.py`` and ``myscript.py``.
-
-Say ``some/module.py`` originally contained::
+Say ``some/module.py`` originally contains::
 
   def add(a, b):
       return a + b
@@ -31,14 +29,23 @@ By default this will dump call traces into a sqlite database in the file
 ``monkeytype`` command to generate a stub file for a module, or apply the type
 annotations directly to your code.
 
-Run ``monkeytype stub some.module`` will give a stub::
+Running ``monkeytype stub some.module`` will output a stub::
 
   def add(a: int, b: int) -> int: ...
 
-Run  ``monkeytype apply some.module`` will modify ``some/module.py`` to::
+Running  ``monkeytype apply some.module`` will modify ``some/module.py`` to::
 
   def add(a: int, b: int) -> int:
       return a + b
+
+This example demonstrates both the value and the limitations of
+MonkeyType. With MonkeyType, it's very easy to add annotations that
+reflect the concrete types you use at runtime, but those annotations may not
+always match the full intended capability of the functions. For instance, ``add``
+is capable of handling many more types than just integers. Similarly, MonkeyType
+may generate a concrete ``List`` annotation where an abstract ``Sequence`` or
+``Iterable`` would be more appropriate. MonkeyType's annotations are an
+informative first draft, to be checked and corrected by a developer.
 
 Requirements
 ------------
@@ -74,18 +81,6 @@ stub files directly to your code.
 See `the full documentation`_ for details.
 
 .. _the full documentation: http://monkeytype.readthedocs.io/en/latest/
-
-Limitations
------------
-
-The example above demonstrates both the value and the limitations of
-MonkeyType. With MonkeyType, it's very easy to add type annotations that
-reflect the concrete types you use at runtime, but those annotations may not
-always match the full intended capability of the functions (e.g. this ``add``
-function is capable of handling many more types than just integers, or
-MonkeyType may generate a ``List`` annotation where ``Sequence`` or
-``Iterable`` would be more appropriate). MonkeyType's annotations are intended
-as a first draft, to be checked and corrected by a developer.
 
 Troubleshooting
 ---------------
