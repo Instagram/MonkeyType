@@ -47,6 +47,20 @@ may generate a concrete ``List`` annotation where an abstract ``Sequence`` or
 ``Iterable`` would be more appropriate. MonkeyType's annotations are an
 informative first draft, to be checked and corrected by a developer.
 
+Motivation
+----------
+
+Readability and static analysis are the primary motivations for adding type
+annotations to code. It's already common in many Python style guides to
+document the argument and return types for a function in its docstring;
+annotations are a standardized way to provide this documentation, which also
+permits static analysis by a typechecker such as `mypy`_.
+
+For more on the motivation and design of Python type annotations, see
+:pep:`483` and :pep:`484`.
+
+.. _mypy: http://mypy.readthedocs.io/en/latest/
+
 Requirements
 ------------
 
