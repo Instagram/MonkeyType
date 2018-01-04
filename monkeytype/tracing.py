@@ -27,6 +27,11 @@ from typing import (
     cast,
 )
 
+try:
+    from django.utils.functional import cached_property  # type: ignore
+except ImportError:
+    cached_property = None
+
 from monkeytype.typing import get_type
 from monkeytype.util import get_func_fqname
 
@@ -112,6 +117,8 @@ def get_func_in_mro(obj: Any, code: CodeType) -> Optional[Callable]:
         cand = cast(Callable, val.__func__)
     elif isinstance(val, property) and (val.fset is None) and (val.fdel is None):
         cand = cast(Callable, val.fget)
+    elif cached_property and isinstance(val, cached_property):
+        cand = cast(Callable, val.func)
     else:
         cand = cast(Callable, val)
     return _has_code(cand, code)

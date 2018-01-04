@@ -15,6 +15,7 @@ pytest-smartcov = "*"
 cython = "*"
 sphinx = "*"
 twine = "*"
+django = "*"
 
 
 [requires]

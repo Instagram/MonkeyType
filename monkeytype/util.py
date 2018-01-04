@@ -7,6 +7,11 @@ import importlib
 import inspect
 import types
 
+try:
+    from django.utils.functional import cached_property  # type: ignore
+except ImportError:
+    cached_property = None
+
 from typing import (
     Any,
     Callable,
@@ -46,6 +51,8 @@ def get_func_in_module(module: str, qualname: str) -> Callable:
         else:
             raise InvalidTypeError(
                 f"Property {module}.{qualname} is missing getter")
+    elif cached_property and isinstance(func, cached_property):
+        func = func.func
     elif not isinstance(func, (types.FunctionType, types.BuiltinFunctionType)):
         raise InvalidTypeError(
             f"{module}.{qualname} is of type '{type(func)}', not function.")

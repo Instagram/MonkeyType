@@ -61,6 +61,13 @@ class TestGetFuncInModule:
         with pytest.raises(InvalidTypeError):
             get_func_in_module(func.__module__, func.__qualname__)
 
+    def test_get_cached_property(self):
+        """We should be able to look up properties that are decorated
+        with django.utils.functional.cached_property"""
+        func = Dummy.a_cached_property.func
+        obj = get_func_in_module(func.__module__, func.__qualname__)
+        assert obj == func
+
     def test_get_non_function(self):
         """Raise an error if lookup returns something that isn't a function"""
         with pytest.raises(InvalidTypeError):
