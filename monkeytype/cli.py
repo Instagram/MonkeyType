@@ -14,7 +14,6 @@ import sys
 import tempfile
 
 from typing import (
-    Callable,
     Dict,
     IO,
     List,
