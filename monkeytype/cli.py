@@ -4,6 +4,7 @@
 # This source code is licensed under the BSD-style license found in the
 # LICENSE file in the root directory of this source tree.
 import argparse
+import collections
 import importlib
 import inspect
 import os.path
@@ -13,6 +14,8 @@ import sys
 import tempfile
 
 from typing import (
+    Callable,
+    Dict,
     IO,
     List,
     Optional,
@@ -27,6 +30,7 @@ from monkeytype.stubs import (
     Stub,
     build_module_stubs_from_traces,
 )
+from monkeytype.tracing import CallTrace
 from monkeytype.typing import NoOpRewriter
 from monkeytype.util import get_name_in_module
 
@@ -72,6 +76,19 @@ def monkeytype_config(path: str) -> Config:
     return config
 
 
+def count_sample(traces: List[CallTrace]) -> Dict[str, int]:
+    """Count the times each function is traced."""
+    counter = collections.Counter([t.funcname for t in traces])
+    return dict(counter.most_common())
+
+
+def display_sample_count(traces: List[CallTrace], stderr: IO) -> None:
+    """Print to stderr the statistics for generating stubs."""
+    sample_count = count_sample(traces)
+    for name, count in sample_count.items():
+        print(f"Annotation for {name} based on {count} call trace(s).", file=stderr)
+
+
 def get_stub(args: argparse.Namespace, stdout: IO, stderr: IO) -> Optional[Stub]:
     module, qualname = args.module_path
     thunks = args.config.trace_store().filter(module, qualname, args.limit)
@@ -87,6 +104,8 @@ def get_stub(args: argparse.Namespace, stdout: IO, stderr: IO) -> Optional[Stub]
     if args.disable_type_rewriting:
         rewriter = NoOpRewriter()
     stubs = build_module_stubs_from_traces(traces, args.include_unparsable_defaults, rewriter)
+    if args.sample_count:
+        display_sample_count(traces, stderr)
     return stubs.get(module, None)
 
 
@@ -215,6 +234,12 @@ anything in the module 'foo.bar', while 'foo.bar:Baz' will only generate stubs
 for methods attached to the class 'Baz' in module 'foo.bar'. See
 https://www.python.org/dev/peps/pep-3155/ for a detailed description of the
 qualname format.""")
+    apply_parser.add_argument(
+        "--sample-count",
+        action='store_true',
+        default=False,
+        help='Print to stderr the numbers of traces stubs are based on'
+        )
     apply_parser.set_defaults(handler=apply_stub_handler)
 
     stub_parser = subparsers.add_parser(
@@ -231,6 +256,12 @@ anything in the module 'foo.bar', while 'foo.bar:Baz' will only generate stubs
 for methods attached to the class 'Baz' in module 'foo.bar'. See
 https://www.python.org/dev/peps/pep-3155/ for a detailed description of the
 qualname format.""")
+    stub_parser.add_argument(
+        "--sample-count",
+        action='store_true',
+        default=False,
+        help='Print to stderr the numbers of traces stubs are based on'
+        )
     stub_parser.set_defaults(handler=print_stub_handler)
 
     args = parser.parse_args(argv)
