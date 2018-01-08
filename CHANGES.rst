@@ -4,6 +4,12 @@ Changelog
 master
 ------
 
+* Add ``monkeytype run -m`` for running a module as a script. Merge of
+  #41. Thanks Simon Gomizelj.
+
+* Add support for Django's ``cached_property`` decorator. Merge of #46, fixes
+  #9. Thanks Christopher J Wang.
+
 * Catch and log serialization exceptions instead of crashing. Fixes #38, merge
   of #39.
 
