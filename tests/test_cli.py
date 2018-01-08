@@ -86,18 +86,6 @@ def test_no_traces(store_data, stdout, stderr):
     assert ret == 0
 
 
-def test_count_sample():
-    traces = [
-        CallTrace(func, {'a': int, 'b': str}, NoneType),
-        CallTrace(func, {'a': str, 'b': str}, NoneType),
-        CallTrace(func2, {'a': str, 'b': int}, NoneType),
-        CallTrace(func2, {'a': int, 'b': str}, NoneType),
-        CallTrace(func2, {'a': str, 'b': int}, NoneType)
-    ]
-    ret = cli.count_sample(traces)
-    assert ret == {'tests.test_cli.func2': 3, 'tests.test_cli.func': 2}
-
-
 def test_display_sample_count(capsys, stderr):
     traces = [
         CallTrace(func, {'a': int, 'b': str}, NoneType),
@@ -107,8 +95,8 @@ def test_display_sample_count(capsys, stderr):
         CallTrace(func2, {'a': str, 'b': int}, NoneType)
     ]
     cli.display_sample_count(traces, stderr)
-    expected = """Annotation for tests.test_cli.func2 based on 3 call trace(s).
-Annotation for tests.test_cli.func based on 2 call trace(s).
+    expected = """Annotation for tests.test_cli.func based on 2 call trace(s).
+Annotation for tests.test_cli.func2 based on 3 call trace(s).
 """
     assert stderr.getvalue() == expected
 

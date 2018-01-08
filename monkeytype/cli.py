@@ -14,7 +14,6 @@ import sys
 import tempfile
 
 from typing import (
-    Dict,
     IO,
     List,
     Optional,
@@ -75,16 +74,10 @@ def monkeytype_config(path: str) -> Config:
     return config
 
 
-def count_sample(traces: List[CallTrace]) -> Dict[str, int]:
-    """Count the times each function is traced."""
-    counter = collections.Counter([t.funcname for t in traces])
-    return dict(counter.most_common())
-
-
 def display_sample_count(traces: List[CallTrace], stderr: IO) -> None:
-    """Print to stderr the statistics for generating stubs."""
-    sample_count = count_sample(traces)
-    for name, count in sample_count.items():
+    """Print to stderr the number of traces each stub is based on."""
+    sample_counter = collections.Counter([t.funcname for t in traces])
+    for name, count in sample_counter.items():
         print(f"Annotation for {name} based on {count} call trace(s).", file=stderr)
 
 
