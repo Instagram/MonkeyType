@@ -33,12 +33,12 @@ script under MonkeyType tracing using ``monkeytype run`` or
 ``monkeytype stub`` and ``monkeytype apply``, to point MonkeyType to the config
 it should use.
 
-Because of the way Python treats scripts and modules differently,
-MonkeyType will record usable traces for modules imported and used by
-the entry point (where ``__name__ == "__main__"``) and not for the
-entry point itself. If you want to annotate the entry point, treat it
-as a module and write another short script that imports and calls its
-function(s), and run that script with ``monkeytype run``.
+Because of the way Python treats scripts and imported modules differently,
+MonkeyType will not record traces for the entry point itself (that is, the script
+passed to ``monkeytype run`` or the module passed to ``run -m``); traces are
+recorded only for imported modules. If you want to annotate the entry point
+script/module, write another short script that imports and calls its function(s),
+and run that script with ``monkeytype run``.
 
 .. module:: monkeytype
 
