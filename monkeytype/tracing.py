@@ -247,6 +247,7 @@ class CallTracer:
         code = frame.f_code
         if (
             event not in SUPPORTED_EVENTS or
+            frame.f_globals.get('__name__') == '__main__' or
             code.co_name == 'trace_types' or
             self.should_trace and not self.should_trace(code)
         ):

@@ -23,19 +23,22 @@ monkeytype run
 ~~~~~~~~~~~~~~
 
 The simplest way to trace some function calls with MonkeyType is to run a Python
-script under MonkeyType tracing using ``monkeytype run`` at the command line::
+script under MonkeyType tracing using ``monkeytype run`` or
+``monkeytype run -m`` at the command line::
 
   $ monkeytype run myscript.py
+  $ monkeytype run -m mymodule
 
 ``monkeytype run`` accepts the same :option:`monkeytype -c` option as
 ``monkeytype stub`` and ``monkeytype apply``, to point MonkeyType to the config
 it should use.
 
-Because of the way Python treats scripts and modules differently, MonkeyType
-will record usable traces for modules imported and used by ``myscript.py``; not
-for ``myscript.py`` itself. If you want to annotate ``myscript.py``, treat it
-as a module and write another short script that imports and calls its
-function(s), and run that script with ``monkeytype run``.
+Because of the way Python treats scripts and imported modules differently,
+MonkeyType will not record traces for the entry point itself (that is, the script
+passed to ``monkeytype run`` or the module passed to ``run -m``); traces are
+recorded only for imported modules. If you want to annotate the entry point
+script/module, write another short script that imports and calls its function(s),
+and run that script with ``monkeytype run``.
 
 .. module:: monkeytype
 
