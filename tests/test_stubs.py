@@ -205,6 +205,15 @@ class TestFunctionStub:
         ])
         assert stub.render() == expected
 
+    def test_cached_property(self):
+        stub = FunctionStub('test',
+                            inspect.signature(Dummy.a_cached_property.func), FunctionKind.DJANGO_CACHED_PROPERTY)
+        expected = "\n".join([
+            '@cached_property',
+            'def test%s: ...' % (render_signature(stub.signature),),
+        ])
+        assert stub.render() == expected
+
     def test_simple(self):
         for kind in [FunctionKind.MODULE, FunctionKind.INSTANCE]:
             stub = FunctionStub('test', inspect.signature(simple_add), kind)
@@ -477,6 +486,7 @@ class TestFunctionKind:
             (Dummy.a_class_method.__func__, FunctionKind.CLASS),
             (Dummy.an_instance_method, FunctionKind.INSTANCE),
             (Dummy.a_property.fget, FunctionKind.PROPERTY),
+            (Dummy.a_cached_property.func, FunctionKind.DJANGO_CACHED_PROPERTY),
             (a_module_func, FunctionKind.MODULE),
         ],
     )
@@ -492,6 +502,7 @@ class TestFunctionDefinition:
             (Dummy.a_class_method.__func__, True),
             (Dummy.an_instance_method, True),
             (Dummy.a_property.fget, True),
+            (Dummy.a_cached_property.func, True),
             (a_module_func, False),
         ],
     )
@@ -514,6 +525,9 @@ class TestFunctionDefinition:
             (Dummy.a_property.fget, FunctionDefinition(
                 'tests.util', 'Dummy.a_property', FunctionKind.PROPERTY,
                 Signature.from_callable(Dummy.a_property.fget))),
+            (Dummy.a_cached_property.func, FunctionDefinition(
+                'tests.util', 'Dummy.a_cached_property', FunctionKind.DJANGO_CACHED_PROPERTY,
+                Signature.from_callable(Dummy.a_cached_property.func))),
             (a_module_func, FunctionDefinition(
                 'tests.test_stubs', 'a_module_func', FunctionKind.MODULE,
                 Signature.from_callable(a_module_func))),

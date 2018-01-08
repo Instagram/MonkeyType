@@ -11,6 +11,7 @@ from typing import (
 )
 
 import pytest
+from django.utils.functional import cached_property
 
 from monkeytype.tracing import (
     CallTrace,
@@ -69,6 +70,10 @@ class GetFuncHelper:
     def a_property(self) -> Optional[FrameType]:
         return inspect.currentframe()
 
+    @cached_property
+    def a_cached_property(self) -> Optional[FrameType]:
+        return inspect.currentframe()
+
 
 def a_module_function() -> Optional[FrameType]:
     return inspect.currentframe()
@@ -83,6 +88,7 @@ class TestGetFunc:
             (GetFuncHelper().an_instance_method(), GetFuncHelper.an_instance_method),
             (a_module_function(), a_module_function),
             (GetFuncHelper().a_property, GetFuncHelper.a_property.fget),
+            (GetFuncHelper().a_cached_property, GetFuncHelper.a_cached_property.func),
         ],
     )
     def test_get_func(self, frame, expected_func):

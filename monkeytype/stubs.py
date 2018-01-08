@@ -29,6 +29,11 @@ from typing import (  # type: ignore
     _Union,
 )
 
+try:
+    from django.utils.functional import cached_property  # type: ignore
+except ImportError:
+    cached_property = None
+
 
 from monkeytype.tracing import (
     CallTrace,
@@ -55,6 +60,7 @@ class FunctionKind(enum.Enum):
     STATIC = 3
     # Properties are really instance methods, but this is fine for now...
     PROPERTY = 4
+    DJANGO_CACHED_PROPERTY = 5
 
     @classmethod
     def from_callable(cls, func: Callable) -> 'FunctionKind':
@@ -67,6 +73,8 @@ class FunctionKind(enum.Enum):
             return FunctionKind.STATIC
         elif isinstance(func_or_desc, property):
             return FunctionKind.PROPERTY
+        elif cached_property and isinstance(func_or_desc, cached_property):
+            return FunctionKind.DJANGO_CACHED_PROPERTY
         return FunctionKind.INSTANCE
 
 
@@ -75,6 +83,7 @@ class FunctionDefinition:
         FunctionKind.CLASS,
         FunctionKind.INSTANCE,
         FunctionKind.PROPERTY,
+        FunctionKind.DJANGO_CACHED_PROPERTY,
     }
 
     def __init__(
@@ -466,6 +475,8 @@ class FunctionStub(Stub):
             s = prefix + "@staticmethod\n" + s
         elif self.kind == FunctionKind.PROPERTY:
             s = prefix + "@property\n" + s
+        elif self.kind == FunctionKind.DJANGO_CACHED_PROPERTY:
+            s = prefix + "@cached_property\n" + s
         return s
 
     def __repr__(self) -> str:
