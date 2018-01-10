@@ -1,8 +1,8 @@
 Changelog
 =========
 
-master
-------
+18.1.10
+-------
 
 * Display retype errors when stub application fails. Merge of #52, fixes #49.
 
