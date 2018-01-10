@@ -8,6 +8,7 @@ import io
 import os
 import pytest
 import sqlite3
+import subprocess
 import tempfile
 from typing import Iterator
 
@@ -115,6 +116,24 @@ Annotation for tests.test_cli.func2 based on 1 call trace(s).
 """
     assert stderr.getvalue() == expected
     assert ret == 0
+
+
+def test_retype_failure(store_data, stdout, stderr):
+    store, db_file = store_data
+    traces = [
+        CallTrace(func, {'a': int, 'b': str}, NoneType),
+        CallTrace(func2, {'a': int, 'b': int}, NoneType),
+    ]
+    store.add(traces)
+    msg = "this is a test"
+    err = subprocess.CalledProcessError(returncode=100, cmd='retype')
+    err.stdout = msg.encode()
+    with mock.patch.dict(os.environ, {DefaultConfig.DB_PATH_VAR: db_file.name}):
+        with mock.patch('subprocess.run', side_effect=err):
+            ret = cli.main(['apply', func.__module__], stdout, stderr)
+    assert stdout.getvalue() == ""
+    assert stderr.getvalue() == f"ERROR: Failed applying stub with retype:\n{msg}\n"
+    assert ret == 1
 
 
 def test_cli_context_manager_activated(capsys, stdout, stderr):
