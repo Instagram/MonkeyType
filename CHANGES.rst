@@ -4,6 +4,8 @@ Changelog
 master
 ------
 
+* Display retype errors when stub application fails. Merge of #42, fixes #49.
+
 * Add ``monkeytype run -m`` for running a module as a script. Merge of
   #41. Thanks Simon Gomizelj.
 
