@@ -101,6 +101,10 @@ def get_stub(args: argparse.Namespace, stdout: IO, stderr: IO) -> Optional[Stub]
     return stubs.get(module, None)
 
 
+class HandlerError(Exception):
+    pass
+
+
 def apply_stub_handler(args: argparse.Namespace, stdout: IO, stderr: IO) -> None:
     stub = get_stub(args, stdout, stderr)
     if stub is None:
@@ -121,7 +125,10 @@ def apply_stub_handler(args: argparse.Namespace, stdout: IO, stderr: IO) -> None
             '--target-dir ' + src_dir,
             src_path
         ])
-        subprocess.run(cmd, shell=True, check=True, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
+        try:
+            subprocess.run(cmd, shell=True, check=True, stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
+        except subprocess.CalledProcessError as cpe:
+            raise HandlerError(f"Failed applying stub with retype:\n{cpe.stdout.decode('utf-8')}")
 
 
 def print_stub_handler(args: argparse.Namespace, stdout: IO, stderr: IO) -> None:
@@ -274,7 +281,11 @@ qualname format.""")
         return 1
 
     with args.config.cli_context(args.command):
-        handler(args, stdout, stderr)
+        try:
+            handler(args, stdout, stderr)
+        except HandlerError as err:
+            print(f"ERROR: {err}", file=stderr)
+            return 1
 
     return 0
 
