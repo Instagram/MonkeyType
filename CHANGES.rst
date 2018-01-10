@@ -4,7 +4,10 @@ Changelog
 master
 ------
 
-* Display retype errors when stub application fails. Merge of #42, fixes #49.
+* Display retype errors when stub application fails. Merge of #52, fixes #49.
+
+* Add ``--sample-count`` option to show the number of traces a given stub is
+  based on. Merge of #50, fixes #7. Thanks Tai-Lin.
 
 * Add ``monkeytype run -m`` for running a module as a script. Merge of
   #41. Thanks Simon Gomizelj.
