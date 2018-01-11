@@ -118,6 +118,7 @@ class TestRemoveEmptyContainers:
             ),
             (Union[str, int], Union[str, int]),
             (Dict[str, Union[List[str], List[Any]]], Dict[str, List[str]]),
+            (Union[List[Any], Set[Any]], Union[List[Any], Set[Any]])
         ],
     )
     def test_rewrite(self, typ, expected):

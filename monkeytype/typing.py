@@ -177,7 +177,9 @@ class RemoveEmptyContainers(TypeRewriter):
     def rewrite_Union(self, union):
         elems = tuple(
             self.rewrite(e) for e in union.__args__ if not self._is_empty(e))
-        return Union[elems]
+        if elems:
+            return Union[elems]
+        return union
 
 
 class RewriteConfigDict(TypeRewriter):
