@@ -92,21 +92,21 @@ class TestGetType:
         assert get_type(Dummy) == Type[Dummy]
 
 
-class GetTypeStrTests:
+class TestGetTypeStr:
     @pytest.mark.parametrize(
         'typ, typ_str',
         [
             (str, 'str'),
-            (Dummy, 'monkeytype.test_util.Dummy'),
+            (Dummy, 'tests.util.Dummy'),
             (Optional[str], 'typing.Optional[str]'),
-            (Dict[str, Dummy], 'typing.Dict[str, monkeytype.test_util.Dummy]'),
+            (Dict[str, Dummy], 'typing.Dict[str, tests.util.Dummy]'),
         ],
     )
     def test_get_type_str(self, typ, typ_str):
         assert get_type_str(typ) == typ_str
 
 
-class RemoveEmptyContainersTests:
+class TestRemoveEmptyContainers:
     @pytest.mark.parametrize(
         'typ, expected',
         [
@@ -125,10 +125,9 @@ class RemoveEmptyContainersTests:
         assert rewritten == expected
 
 
-class RewriteConfigDictTests:
-
+class TestRewriteConfigDict:
     @pytest.mark.parametrize(
-        'type, expected',
+        'typ,expected',
         [
             # Not all dictionaries; shouldn't rewrite
             (
@@ -156,7 +155,7 @@ class RewriteConfigDictTests:
         assert rewritten == expected
 
 
-class RewriteLargeUnionTests:
+class TestRewriteLargeUnion:
     #        A
     #      __|__
     #     |     |
