@@ -272,6 +272,12 @@ qualname format.""")
         default=False,
         help='Print to stderr the numbers of traces stubs are based on'
         )
+    stub_parser.add_argument(
+        "--ignore-existing-annotations",
+        action='store_true',
+        default=False,
+        help='Ignore existing annotations and generate stubs only from traces.'
+        )
     stub_parser.set_defaults(handler=print_stub_handler)
 
     args = parser.parse_args(argv)
