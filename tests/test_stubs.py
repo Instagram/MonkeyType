@@ -426,6 +426,44 @@ class TestUpdateSignatureArgs:
         expected = Signature(parameters=[Parameter('cls', Parameter.POSITIONAL_OR_KEYWORD)])
         assert sig == expected
 
+    def test_update_arg_ignore_existing_anno(self):
+        """Update stubs only bases on traces."""
+        sig = Signature.from_callable(UpdateSignatureHelper.has_annos)
+        ignore_existing_annotations = True
+        sig = update_signature_args(sig, {'a': str, 'b': bool}, False, ignore_existing_annotations)
+        params = [
+            Parameter('a', Parameter.POSITIONAL_OR_KEYWORD, annotation=str),
+            Parameter('b', Parameter.POSITIONAL_OR_KEYWORD, annotation=bool),
+        ]
+        assert sig == Signature(parameters=params, return_annotation=int)
+
+    def test_update_self_ignore_existing_anno(self):
+        """Don't annotate first arg of instance methods with ignore_existing_annotations"""
+        sig = Signature.from_callable(UpdateSignatureHelper.an_instance_method)
+        sig = update_signature_args(sig, {'self': UpdateSignatureHelper}, True, True)
+        expected = Signature(parameters=[Parameter('self', Parameter.POSITIONAL_OR_KEYWORD)])
+        assert sig == expected
+
+    def test_update_arg_ignore_existing_anno_NoneType(self):
+        """Update arg annotations from types"""
+        sig = Signature.from_callable(UpdateSignatureHelper.has_annos)
+        sig = update_signature_args(sig, {'a': NoneType, 'b': int}, False, True)
+        params = [
+            Parameter('a', Parameter.POSITIONAL_OR_KEYWORD, annotation=inspect.Parameter.empty),
+            Parameter('b', Parameter.POSITIONAL_OR_KEYWORD, annotation=int),
+        ]
+        assert sig == Signature(parameters=params, return_annotation=int)
+
+    def test_update_arg_ignore_existing_anno_None(self):
+        """Update arg annotations from types"""
+        sig = Signature.from_callable(UpdateSignatureHelper.has_annos)
+        sig = update_signature_args(sig, {'a': None, 'b': int}, False, True)
+        params = [
+            Parameter('a', Parameter.POSITIONAL_OR_KEYWORD, annotation=inspect.Parameter.empty),
+            Parameter('b', Parameter.POSITIONAL_OR_KEYWORD, annotation=int),
+        ]
+        assert sig == Signature(parameters=params, return_annotation=int)
+
 
 class TestUpdateSignatureReturn:
     def test_update_return(self):
