@@ -107,6 +107,7 @@ class HandlerError(Exception):
 
 
 def apply_stub_handler(args: argparse.Namespace, stdout: IO, stderr: IO) -> None:
+    args.ignore_existing_annotations = False
     stub = get_stub(args, stdout, stderr)
     if stub is None:
         print(f'No traces found', file=stderr)
