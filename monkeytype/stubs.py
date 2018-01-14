@@ -181,16 +181,21 @@ def get_imports_for_signature(sig: inspect.Signature) -> ImportMap:
     return imports
 
 
-def update_signature_args(sig: inspect.Signature, arg_types: Dict[str, type], has_self: bool) -> inspect.Signature:
+def update_signature_args(
+        sig: inspect.Signature,
+        arg_types: Dict[str, type],
+        has_self: bool,
+        ignore_existing_annotations: bool = False) -> inspect.Signature:
     """Update argument annotations with the supplied types"""
     params = []
     for arg_idx, name in enumerate(sig.parameters):
         param = sig.parameters[name]
         typ = arg_types.get(name)
-        # Don't touch pre-existing annotations and leave self un-annotated
-        if (typ is not None) and \
-           (param.annotation is inspect.Parameter.empty) and \
-           ((not has_self) or (arg_idx != 0)):
+        typ = inspect.Parameter.empty if (typ is None or typ is NoneType) else typ
+        with_self = (has_self and arg_idx == 0)
+        annotated = param.annotation is not inspect.Parameter.empty
+        # Dont' touch existing annotations unless ignore_existing_annotations
+        if not with_self and (ignore_existing_annotations or not annotated):
             param = param.replace(annotation=typ)
         params.append(param)
     return sig.replace(parameters=params)
@@ -199,11 +204,12 @@ def update_signature_args(sig: inspect.Signature, arg_types: Dict[str, type], ha
 def update_signature_return(
         sig: inspect.Signature,
         return_type: type = None,
-        yield_type: type = None) -> inspect.Signature:
+        yield_type: type = None,
+        ignore_existing_annotations: bool = False) -> inspect.Signature:
     """Update return annotation with the supplied types"""
     anno = sig.return_annotation
-    # Dont' touch pre-existing annotations
-    if anno is not inspect.Signature.empty:
+    # Dont' touch pre-existing annotations unless ignore_existing_annotations
+    if not ignore_existing_annotations and anno is not inspect.Signature.empty:
         return sig
     # NB: We cannot distinguish between functions that explicitly only
     # return None and those that do so implicitly. In the case of generator
@@ -239,6 +245,7 @@ def get_updated_definition(
     func: Callable,
     traces: Iterable[CallTrace],
     rewriter: Optional[TypeRewriter] = None,
+    ignore_existing_annotations: bool = False
 ) -> FunctionDefinition:
     """Update the definition for func using the types collected in traces."""
     if rewriter is None:
@@ -251,8 +258,8 @@ def get_updated_definition(
     if yield_type is not None:
         yield_type = rewriter.rewrite(yield_type)
     sig = defn.signature
-    sig = update_signature_args(sig, arg_types, defn.has_self)
-    sig = update_signature_return(sig, return_type, yield_type)
+    sig = update_signature_args(sig, arg_types, defn.has_self, ignore_existing_annotations)
+    sig = update_signature_return(sig, return_type, yield_type, ignore_existing_annotations)
     return FunctionDefinition(defn.module, defn.qualname, defn.kind, sig, defn.is_async)
 
 
@@ -563,6 +570,7 @@ def build_module_stubs(entries: Iterable[FunctionDefinition]) -> Dict[str, Modul
 def build_module_stubs_from_traces(
     traces: Iterable[CallTrace],
     include_unparsable_defaults: bool = False,
+    ignore_existing_annotations: bool = False,
     rewriter: Optional[TypeRewriter] = None
 ) -> Dict[str, ModuleStub]:
     """Given an iterable of call traces, build the corresponding stubs."""
@@ -571,7 +579,7 @@ def build_module_stubs_from_traces(
         index[trace.func].add(trace)
     defns = []
     for func, traces in index.items():
-        defn = get_updated_definition(func, traces, rewriter=rewriter)
+        defn = get_updated_definition(func, traces, rewriter, ignore_existing_annotations)
         if has_unparsable_defaults(defn.signature) and not include_unparsable_defaults:
             logger.warning(
                 "Omitting stub for function %s.%s; it contains unparsable default values." +
