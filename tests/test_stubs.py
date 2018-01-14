@@ -485,6 +485,19 @@ class TestUpdateSignatureReturn:
         )
         assert sig == expected
 
+    def test_update_return_with_anno_ignored(self):
+        """Leave existing return annotations alone"""
+        sig = Signature.from_callable(UpdateSignatureHelper.has_annos)
+        sig = update_signature_return(sig, return_type=str, ignore_existing_annotations=True)
+        expected = Signature(
+            parameters=[
+                Parameter('a', Parameter.POSITIONAL_OR_KEYWORD, annotation=int),
+                Parameter('b', Parameter.POSITIONAL_OR_KEYWORD)
+            ],
+            return_annotation=str
+        )
+        assert sig == expected
+
     def test_update_yield(self):
         sig = Signature.from_callable(UpdateSignatureHelper.a_class_method)
         sig = update_signature_return(sig, yield_type=int)
