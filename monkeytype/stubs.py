@@ -192,10 +192,10 @@ def update_signature_args(
         param = sig.parameters[name]
         typ = arg_types.get(name)
         typ = inspect.Parameter.empty if (typ is None or typ is NoneType) else typ
-        with_self = (has_self and arg_idx == 0)
+        is_self = (has_self and arg_idx == 0)
         annotated = param.annotation is not inspect.Parameter.empty
         # Dont' touch existing annotations unless ignore_existing_annotations
-        if not with_self and (ignore_existing_annotations or not annotated):
+        if not is_self and (ignore_existing_annotations or not annotated):
             param = param.replace(annotation=typ)
         params.append(param)
     return sig.replace(parameters=params)
