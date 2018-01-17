@@ -95,8 +95,12 @@ def get_stub(args: argparse.Namespace, stdout: IO, stderr: IO) -> Optional[Stub]
     rewriter = args.config.type_rewriter()
     if args.disable_type_rewriting:
         rewriter = NoOpRewriter()
-    stubs = build_module_stubs_from_traces(traces, args.include_unparsable_defaults,
-                                           args.ignore_existing_annotations, rewriter)
+    stubs = build_module_stubs_from_traces(
+        traces,
+        include_unparsable_defaults=args.include_unparsable_defaults,
+        ignore_existing_annotations=args.ignore_existing_annotations,
+        rewriter=rewriter
+    )
     if args.sample_count:
         display_sample_count(traces, stderr)
     return stubs.get(module, None)
