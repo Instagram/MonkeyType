@@ -191,7 +191,7 @@ def update_signature_args(
     for arg_idx, name in enumerate(sig.parameters):
         param = sig.parameters[name]
         typ = arg_types.get(name)
-        typ = inspect.Parameter.empty if (typ is None or typ is NoneType) else typ
+        typ = inspect.Parameter.empty if typ is None else typ
         is_self = (has_self and arg_idx == 0)
         annotated = param.annotation is not inspect.Parameter.empty
         # Don't touch existing annotations unless ignore_existing_annotations
@@ -245,7 +245,7 @@ def get_updated_definition(
     func: Callable,
     traces: Iterable[CallTrace],
     rewriter: Optional[TypeRewriter] = None,
-    ignore_existing_annotations: bool = False
+    ignore_existing_annotations: bool = False,
 ) -> FunctionDefinition:
     """Update the definition for func using the types collected in traces."""
     if rewriter is None:

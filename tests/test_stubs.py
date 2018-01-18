@@ -444,16 +444,6 @@ class TestUpdateSignatureArgs:
         expected = Signature(parameters=[Parameter('self', Parameter.POSITIONAL_OR_KEYWORD)])
         assert sig == expected
 
-    def test_update_arg_ignore_existing_anno_NoneType(self):
-        """Update arg annotations from types"""
-        sig = Signature.from_callable(UpdateSignatureHelper.has_annos)
-        sig = update_signature_args(sig, {'a': NoneType, 'b': int}, False, True)
-        params = [
-            Parameter('a', Parameter.POSITIONAL_OR_KEYWORD, annotation=inspect.Parameter.empty),
-            Parameter('b', Parameter.POSITIONAL_OR_KEYWORD, annotation=int),
-        ]
-        assert sig == Signature(parameters=params, return_annotation=int)
-
     def test_update_arg_ignore_existing_anno_None(self):
         """Update arg annotations from types"""
         sig = Signature.from_callable(UpdateSignatureHelper.has_annos)

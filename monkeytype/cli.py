@@ -99,7 +99,7 @@ def get_stub(args: argparse.Namespace, stdout: IO, stderr: IO) -> Optional[Stub]
         traces,
         include_unparsable_defaults=args.include_unparsable_defaults,
         ignore_existing_annotations=args.ignore_existing_annotations,
-        rewriter=rewriter
+        rewriter=rewriter,
     )
     if args.sample_count:
         display_sample_count(traces, stderr)
@@ -280,7 +280,7 @@ qualname format.""")
         "--ignore-existing-annotations",
         action='store_true',
         default=False,
-        help='Ignore existing annotations and generate stubs only from traces.'
+        help='Ignore existing annotations and generate stubs only from traces.',
         )
     stub_parser.set_defaults(handler=print_stub_handler)
 
