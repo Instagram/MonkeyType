@@ -4,6 +4,10 @@ Changelog
 master
 ------
 
+* Add ``--ignore-existing-annotations`` option to ``monkeytype stub``. Merge of
+  #55, fixes #15. Thanks Tai-Lin!
+
+
 18.1.11
 -------
 

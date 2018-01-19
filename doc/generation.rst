@@ -47,8 +47,7 @@ understands the code.
 Options
 ~~~~~~~
 
-Both ``monkeytype stub`` and ``monkeytype apply`` accept the same set of
-options:
+Both ``monkeytype stub`` and ``monkeytype apply`` accept the following options:
 
 .. option:: -c <config-path>, --config <config-path>
 
@@ -94,6 +93,18 @@ options:
 
   See the :meth:`~monkeytype.config.Config.include_unparsable_defaults` config
   method.
+
+Additionally, ``monkeytype stub`` accepts:
+
+.. option:: --ignore-existing-annotations
+
+  Generate a stub based only on traced calls, ignoring any existing type
+  annotations in the code. (By default, existing annotations in the code take
+  precedence over traced types.) This can be useful for validating the
+  correctness of existing annotations.
+
+  This option is not usable with ``monkeytype apply``, since it would
+  frequently result in a conflict when attempting to apply annotations.
 
 .. module:: monkeytype.typing
 
