@@ -33,6 +33,10 @@ def func2(a, b):
     pass
 
 
+def func_anno(a: int, b: str) -> None:
+    pass
+
+
 class LoudContextConfig(DefaultConfig):
     @contextmanager
     def cli_context(self, command: str) -> Iterator[None]:
@@ -72,6 +76,22 @@ def test_generate_stub(store_data, stdout, stderr):
 
 
 def func2(a: int, b: int) -> None: ...
+"""
+    assert stdout.getvalue() == expected
+    assert stderr.getvalue() == ''
+    assert ret == 0
+
+
+def test_print_stub_ignore_existing_annotations(store_data, stdout, stderr):
+    store, db_file = store_data
+    traces = [
+        CallTrace(func_anno, {'a': int, 'b': int}, int),
+    ]
+    store.add(traces)
+    with mock.patch.dict(os.environ, {DefaultConfig.DB_PATH_VAR: db_file.name}):
+        ret = cli.main(['stub', func.__module__, '--ignore-existing-annotations'],
+                       stdout, stderr)
+    expected = """def func_anno(a: int, b: int) -> int: ...
 """
     assert stdout.getvalue() == expected
     assert stderr.getvalue() == ''

@@ -95,7 +95,12 @@ def get_stub(args: argparse.Namespace, stdout: IO, stderr: IO) -> Optional[Stub]
     rewriter = args.config.type_rewriter()
     if args.disable_type_rewriting:
         rewriter = NoOpRewriter()
-    stubs = build_module_stubs_from_traces(traces, args.include_unparsable_defaults, rewriter)
+    stubs = build_module_stubs_from_traces(
+        traces,
+        include_unparsable_defaults=args.include_unparsable_defaults,
+        ignore_existing_annotations=args.ignore_existing_annotations,
+        rewriter=rewriter,
+    )
     if args.sample_count:
         display_sample_count(traces, stderr)
     return stubs.get(module, None)
@@ -106,6 +111,7 @@ class HandlerError(Exception):
 
 
 def apply_stub_handler(args: argparse.Namespace, stdout: IO, stderr: IO) -> None:
+    args.ignore_existing_annotations = False
     stub = get_stub(args, stdout, stderr)
     if stub is None:
         print(f'No traces found', file=stderr)
@@ -269,6 +275,12 @@ qualname format.""")
         action='store_true',
         default=False,
         help='Print to stderr the numbers of traces stubs are based on'
+        )
+    stub_parser.add_argument(
+        "--ignore-existing-annotations",
+        action='store_true',
+        default=False,
+        help='Ignore existing annotations and generate stubs only from traces.',
         )
     stub_parser.set_defaults(handler=print_stub_handler)
 
