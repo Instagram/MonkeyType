@@ -28,6 +28,12 @@ some/module.pyi``).
 You can also run e.g. ``monkeytype stub some.module:SomeClass`` or ``monkeytype
 stub some.module:somefunc`` to generate a stub for just one class or function.
 
+MonkeyType must import your code in order to generate annotations for it, so if
+a module has import side effects, running ``monkeytype stub`` on the module
+will trigger those side effects. For "executable" modules, ensure the execution
+code is protected with ``if __name__ == '__main__'`` to avoid MonkeyType
+triggering it.
+
 .. _monkeytype-apply:
 
 monkeytype apply
