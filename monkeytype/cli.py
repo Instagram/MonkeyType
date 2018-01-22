@@ -282,6 +282,12 @@ qualname format.""")
         default=False,
         help='Ignore existing annotations and generate stubs only from traces.',
         )
+    stub_parser.add_argument(
+        "--diff",
+        action='store_true',
+        default=False,
+        help='Compare stubs generated with or without considering existing annotations.',
+        )
     stub_parser.set_defaults(handler=print_stub_handler)
 
     args = parser.parse_args(argv)
