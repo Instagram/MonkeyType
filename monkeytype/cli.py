@@ -5,6 +5,7 @@
 # LICENSE file in the root directory of this source tree.
 import argparse
 import collections
+import difflib
 import importlib
 import inspect
 import os.path
@@ -137,12 +138,34 @@ def apply_stub_handler(args: argparse.Namespace, stdout: IO, stderr: IO) -> None
             raise HandlerError(f"Failed applying stub with retype:\n{cpe.stdout.decode('utf-8')}")
 
 
-def print_stub_handler(args: argparse.Namespace, stdout: IO, stderr: IO) -> None:
+def get_diff(args: argparse.Namespace, stdout: IO, stderr: IO) -> Optional[str]:
+    args.ignore_existing_annotations = False
     stub = get_stub(args, stdout, stderr)
-    if stub is None:
-        print(f'No traces found', file=stderr)
-        return
-    print(stub.render(), file=stdout)
+    args.ignore_existing_annotations = True
+    stub_ignore_anno = get_stub(args, stdout, stderr)
+    if stub is None or stub_ignore_anno is None:
+        return None
+    seq1 = stub.render().splitlines(keepends=True)
+    seq2 = stub_ignore_anno.render().splitlines(keepends=True)
+    diff = [s for s in difflib.ndiff(seq1, seq2) if s.startswith(("+", "-", "?"))]
+    for i in range(len(diff) // 4 - 1):
+        diff.insert(5 * (i+1) - 1, "\n")
+    return "".join(diff)[:-1]
+
+
+def print_stub_handler(args: argparse.Namespace, stdout: IO, stderr: IO) -> None:
+    if args.diff:
+        output = get_diff(args, stdout, stderr)
+        if output is None:
+            print(f'No traces found', file=stderr)
+            return
+    else:
+        stub = get_stub(args, stdout, stderr)
+        if stub is None:
+            print(f'No traces found', file=stderr)
+            return
+        output = stub.render()
+    print(output, file=stdout)
 
 
 def run_handler(args: argparse.Namespace, stdout: IO, stderr: IO) -> None:
@@ -286,7 +309,7 @@ qualname format.""")
         "--diff",
         action='store_true',
         default=False,
-        help='Compare stubs generated with or without considering existing annotations.',
+        help='Compare stubs generated with and without considering existing annotations.',
         )
     stub_parser.set_defaults(handler=print_stub_handler)
 
