@@ -145,12 +145,14 @@ def get_diff(args: argparse.Namespace, stdout: IO, stderr: IO) -> Optional[str]:
     stub_ignore_anno = get_stub(args, stdout, stderr)
     if stub is None or stub_ignore_anno is None:
         return None
-    seq1 = stub.render().splitlines(keepends=True)
-    seq2 = stub_ignore_anno.render().splitlines(keepends=True)
-    diff = [s for s in difflib.ndiff(seq1, seq2) if s.startswith(("+", "-", "?"))]
-    for i in range(len(diff) // 4 - 1):
-        diff.insert(5 * (i+1) - 1, "\n\n\n")
-    return "".join(diff)[:-1]
+    diff = []
+    seq1 = (s + "\n" for s in stub.render().split("\n\n\n"))
+    seq2 = (s + "\n" for s in stub_ignore_anno.render().split("\n\n\n"))
+    for stub1, stub2 in zip(seq1, seq2):
+        if stub1 != stub2:
+            stub_diff = "".join(difflib.ndiff(stub1.splitlines(keepends=True), stub2.splitlines(keepends=True)))
+            diff.append(stub_diff[:-1])
+    return "\n\n\n".join(diff)
 
 
 def print_stub_handler(args: argparse.Namespace, stdout: IO, stderr: IO) -> None:
