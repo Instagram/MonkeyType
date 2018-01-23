@@ -149,7 +149,7 @@ def get_diff(args: argparse.Namespace, stdout: IO, stderr: IO) -> Optional[str]:
     seq2 = stub_ignore_anno.render().splitlines(keepends=True)
     diff = [s for s in difflib.ndiff(seq1, seq2) if s.startswith(("+", "-", "?"))]
     for i in range(len(diff) // 4 - 1):
-        diff.insert(5 * (i+1) - 1, "\n")
+        diff.insert(5 * (i+1) - 1, "\n\n\n")
     return "".join(diff)[:-1]
 
 
