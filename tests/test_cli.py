@@ -180,6 +180,22 @@ def test_no_traces(store_data, stdout, stderr):
     assert ret == 0
 
 
+def test_display_list_of_modules(store_data, stdout, stderr):
+    store, db_file = store_data
+    traces = [
+        CallTrace(func, {'a': int, 'b': str}, NoneType),
+    ]
+    store.add(traces)
+    with mock.patch.dict(os.environ, {DefaultConfig.DB_PATH_VAR: db_file.name}):
+        ret = cli.main(['list-modules'], stdout, stderr)
+
+    expected = ""
+    assert stderr.getvalue() == expected
+    expected = "tests.test_cli\n"
+    assert stdout.getvalue() == expected
+    assert ret == 0
+
+
 def test_display_sample_count(capsys, stderr):
     traces = [
         CallTrace(func, {'a': int, 'b': str}, NoneType),
