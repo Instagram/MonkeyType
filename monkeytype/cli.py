@@ -156,18 +156,16 @@ def get_diff(args: argparse.Namespace, stdout: IO, stderr: IO) -> Optional[str]:
 
 
 def print_stub_handler(args: argparse.Namespace, stdout: IO, stderr: IO) -> None:
+    output, file = None, stdout
     if args.diff:
         output = get_diff(args, stdout, stderr)
-        if output is None:
-            print(f'No traces found', file=stderr)
-            return
     else:
         stub = get_stub(args, stdout, stderr)
-        if stub is None:
-            print(f'No traces found', file=stderr)
-            return
-        output = stub.render()
-    print(output, file=stdout)
+        if stub is not None:
+            output = stub.render()
+    if output is None:
+        output, file = 'No traces found', stderr
+    print(output, file=file)
 
 
 def run_handler(args: argparse.Namespace, stdout: IO, stderr: IO) -> None:
