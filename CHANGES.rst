@@ -4,6 +4,9 @@ Changelog
 master
 ------
 
+* Add ``--diff`` option to ``monkeytype stub``. Merge of #59, fixes #58.
+  Thanks Tai-Lin!
+
 * Add ``--ignore-existing-annotations`` option to ``monkeytype stub``. Merge of
   #55, fixes #15. Thanks Tai-Lin!
 
