@@ -168,7 +168,7 @@ def print_stub_handler(args: argparse.Namespace, stdout: IO, stderr: IO) -> None
     print(output, file=file)
 
 
-def print_list_handler(args: argparse.Namespace, stdout: IO, stderr: IO) -> None:
+def list_modules_handler(args: argparse.Namespace, stdout: IO, stderr: IO) -> None:
     output, file = None, stdout
     modules = args.config.trace_store().list_modules()
     if not modules:
@@ -327,7 +327,7 @@ qualname format.""")
         'list-modules',
         help='Listing of the unique set of module traces',
         description='Listing of the unique set of module traces')
-    list_modules_parser.set_defaults(handler=print_list_handler)
+    list_modules_parser.set_defaults(handler=list_modules_handler)
 
     args = parser.parse_args(argv)
     update_args_from_config(args)
