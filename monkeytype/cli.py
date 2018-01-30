@@ -168,6 +168,16 @@ def print_stub_handler(args: argparse.Namespace, stdout: IO, stderr: IO) -> None
     print(output, file=file)
 
 
+def list_modules_handler(args: argparse.Namespace, stdout: IO, stderr: IO) -> None:
+    output, file = None, stdout
+    modules = args.config.trace_store().list_modules()
+    if not modules:
+        print(f'No traces found', file=stderr)
+        return
+    output = '\n'.join(modules)
+    print(output, file=file)
+
+
 def run_handler(args: argparse.Namespace, stdout: IO, stderr: IO) -> None:
     # remove initial `monkeytype run`
     old_argv = sys.argv.copy()
@@ -312,6 +322,12 @@ qualname format.""")
         help='Compare stubs generated with and without considering existing annotations.',
         )
     stub_parser.set_defaults(handler=print_stub_handler)
+
+    list_modules_parser = subparsers.add_parser(
+        'list-modules',
+        help='Listing of the unique set of module traces',
+        description='Listing of the unique set of module traces')
+    list_modules_parser.set_defaults(handler=list_modules_handler)
 
     args = parser.parse_args(argv)
     update_args_from_config(args)

@@ -104,3 +104,13 @@ class SQLiteStore(CallTraceStore):
             cur = self.conn.cursor()
             cur.execute(sql_query, values)
             return [CallTraceRow(*row) for row in cur.fetchall()]
+
+    def list_modules(self) -> List[str]:
+        with self.conn:
+            cur = self.conn.cursor()
+            cur.execute("""
+                        SELECT module FROM {table}
+                        GROUP BY module
+                        ORDER BY date(created_at) DESC
+                        """.format(table=self.table))
+            return [row[0] for row in cur.fetchall() if row[0]]
