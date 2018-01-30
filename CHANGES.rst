@@ -4,6 +4,10 @@ Changelog
 master
 ------
 
+* Improve error messages in case of "no traces found" and/or file path given
+  instead of module name. Merge of #37, partial fix for #65. Thanks Aarni
+  Koskela.
+
 * Add ``monkeytype list_modules`` sub-command to list all modules present in
   trace db. Merge of #61, fixes #60. Thanks Alex Miasoiedov.
 

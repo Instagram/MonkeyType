@@ -187,7 +187,7 @@ def list_modules_handler(args: argparse.Namespace, stdout: IO, stderr: IO) -> No
     output, file = None, stdout
     modules = args.config.trace_store().list_modules()
     if not modules:
-        print(f'No traces found', file=stderr)
+        complain_about_no_traces(args, stderr)
         return
     output = '\n'.join(modules)
     print(output, file=file)
