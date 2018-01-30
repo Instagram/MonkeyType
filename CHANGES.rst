@@ -1,8 +1,8 @@
 Changelog
 =========
 
-master
-------
+18.1.13
+-------
 
 * Improve error messages in case of "no traces found" and/or file path given
   instead of module name. Merge of #37, partial fix for #65. Thanks Aarni
