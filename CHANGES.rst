@@ -4,6 +4,9 @@ Changelog
 master
 ------
 
+* Add ``monkeytype list_modules`` sub-command to list all modules present in
+  trace db. Merge of #61, fixes #60. Thanks Alex Miasoiedov.
+
 * Add ``--diff`` option to ``monkeytype stub``. Merge of #59, fixes #58.
   Thanks Tai-Lin!
 

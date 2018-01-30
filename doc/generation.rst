@@ -118,6 +118,14 @@ Additionally, ``monkeytype stub`` accepts:
   annotations and ignoring them. Use this to see how accurately your annotations
   represent what is seen in production.
 
+monkeytype list-modules
+~~~~~~~~~~~~~~~~~~~~~~~
+
+The ``monkeytype list-modules`` subcommand outputs a list of all modules which
+have traces present in the trace store. This command respects only the
+:option:`--config` option.
+
+
 .. module:: monkeytype.typing
 
 .. _rewriters:

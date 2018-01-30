@@ -63,6 +63,11 @@ interface.
     :meth:`~monkeytype.encoding.CallTraceRow.from_trace` classmethod serializes
     to.
 
+  .. method:: list_modules() -> List[str]
+
+    Query all traces in the trace store and return a list of module names for
+    which traces exist in the store.
+
 .. module:: monkeytype.db.sqlite
 
 SQLiteStore

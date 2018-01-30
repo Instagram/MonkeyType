@@ -58,7 +58,10 @@ class CallTraceStore(metaclass=ABCMeta):
 
     def list_modules(self) -> List[str]:
         """List of traced modules from the backing store"""
-        raise NotImplementedError
+        raise NotImplementedError(
+            f"Your CallTraceStore ({self.__class__.__module__}.{self.__class__.__name__}) "
+            f"does not implement list_modules()"
+        )
 
 
 class CallTraceStoreLogger(CallTraceLogger):
