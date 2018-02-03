@@ -25,7 +25,7 @@ from monkeytype.tracing import CallTrace
 from monkeytype.typing import NoneType
 
 from .testmodule import Foo
-from .test_tracing import collector, trace_calls
+from .test_tracing import trace_calls
 
 
 def func_foo():
@@ -273,6 +273,7 @@ def test_pathlike_parameter(store_data, capsys):
         assert "test/foo.py does not look like a valid Python import path" in err
 
 
+@pytest.mark.usefixtures("collector")
 def test_apply_stub_init(store_data, stdout, stderr, collector):
     """Regression test for applying stubs to testmodule/__init__.py style module layout"""
     store, db_file = store_data
@@ -284,4 +285,5 @@ def test_apply_stub_init(store_data, stdout, stderr, collector):
     with mock.patch.dict(os.environ, {DefaultConfig.DB_PATH_VAR: db_file.name}):
         ret = cli.main(['apply', Foo.__module__], stdout, stderr)
 
+    assert ret == 0
     assert 'warning:' not in stdout.getvalue()
