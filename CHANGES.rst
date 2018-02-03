@@ -22,7 +22,7 @@ master
   #55, fixes #15. Thanks Tai-Lin!
 
 * Generate stubs for modules where the module file is like module/__init__.py.
-  Print retype stdout/stderr. Fixes #66.
+  Print retype stdout/stderr. Merge of #69, Fixes #66.
   Thanks John Arnold.
 
 

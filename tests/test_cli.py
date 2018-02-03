@@ -24,6 +24,15 @@ from monkeytype.db.sqlite import (
 from monkeytype.tracing import CallTrace
 from monkeytype.typing import NoneType
 
+from .testmodule import Foo
+from .testmodule.submodule1 import Foo2
+from .test_tracing import collector, trace_calls
+
+
+def func_foo():
+    foo = Foo(arg1='string', arg2=1)
+    foo2 = Foo2(arg1='string', arg2=1)
+
 
 def func(a, b):
     pass
@@ -51,7 +60,7 @@ def super_long_function_with_long_params(
     pass
 
 
-class LoudContextConfig(DefaultConfig):
+class LoadContextConfig(DefaultConfig):
     @contextmanager
     def cli_context(self, command: str) -> Iterator[None]:
         print(f"IN SETUP: {command}")
@@ -250,7 +259,7 @@ def test_retype_failure(store_data, stdout, stderr):
 
 
 def test_cli_context_manager_activated(capsys, stdout, stderr):
-    ret = cli.main(['-c', f'{__name__}:LoudContextConfig()', 'stub', 'some.module'], stdout, stderr)
+    ret = cli.main(['-c', f'{__name__}:LoadContextConfig()', 'stub', 'some.module'], stdout, stderr)
     out, err = capsys.readouterr()
     assert out == "IN SETUP: stub\nIN TEARDOWN: stub\n"
     assert err == ""
@@ -264,3 +273,17 @@ def test_pathlike_parameter(store_data, capsys):
             cli.main(['stub', 'test/foo.py:bar'], stdout, stderr)
         out, err = capsys.readouterr()
         assert "test/foo.py does not look like a valid Python import path" in err
+
+
+def test_apply_stub_init(store_data, stdout, stderr, collector):
+    """Regression test for applying stubs to testmodule/__init__.py style module layout"""
+    store, db_file = store_data
+    with trace_calls(collector):
+        func_foo()
+
+    store.add(collector.traces)
+
+    with mock.patch.dict(os.environ, {DefaultConfig.DB_PATH_VAR: db_file.name}):
+        ret = cli.main(['apply', Foo.__module__], stdout, stderr)
+
+    assert 'warning:' not in stdout.getvalue()

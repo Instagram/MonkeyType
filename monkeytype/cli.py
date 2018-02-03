@@ -14,7 +14,6 @@ import runpy
 import subprocess
 import sys
 import tempfile
-import errno
 
 from typing import (
     IO,
@@ -140,12 +139,9 @@ def apply_stub_handler(args: argparse.Namespace, stdout: IO, stderr: IO) -> None
     with tempfile.TemporaryDirectory(prefix='monkeytype') as pyi_dir:
         if src_path.endswith('__init__.py'):
             pyi_name = '__init__.pyi'
-            pyi_dir = os.path.join(pyi_dir, module)
-            pyi_path = os.path.join(pyi_dir, pyi_name)
-            mkdir_p(pyi_dir)
         else:
             pyi_name = module.split('.')[-1] + '.pyi'
-            pyi_path = os.path.join(pyi_dir, pyi_name)
+        pyi_path = os.path.join(pyi_dir, pyi_name)
         with open(pyi_path, 'w+') as f:
             f.write(stub.render())
         cmd = ' '.join([
@@ -156,10 +152,9 @@ def apply_stub_handler(args: argparse.Namespace, stdout: IO, stderr: IO) -> None
         ])
         try:
             proc_output = subprocess.run(cmd, shell=True, check=True, stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
-            for line in proc_output.stdout.decode('utf-8').splitlines():
-                print(line)
+            print(proc_output.stdout.decode('utf-8'), file=stdout)
         except subprocess.CalledProcessError as cpe:
-            raise HandlerError(f"Failed applying stub with retype:\n{cpe.stdout.decode('utf-8')}")
+            raise HandlerError(f"Failed applying stub with retype:\n{cpe.stderr.decode('utf-8')}")
 
 
 def get_diff(args: argparse.Namespace, stdout: IO, stderr: IO) -> Optional[str]:
@@ -224,16 +219,6 @@ def update_args_from_config(args: argparse.Namespace) -> None:
         args.limit = args.config.query_limit()
     if args.include_unparsable_defaults is None:
         args.include_unparsable_defaults = args.config.include_unparsable_defaults()
-
-
-def mkdir_p(path):
-    try:
-        os.makedirs(path)
-    except OSError as exc:
-        if exc.errno == errno.EEXIST and os.path.isdir(path):
-            pass
-        else:
-            raise
 
 
 def main(argv: List[str], stdout: IO, stderr: IO) -> int:
