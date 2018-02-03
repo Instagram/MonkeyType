@@ -25,13 +25,11 @@ from monkeytype.tracing import CallTrace
 from monkeytype.typing import NoneType
 
 from .testmodule import Foo
-from .testmodule.submodule1 import Foo2
 from .test_tracing import collector, trace_calls
 
 
 def func_foo():
-    foo = Foo(arg1='string', arg2=1)
-    foo2 = Foo2(arg1='string', arg2=1)
+    Foo(arg1='string', arg2=1)
 
 
 def func(a, b):

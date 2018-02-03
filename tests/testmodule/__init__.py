@@ -1,6 +1,3 @@
-from .submodule1 import Foo2
-
-
 class Foo:
     def __init__(self, arg1: str, arg2: int) -> None:
         self.arg1 = arg1
