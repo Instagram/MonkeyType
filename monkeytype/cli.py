@@ -151,8 +151,8 @@ def apply_stub_handler(args: argparse.Namespace, stdout: IO, stderr: IO) -> None
             src_path
         ])
         try:
-            proc_output = subprocess.run(cmd, shell=True, check=True, stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
-            print(proc_output.stdout.decode('utf-8'), file=stdout)
+            proc = subprocess.run(cmd, shell=True, check=True, stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
+            print(proc.stdout.decode('utf-8'), file=stdout)
         except subprocess.CalledProcessError as cpe:
             raise HandlerError(f"Failed applying stub with retype:\n{cpe.stderr.decode('utf-8')}")
 

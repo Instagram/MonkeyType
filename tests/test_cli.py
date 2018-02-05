@@ -58,7 +58,7 @@ def super_long_function_with_long_params(
     pass
 
 
-class LoadContextConfig(DefaultConfig):
+class LoudContextConfig(DefaultConfig):
     @contextmanager
     def cli_context(self, command: str) -> Iterator[None]:
         print(f"IN SETUP: {command}")
