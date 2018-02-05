@@ -21,6 +21,10 @@ master
 * Add ``--ignore-existing-annotations`` option to ``monkeytype stub``. Merge of
   #55, fixes #15. Thanks Tai-Lin!
 
+* Generate stubs for modules where the module file is like module/__init__.py.
+  Print retype stdout/stderr. Merge of #69, Fixes #66.
+  Thanks John Arnold.
+
 
 18.1.11
 -------

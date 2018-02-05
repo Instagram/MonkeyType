@@ -135,8 +135,12 @@ def apply_stub_handler(args: argparse.Namespace, stdout: IO, stderr: IO) -> None
     mod = importlib.import_module(module)
     src_path = inspect.getfile(mod)
     src_dir = os.path.dirname(src_path)
-    pyi_name = module.split('.')[-1] + '.pyi'
+
     with tempfile.TemporaryDirectory(prefix='monkeytype') as pyi_dir:
+        if src_path.endswith('__init__.py'):
+            pyi_name = '__init__.pyi'
+        else:
+            pyi_name = module.split('.')[-1] + '.pyi'
         pyi_path = os.path.join(pyi_dir, pyi_name)
         with open(pyi_path, 'w+') as f:
             f.write(stub.render())
@@ -147,7 +151,8 @@ def apply_stub_handler(args: argparse.Namespace, stdout: IO, stderr: IO) -> None
             src_path
         ])
         try:
-            subprocess.run(cmd, shell=True, check=True, stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
+            proc = subprocess.run(cmd, shell=True, check=True, stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
+            print(proc.stdout.decode('utf-8'), file=stdout)
         except subprocess.CalledProcessError as cpe:
             raise HandlerError(f"Failed applying stub with retype:\n{cpe.stdout.decode('utf-8')}")
 

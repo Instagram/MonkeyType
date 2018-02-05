@@ -24,6 +24,13 @@ from monkeytype.db.sqlite import (
 from monkeytype.tracing import CallTrace
 from monkeytype.typing import NoneType
 
+from .testmodule import Foo
+from .test_tracing import trace_calls
+
+
+def func_foo():
+    Foo(arg1='string', arg2=1)
+
 
 def func(a, b):
     pass
@@ -264,3 +271,19 @@ def test_pathlike_parameter(store_data, capsys):
             cli.main(['stub', 'test/foo.py:bar'], stdout, stderr)
         out, err = capsys.readouterr()
         assert "test/foo.py does not look like a valid Python import path" in err
+
+
+@pytest.mark.usefixtures("collector")
+def test_apply_stub_init(store_data, stdout, stderr, collector):
+    """Regression test for applying stubs to testmodule/__init__.py style module layout"""
+    store, db_file = store_data
+    with trace_calls(collector):
+        func_foo()
+
+    store.add(collector.traces)
+
+    with mock.patch.dict(os.environ, {DefaultConfig.DB_PATH_VAR: db_file.name}):
+        ret = cli.main(['apply', Foo.__module__], stdout, stderr)
+
+    assert ret == 0
+    assert 'warning:' not in stdout.getvalue()
