@@ -154,7 +154,7 @@ def apply_stub_handler(args: argparse.Namespace, stdout: IO, stderr: IO) -> None
             proc = subprocess.run(cmd, shell=True, check=True, stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
             print(proc.stdout.decode('utf-8'), file=stdout)
         except subprocess.CalledProcessError as cpe:
-            raise HandlerError(f"Failed applying stub with retype:\n{cpe.stderr.decode('utf-8')}")
+            raise HandlerError(f"Failed applying stub with retype:\n{cpe.stdout.decode('utf-8')}")
 
 
 def get_diff(args: argparse.Namespace, stdout: IO, stderr: IO) -> Optional[str]:
