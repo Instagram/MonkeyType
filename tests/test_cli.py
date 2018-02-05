@@ -257,7 +257,7 @@ def test_retype_failure(store_data, stdout, stderr):
 
 
 def test_cli_context_manager_activated(capsys, stdout, stderr):
-    ret = cli.main(['-c', f'{__name__}:LoadContextConfig()', 'stub', 'some.module'], stdout, stderr)
+    ret = cli.main(['-c', f'{__name__}:LoudContextConfig()', 'stub', 'some.module'], stdout, stderr)
     out, err = capsys.readouterr()
     assert out == "IN SETUP: stub\nIN TEARDOWN: stub\n"
     assert err == ""
