@@ -20,6 +20,7 @@ import pytest
 
 from monkeytype.typing import (
     NoneType,
+    TypeRewriter,
     RemoveEmptyContainers,
     RewriteConfigDict,
     RewriteLargeUnion,
@@ -124,6 +125,15 @@ class TestRemoveEmptyContainers:
     def test_rewrite(self, typ, expected):
         rewritten = RemoveEmptyContainers().rewrite(typ)
         assert rewritten == expected
+
+
+class TestRewriteNameCollision:
+    def test_rewrite(self):
+        class List:
+            pass
+
+        rewritten = TypeRewriter().rewrite(List)
+        assert rewritten == List
 
 
 class TestRewriteConfigDict:
