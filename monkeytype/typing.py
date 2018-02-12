@@ -145,6 +145,8 @@ class TypeRewriter:
         return typ
 
     def rewrite(self, typ):
+        if typ.__module__ != 'typing':
+            return self.generic_rewrite(typ)
         if isinstance(typ, _Any):
             typname = 'Any'
         elif isinstance(typ, _Union):
