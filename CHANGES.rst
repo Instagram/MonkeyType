@@ -1,7 +1,7 @@
 Changelog
 =========
 
-master
+18.2.0
 ------
 
 * Move filtering of `__main__` module into CallTraceStoreLogger instead of core
