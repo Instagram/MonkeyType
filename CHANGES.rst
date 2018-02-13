@@ -4,6 +4,14 @@ Changelog
 master
 ------
 
+* Move filtering of `__main__` module into CallTraceStoreLogger instead of core
+  tracing code, so it can be overridden by special use cases like IPython
+  tracing. Merge of #72, fixes #68. Thanks Tony Fast.
+
+* Generate stubs for modules where the module file is like module/__init__.py.
+  Print retype stdout/stderr. Merge of #69, Fixes #66.
+  Thanks John Arnold.
+
 
 18.1.13
 -------
@@ -20,10 +28,6 @@ master
 
 * Add ``--ignore-existing-annotations`` option to ``monkeytype stub``. Merge of
   #55, fixes #15. Thanks Tai-Lin!
-
-* Generate stubs for modules where the module file is like module/__init__.py.
-  Print retype stdout/stderr. Merge of #69, Fixes #66.
-  Thanks John Arnold.
 
 
 18.1.11
