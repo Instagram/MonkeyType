@@ -12,18 +12,14 @@ from monkeytype.db.sqlite import (
     SQLiteStore,
 )
 from monkeytype.tracing import trace_calls
-from _pytest.monkeypatch import MonkeyPatch
+from unittest.mock import patch
 
 
-def func(a, b):
+def normal_func(a, b):
     pass
 
 
-def func2(a, b):
-    pass
-
-
-def func3(a, b):
+def main_func(a, b):
     pass
 
 
@@ -35,19 +31,12 @@ def logger() -> CallTraceStoreLogger:
 
 
 def test_round_trip(logger):
-    from types import ModuleType
-    module = ModuleType('__main__')
-    module.func = func3
-    MonkeyPatch().setattr(module.func, '__module__', '__main__', raising=False)
-    assert module.func.__module__ == '__main__'
+    with patch.object(main_func, '__module__', '__main__'):
+        with trace_calls(logger):
+            main_func(int, str)
+            assert not logger.traces
+            normal_func(int, str)
+            assert logger.traces
 
-    with trace_calls(logger):
-        module.func(int, str)
-        assert len(logger.traces) == 0
-        func(int, str)
-        assert len(logger.traces) == 1
-        func2(int, str)
-        assert len(logger.traces) == 2
-
-    assert len(logger.store.filter('__main__')) == 0
-    assert len(logger.store.filter(func.__module__)) == 2
+    assert not logger.store.filter('__main__')
+    assert logger.store.filter(normal_func.__module__)
