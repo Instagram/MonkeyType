@@ -10,7 +10,7 @@ from monkeytype.db.base import CallTraceStoreLogger
 from monkeytype.db.sqlite import (
     create_call_trace_table,
     SQLiteStore,
-    )
+)
 from monkeytype.tracing import trace_calls
 from _pytest.monkeypatch import MonkeyPatch
 
@@ -26,11 +26,13 @@ def func2(a, b):
 def func3(a, b):
     pass
 
+
 @pytest.fixture
 def logger() -> CallTraceStoreLogger:
     conn = sqlite3.connect(':memory:')
     create_call_trace_table(conn)
     return CallTraceStoreLogger(SQLiteStore(conn))
+
 
 def test_round_trip(logger):
     from types import ModuleType
@@ -49,23 +51,3 @@ def test_round_trip(logger):
 
     assert len(logger.store.filter('__main__')) == 0
     assert len(logger.store.filter(func.__module__)) == 2
-
-
-
-# def test_main_logging(logger):
-#     """Prefix match on qualname"""
-#     from types import ModuleType
-#     module = ModuleType('__main__')
-#     module.func = func
-#     MonkeyPatch().setattr(module.func, '__module__', '__main__', raising=False)
-#
-#     assert module.func.__module__ == '__main__'
-#
-#     traces = [
-#         CallTrace(func, {'a': int, 'b': str}, None),
-#         CallTrace(func2, {'a': int, 'b': int}, None),
-#         CallTrace(module.func, {'a': int, 'b': int}, None),
-#     ]
-#     store.add(traces)
-#     assert store.filter('__main__') == 0
-#     assert len(store.filter(func.__module__)) == 2
