@@ -335,20 +335,29 @@ def render_annotation(anno: Any) -> str:
     if _is_optional(anno):
         elem_type = _get_optional_elem(anno)
         rendered = render_annotation(elem_type)
-        return 'Optional[' + rendered + ']'
+        rendered = 'Optional[' + rendered + ']'
     elif hasattr(anno, '__supertype__'):
-        return anno.__name__
+        rendered = anno.__name__
     elif getattr(anno, '__module__', None) == 'typing':
-        return repr(anno).replace('typing.', '')
-    elif anno is NoneType:
-        # This isn't my favorite thing in the world, but by convention NoneType
-        # and None are used interchangeably in signatures.
-        return 'None'
+        rendered = repr(anno).replace('typing.', '')
+    elif isinstance(anno, NoneType):
+        rendered = 'None'
     elif isinstance(anno, type):
         if anno.__module__ in ('builtins',):
-            return anno.__qualname__
-        return anno.__module__ + '.' + anno.__qualname__
-    return repr(anno)
+            rendered = anno.__qualname__
+        else:
+            rendered = anno.__module__ + '.' + anno.__qualname__
+    else:
+        rendered = repr(anno)
+
+    return replace_nonetype(rendered)
+
+
+def replace_nonetype(stub: str) -> str:
+    """Replaces NoneType with None
+    By convention NoneType and None are used interchangeably in signatures.
+    """
+    return stub.replace('NoneType', 'None')
 
 
 def render_parameter(param: inspect.Parameter) -> str:

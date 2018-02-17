@@ -16,6 +16,9 @@ master
   Print retype stdout/stderr. Merge of #69, Fixes #66.
   Thanks John Arnold.
 
+* Never render NoneType in stubs, substitute None.  fixes #5.
+  Thanks John Arnold.
+
 
 18.1.13
 -------
