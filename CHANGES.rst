@@ -4,6 +4,9 @@ Changelog
 master
 ------
 
+* Never render NoneType in stubs, substitute None.  Merge of #75, Fixes #5.
+  Thanks John Arnold.
+
 
 18.2.0
 ------
@@ -14,9 +17,6 @@ master
 
 * Generate stubs for modules where the module file is like module/__init__.py.
   Print retype stdout/stderr. Merge of #69, Fixes #66.
-  Thanks John Arnold.
-
-* Never render NoneType in stubs, substitute None.  Merge of #75, Fixes #5.
   Thanks John Arnold.
 
 

@@ -334,8 +334,7 @@ def render_annotation(anno: Any) -> str:
     """Convert an annotation into its stub representation."""
     if _is_optional(anno):
         elem_type = _get_optional_elem(anno)
-        rendered = render_annotation(elem_type)
-        rendered = 'Optional[' + rendered + ']'
+        rendered = 'Optional[' + render_annotation(elem_type) + ']'
     elif hasattr(anno, '__supertype__'):
         rendered = anno.__name__
     elif getattr(anno, '__module__', None) == 'typing':
@@ -350,14 +349,8 @@ def render_annotation(anno: Any) -> str:
     else:
         rendered = repr(anno)
 
-    return replace_nonetype(rendered)
-
-
-def replace_nonetype(stub: str) -> str:
-    """Replaces NoneType with None
-    By convention NoneType and None are used interchangeably in signatures.
-    """
-    return stub.replace('NoneType', 'None')
+    # Temporary hacky workaround for #76 to fix remaining NoneType hints by search-replace
+    return rendered.replace('NoneType', 'None')
 
 
 def render_parameter(param: inspect.Parameter) -> str:
