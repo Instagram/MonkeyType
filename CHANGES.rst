@@ -4,6 +4,9 @@ Changelog
 master
 ------
 
+* Never render NoneType in stubs, substitute None.  Merge of #75, Fixes #5.
+  Thanks John Arnold.
+
 
 18.2.0
 ------

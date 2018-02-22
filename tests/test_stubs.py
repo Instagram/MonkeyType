@@ -285,6 +285,15 @@ class TestFunctionStub:
         expected = 'def test(user_id: UserId) -> None: ...'
         assert stub.render() == expected
 
+    def test_nonetype_annotation(self):
+        """NoneType should always be rendered as None"""
+        sig = Signature.from_callable(UpdateSignatureHelper.has_annos)
+        sig = update_signature_args(sig, {'a': Dict[str, NoneType]}, has_self=False,
+                                    ignore_existing_annotations=True)
+        stub = FunctionStub('test', sig, FunctionKind.MODULE)
+        expected = 'def test(a: Dict[str, None], b) -> int: ...'
+        assert stub.render() == expected
+
 
 def _func_stub_from_callable(func: Callable, strip_modules: List[str] = None):
     kind = FunctionKind.from_callable(func)
