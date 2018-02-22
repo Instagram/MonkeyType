@@ -285,13 +285,13 @@ class TestFunctionStub:
         expected = 'def test(user_id: UserId) -> None: ...'
         assert stub.render() == expected
 
-    def test_union_nonetype_annotation(self):
+    def test_nonetype_annotation(self):
         """NoneType should always be rendered as None"""
         sig = Signature.from_callable(UpdateSignatureHelper.has_annos)
-        sig = update_signature_args(sig, {'a': Dict[str, Dict[str, Union[str, NoneType]]]}, has_self=False,
+        sig = update_signature_args(sig, {'a': Dict[str, NoneType]}, has_self=False,
                                     ignore_existing_annotations=True)
         stub = FunctionStub('test', sig, FunctionKind.MODULE)
-        expected = 'def test(a: Dict[str, Dict[str, Union[str, None]]], b) -> int: ...'
+        expected = 'def test(a: Dict[str, None], b) -> int: ...'
         assert stub.render() == expected
 
 
