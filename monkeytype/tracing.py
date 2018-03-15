@@ -32,7 +32,7 @@ try:
 except ImportError:
     cached_property = None
 
-from monkeytype.typing import get_type
+from monkeytype.type_util import get_type
 from monkeytype.util import get_func_fqname
 
 

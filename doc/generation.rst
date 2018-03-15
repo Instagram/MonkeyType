@@ -126,7 +126,7 @@ have traces present in the trace store. This command respects only the
 :option:`--config` option.
 
 
-.. module:: monkeytype.typing
+.. module:: monkeytype.type_util
 
 .. _rewriters:
 

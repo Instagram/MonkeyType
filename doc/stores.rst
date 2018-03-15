@@ -38,7 +38,7 @@ interface.
 
   .. method:: add(traces: Iterable[CallTrace]) -> None
 
-    Store one or more :class:`~monkeytype.typing.CallTrace` instances.
+    Store one or more :class:`~monkeytype.tracing.CallTrace` instances.
 
     Implementations of this method will probably find the
     :func:`~monkeytype.encoding.serialize_traces` function useful.
@@ -53,7 +53,7 @@ interface.
 
     The returned :class:`CallTraceThunk` instances can be any object that
     implements a :meth:`~CallTraceThunk.to_trace` zero-argument method returning
-    a :class:`~monkeytype.typing.CallTrace` instance. This allows callers of
+    a :class:`~monkeytype.tracing.CallTrace` instance. This allows callers of
     ``filter`` to handle deserialization errors as desired per-trace.
 
     Most stores will choose to return instances of
@@ -86,7 +86,7 @@ call traces in a SQLite database in a local file.
 
   .. method:: add(traces: Iterable[CallTrace]) -> None
 
-    Store one or more :class:`~monkeytype.typing.CallTrace` instances in the
+    Store one or more :class:`~monkeytype.tracing.CallTrace` instances in the
     SQLite database, encoded via :class:`~monkeytype.encoding.CallTraceRow`.
 
   .. method:: filter(module: str, qualname_prefix: Optional[str] = None, limit: int = 2000) -> List[CallTraceRow]

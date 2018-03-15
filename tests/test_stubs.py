@@ -40,7 +40,7 @@ from monkeytype.stubs import (
     update_signature_return,
 )
 from monkeytype.tracing import CallTrace
-from monkeytype.typing import NoneType
+from monkeytype.type_util import NoneType
 from .util import Dummy
 
 UserId = NewType('UserId', int)

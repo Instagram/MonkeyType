@@ -31,7 +31,7 @@ from monkeytype.stubs import (
     build_module_stubs_from_traces,
 )
 from monkeytype.tracing import CallTrace
-from monkeytype.typing import NoOpRewriter
+from monkeytype.type_util import NoOpRewriter
 from monkeytype.util import get_name_in_module
 
 

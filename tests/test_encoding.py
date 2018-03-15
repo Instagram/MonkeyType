@@ -28,7 +28,7 @@ from monkeytype.encoding import (
 )
 from monkeytype.exceptions import InvalidTypeError
 from monkeytype.tracing import CallTrace
-from monkeytype.typing import NoneType
+from monkeytype.type_util import NoneType
 from .util import Outer
 
 from unittest.mock import Mock
