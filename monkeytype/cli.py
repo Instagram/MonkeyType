@@ -144,14 +144,14 @@ def apply_stub_handler(args: argparse.Namespace, stdout: IO, stderr: IO) -> None
         pyi_path = os.path.join(pyi_dir, pyi_name)
         with open(pyi_path, 'w+') as f:
             f.write(stub.render())
-        cmd = ' '.join([
+        retype_args = [
             'retype',
-            '--pyi-dir ' + pyi_dir,
-            '--target-dir ' + src_dir,
+            '--pyi-dir', pyi_dir,
+            '--target-dir', src_dir,
             src_path
-        ])
+        ]
         try:
-            proc = subprocess.run(cmd, shell=True, check=True, stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
+            proc = subprocess.run(retype_args, check=True, stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
             print(proc.stdout.decode('utf-8'), file=stdout)
         except subprocess.CalledProcessError as cpe:
             raise HandlerError(f"Failed applying stub with retype:\n{cpe.stdout.decode('utf-8')}")

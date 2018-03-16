@@ -6,9 +6,11 @@
 from contextlib import contextmanager
 import io
 import os
+import os.path
 import pytest
 import sqlite3
 import subprocess
+import sys
 import tempfile
 from typing import Iterator
 
@@ -285,5 +287,27 @@ def test_apply_stub_init(store_data, stdout, stderr, collector):
     with mock.patch.dict(os.environ, {DefaultConfig.DB_PATH_VAR: db_file.name}):
         ret = cli.main(['apply', Foo.__module__], stdout, stderr)
 
+    assert ret == 0
+    assert 'warning:' not in stdout.getvalue()
+
+
+def test_apply_stub_file_with_spaces(store_data, stdout, stderr):
+    """Regression test for applying a stub to a filename containing spaces"""
+    src = """
+def my_test_function(a, b):
+  return a + b
+"""
+    with tempfile.TemporaryDirectory(prefix='monkey type') as tempdir:
+        module = 'my_test_module'
+        src_path = os.path.join(tempdir, module + '.py')
+        with open(src_path, 'w+') as f:
+            f.write(src)
+        with mock.patch('sys.path', sys.path + [tempdir]):
+            import my_test_module as mtm
+            traces = [CallTrace(mtm.my_test_function, {'a': int, 'b': str}, NoneType)]
+            store, db_file = store_data
+            store.add(traces)
+            with mock.patch.dict(os.environ, {DefaultConfig.DB_PATH_VAR: db_file.name}):
+                ret = cli.main(['apply', 'my_test_module'], stdout, stderr)
     assert ret == 0
     assert 'warning:' not in stdout.getvalue()
