@@ -18,7 +18,7 @@ from typing import (
 
 import pytest
 
-from monkeytype.typing import (
+from monkeytype.type_util import (
     NoneType,
     RemoveEmptyContainers,
     RewriteConfigDict,

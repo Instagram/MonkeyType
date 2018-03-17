@@ -61,10 +61,10 @@ Subclassing ``Config`` or ``DefaultConfig``
 
   .. method:: type_rewriter() -> TypeRewriter
 
-    Return the :class:`~monkeytype.typing.TypeRewriter` which will be applied
+    Return the :class:`~monkeytype.type_util.TypeRewriter` which will be applied
     to all your types when stubs are generated.
 
-    If you don't override, returns :class:`~monkeytype.typing.NoOpRewriter`,
+    If you don't override, returns :class:`~monkeytype.type_util.NoOpRewriter`,
     which doesn't rewrite any types.
 
   .. method:: query_limit() -> int
@@ -148,10 +148,10 @@ Subclassing ``Config`` or ``DefaultConfig``
 
   .. method:: type_rewriter() -> ChainedRewriter
 
-    Returns an instance of :class:`~monkeytype.typing.ChainedRewriter`
-    initialized with the :class:`~monkeytype.typing.RemoveEmptyContainers`,
-    :class:`~monkeytype.typing.RewriteConfigDict`, and
-    :class:`~monkeytype.typing.RewriteLargeUnion` type rewriters.
+    Returns an instance of :class:`~monkeytype.type_util.ChainedRewriter`
+    initialized with the :class:`~monkeytype.type_util.RemoveEmptyContainers`,
+    :class:`~monkeytype.type_util.RewriteConfigDict`, and
+    :class:`~monkeytype.type_util.RewriteLargeUnion` type rewriters.
 
 Using your custom config subclass
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

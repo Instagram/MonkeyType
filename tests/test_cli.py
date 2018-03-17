@@ -24,7 +24,7 @@ from monkeytype.db.sqlite import (
     SQLiteStore,
     )
 from monkeytype.tracing import CallTrace
-from monkeytype.typing import NoneType
+from monkeytype.type_util import NoneType
 
 from .testmodule import Foo
 from .test_tracing import trace_calls

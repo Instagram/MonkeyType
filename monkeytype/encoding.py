@@ -23,7 +23,7 @@ from typing import (  # type: ignore
 from monkeytype.db.base import CallTraceThunk
 from monkeytype.exceptions import InvalidTypeError
 from monkeytype.tracing import CallTrace
-from monkeytype.typing import NoneType
+from monkeytype.type_util import NoneType
 from monkeytype.util import (
     get_func_in_module,
     get_name_in_module,

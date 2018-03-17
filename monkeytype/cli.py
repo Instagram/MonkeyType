@@ -31,7 +31,7 @@ from monkeytype.stubs import (
     build_module_stubs_from_traces,
 )
 from monkeytype.tracing import CallTrace
-from monkeytype.typing import NoOpRewriter
+from monkeytype.type_util import NoOpRewriter
 from monkeytype.util import get_name_in_module
 
 
@@ -375,3 +375,7 @@ def entry_point_main() -> 'NoReturn':
     # Python path ourselves.
     sys.path.insert(0, os.getcwd())
     sys.exit(main(sys.argv[1:], sys.stdout, sys.stderr))
+
+
+if __name__ == '__main__':
+    entry_point_main()

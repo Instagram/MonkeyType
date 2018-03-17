@@ -39,7 +39,7 @@ from monkeytype.tracing import (
     CallTrace,
     CallTraceLogger,
 )
-from monkeytype.typing import (
+from monkeytype.type_util import (
     NoneType,
     NoOpRewriter,
     TypeRewriter,

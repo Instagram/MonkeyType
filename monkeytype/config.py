@@ -26,7 +26,7 @@ from monkeytype.tracing import (
     CallTraceLogger,
     CodeFilter,
 )
-from monkeytype.typing import (
+from monkeytype.type_util import (
     DEFAULT_REWRITER,
     NoOpRewriter,
     TypeRewriter,
