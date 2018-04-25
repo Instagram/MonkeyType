@@ -116,7 +116,7 @@ def default_code_filter(code: CodeType) -> bool:
 
     filename = pathlib.Path(code.co_filename).resolve()
     return os.environ.get('MONKEYTYPE_MODULE', '__unspecified__') in code.co_filename or \
-           not any(_startswith(filename, lib_path) for lib_path in LIB_PATHS)
+        not any(_startswith(filename, lib_path) for lib_path in LIB_PATHS)
 
 
 class DefaultConfig(Config):
