@@ -43,6 +43,7 @@ setup(
             'monkeytype=monkeytype.cli:entry_point_main'
         ]
     },
+    python_requires='>=3.6',
     install_requires=['retype'],
     classifiers=[
         'Development Status :: 5 - Production/Stable',
