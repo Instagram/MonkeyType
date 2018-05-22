@@ -115,8 +115,18 @@ def default_code_filter(code: CodeType) -> bool:
         return False
 
     filename = pathlib.Path(code.co_filename).resolve()
-    return os.environ.get('MONKEYTYPE_MODULE', '__unspecified__') in code.co_filename or \
-        not any(_startswith(filename, lib_path) for lib_path in LIB_PATHS)
+    # if MONKEYTYPE_MODULE is defined, type it even if it is under site-packages
+    if 'MONKEYTYPE_MODULES' in os.environ:
+        # try to remove lib_path to only check package and module names
+        for lib_path in LIB_PATHS:
+            try:
+                filename = filename.relative_to(lib_path)
+                break
+            except ValueError:
+                pass
+        return any(x == filename.stem or x in filename.parts for x in os.environ['MONKEYTYPE_MODULES'].split(','))
+    else:
+        return not any(_startswith(filename, lib_path) for lib_path in LIB_PATHS)
 
 
 class DefaultConfig(Config):

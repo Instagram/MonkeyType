@@ -124,7 +124,10 @@ object`_ and return a boolean: ``True`` means the function will be traced, and
 
 The :class:`~monkeytype.config.DefaultConfig` includes a code filter that
 excludes code from the Python standard library and site-packages (where
-third-party packages are installed).
+third-party packages are installed) unless a list of modules are specified
+in an environment variable ``MONKEYTYPE_MODULES``. Modules defined in
+``MONKEYTYPE_MODULES`` can include Python standard libraries and site packages
+and should be separated by commas if multiple modules are traced.
 
 .. _Python code object: https://docs.python.org/3/reference/datamodel.html
 

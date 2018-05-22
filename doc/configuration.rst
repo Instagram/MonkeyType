@@ -143,8 +143,11 @@ Subclassing ``Config`` or ``DefaultConfig``
 
   .. method:: code_filter() -> CodeFilter
 
-    Returns a predicate function that excludes code in the Python standard
-    library and installed site-packages from call trace logging.
+    If an environment variable ``MONKEYTYPE_MODULES`` is defined with one or
+    more comma separated module names, returns a predicate function that allows
+    only modules defined in this variable. Otherwise a predicate function that
+    excludes code in the Python standard library and installed site-packages
+    from call trace logging will be returned.
 
   .. method:: type_rewriter() -> ChainedRewriter
 
