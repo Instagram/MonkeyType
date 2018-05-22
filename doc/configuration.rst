@@ -144,7 +144,7 @@ Subclassing ``Config`` or ``DefaultConfig``
   .. method:: code_filter() -> CodeFilter
 
     Returns a predicate function that excludes code in the Python standard
-    library and installed third-party packages from call trace logging.
+    library and installed site-packages from call trace logging.
 
   .. method:: type_rewriter() -> ChainedRewriter
 

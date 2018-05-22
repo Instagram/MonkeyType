@@ -10,3 +10,4 @@ dist/
 build/
 .idea/
 monkeytype.sqlite3
+.pytest_cache/

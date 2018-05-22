@@ -203,11 +203,10 @@ def run_handler(args: argparse.Namespace, stdout: IO, stderr: IO) -> None:
     old_argv = sys.argv.copy()
     try:
         with trace(args.config):
+            sys.argv = [args.script_path] + args.script_args
             if args.m:
-                sys.argv = sys.argv[3:]
                 runpy.run_module(args.script_path, run_name='__main__', alter_sys=True)
             else:
-                sys.argv = sys.argv[2:]
                 runpy.run_path(args.script_path, run_name='__main__')
     finally:
         sys.argv = old_argv

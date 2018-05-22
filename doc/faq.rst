@@ -10,11 +10,22 @@ which runs only Django code (that is excluded from tracing by the default code
 filter). To get traces, use ``--parallel 1`` when running your tests under
 MonkeyType tracing.
 
+
 I'm using Django, and I get an AppRegistryNotReady exception when I run monkeytype.
 -----------------------------------------------------------------------------------
 
 You need to use the :meth:`~monkeytype.config.Config.cli_context` config method
 to call ``django.setup()``.
+
+
+I run tests against my package installed in site-packages, and I get no traces.
+-------------------------------------------------------------------------------
+
+The default :meth:`~monkeytype.config.DefaultConfig.code_filter`
+excludes all code from the standard library and ``site-packages``, on the
+assumption that it is third-party code that isn't useful to trace. If you want
+to trace calls to a package in ``site-packages``, you can define
+:ref:`your own custom code filter<codefilters>`.
 
 
 Why did my test coverage measurement stop working?
