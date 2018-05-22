@@ -115,7 +115,7 @@ def default_code_filter(code: CodeType) -> bool:
         return False
 
     filename = pathlib.Path(code.co_filename).resolve()
-    # if MONKEYTYPE_MODULE is defined, type it even if it is under site-packages
+    # if MONKEYTYPE_MODULES is defined, type only specified packages
     if 'MONKEYTYPE_MODULES' in os.environ:
         # try to remove lib_path to only check package and module names
         for lib_path in LIB_PATHS:
