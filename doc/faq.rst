@@ -21,10 +21,13 @@ to call ``django.setup()``.
 I run tests against my package installed in site-packages, and I get no traces.
 -------------------------------------------------------------------------------
 
-The default :meth:`~monkeytype.config.DefaultConfig.code_filter`
-excludes all code from the standard library and ``site-packages``, on the
-assumption that it is third-party code that isn't useful to trace. If you want
-to trace calls to a package in ``site-packages``, you can define
+The default :meth:`~monkeytype.config.DefaultConfig.code_filter` excludes all
+code from the standard library and ``site-packages``, on the assumption that it
+is third-party code that isn't useful to trace. If you want to trace calls to a
+package in ``site-packages``, you can set the environment variable
+``MONKEYTYPE_TRACE_MODULES`` to a comma-separated list of package/module names
+you want to trace; only these modules will be traced, wherever they are
+installed. For more advanced behaviors, you can define
 :ref:`your own custom code filter<codefilters>`.
 
 
