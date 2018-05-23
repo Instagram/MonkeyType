@@ -4,7 +4,16 @@ Changelog
 master
 ------
 
-* Never render NoneType in stubs, substitute None.  Merge of #75, Fixes #5.
+* Add ``MONKEYTYPE_TRACE_MODULES`` env var for easier tracing of code in
+  site-packages. Merge of #83, fixes #82. Thanks Bo Peng.
+
+* Fix passing additional arguments to scripts run via ``monkeytype run``. Merge
+  of #85. Thanks Danny Qiu.
+
+* Fix handling of spaces in filenames passed to retype. Merge of #79, fixes
+  #77.
+
+* Never render NoneType in stubs, substitute None.  Merge of #75, fixes #5.
   Thanks John Arnold.
 
 
