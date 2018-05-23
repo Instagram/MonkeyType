@@ -21,3 +21,8 @@ django = "*"
 [requires]
 
 python_version = "3.6"
+
+
+[pipenv]
+
+keep_outdated = true
