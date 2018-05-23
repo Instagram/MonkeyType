@@ -116,7 +116,9 @@ def default_code_filter(code: CodeType) -> bool:
 
     filename = pathlib.Path(code.co_filename).resolve()
     # if MONKEYTYPE_TRACE_MODULES is defined, trace only specified packages or modules
-    if 'MONKEYTYPE_TRACE_MODULES' in os.environ:
+    trace_modules_str = os.environ.get('MONKEYTYPE_TRACE_MODULES')
+    if trace_modules_str is not None:
+        trace_modules = trace_modules_str.split(',')
         # try to remove lib_path to only check package and module names
         for lib_path in LIB_PATHS:
             try:
@@ -124,7 +126,7 @@ def default_code_filter(code: CodeType) -> bool:
                 break
             except ValueError:
                 pass
-        return any(x == filename.stem or x in filename.parts for x in os.environ['MONKEYTYPE_TRACE_MODULES'].split(','))
+        return any(m == filename.stem or m in filename.parts for m in trace_modules)
     else:
         return not any(_startswith(filename, lib_path) for lib_path in LIB_PATHS)
 
