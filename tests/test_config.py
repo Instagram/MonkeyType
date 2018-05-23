@@ -26,5 +26,5 @@ class TestDefaultCodeFilter:
 
     def test_includes_stdlib_in_MONKEYTYPE_TRACE_MODULES(self, monkeypatch):
         monkeypatch.setenv('MONKEYTYPE_TRACE_MODULES', 'sysconfig')
-        assert config.default_code_filter(sysconfig.get_path.__code__)
+        assert config.default_code_filter(sysconfig.get_config_vars.__code__)
         monkeypatch.delenv('MONKEYTYPE_TRACE_MODULES')
