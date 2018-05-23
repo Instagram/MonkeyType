@@ -23,3 +23,8 @@ class TestDefaultCodeFilter:
 
     def test_excludes_frozen_importlib(self):
         assert not config.default_code_filter(_frozen_importlib.spec_from_loader.__code__)
+
+    def test_includes_stdlib_in_MONKEYTYPE_TRACE_MODULES(self, monkeypatch):
+        monkeypatch.setenv('MONKEYTYPE_TRACE_MODULES', 'sysconfig')
+        assert config.default_code_filter(sysconfig.get_config_vars.__code__)
+        monkeypatch.delenv('MONKEYTYPE_TRACE_MODULES')

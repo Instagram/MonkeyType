@@ -122,9 +122,11 @@ from the :meth:`~monkeytype.config.Config.code_filter` method of your
 object`_ and return a boolean: ``True`` means the function will be traced, and
 ``False`` means it will not.
 
-The :class:`~monkeytype.config.DefaultConfig` includes a code filter that
-excludes code from the Python standard library and site-packages (where
-third-party packages are installed).
+The :class:`~monkeytype.config.DefaultConfig` includes a default code filter.
+If the environment variable ``MONKEYTYPE_TRACE_MODULES`` is set to a list of
+package and/or module names, the default filter traces only code from within
+those modules. Otherwise, the default filter simply excludes code from the
+Python standard library and site-packages.
 
 .. _Python code object: https://docs.python.org/3/reference/datamodel.html
 
