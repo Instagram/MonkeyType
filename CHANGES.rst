@@ -1,7 +1,7 @@
 Changelog
 =========
 
-master
+18.5.1
 ------
 
 * Add ``MONKEYTYPE_TRACE_MODULES`` env var for easier tracing of code in
