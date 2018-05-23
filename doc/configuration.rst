@@ -143,11 +143,12 @@ Subclassing ``Config`` or ``DefaultConfig``
 
   .. method:: code_filter() -> CodeFilter
 
-    If an environment variable ``MONKEYTYPE_TRACE_MODULES`` is defined with one
-    or more comma separated package and/or module names, returns a predicate
-    function that traces only modules defined in this variable. Otherwise a
-    predicate function that excludes code in the Python standard library and
-    installed site-packages from call trace logging will be returned.
+    Returns the default code filter predicate function. If an environment
+    variable ``MONKEYTYPE_TRACE_MODULES`` is defined with one or more comma
+    separated package and/or module names, the default code filter traces only
+    functions within the listed modules. Otherwise the default filter excludes
+    code in the Python standard library and installed site-packages, and traces
+    all other functions.
 
   .. method:: type_rewriter() -> ChainedRewriter
 
