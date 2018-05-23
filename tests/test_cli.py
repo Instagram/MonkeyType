@@ -275,6 +275,24 @@ def test_pathlike_parameter(store_data, capsys):
         assert "test/foo.py does not look like a valid Python import path" in err
 
 
+def test_toplevel_filename_parameter(store_data, stdout, stderr):
+    filename = 'foo.py'
+    store, db_file = store_data
+    with mock.patch.dict(os.environ, {DefaultConfig.DB_PATH_VAR: db_file.name}):
+        orig_exists = os.path.exists
+
+        def side_effect(x):
+            return True if x == filename else orig_exists(x)
+        with mock.patch('os.path.exists', side_effect=side_effect) as mock_exists:
+            ret = cli.main(['stub', filename], stdout, stderr)
+            mock_exists.assert_called_with(filename)
+        err_msg = f"No traces found for {filename}; did you pass a filename instead of a module name? " \
+                  f"Maybe try just '{os.path.splitext(filename)[0]}'.\n"
+        assert stderr.getvalue() == err_msg
+        assert stdout.getvalue() == ''
+        assert ret == 0
+
+
 @pytest.mark.usefixtures("collector")
 def test_apply_stub_init(store_data, stdout, stderr, collector):
     """Regression test for applying stubs to testmodule/__init__.py style module layout"""
