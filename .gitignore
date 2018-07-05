@@ -13,3 +13,4 @@ monkeytype.sqlite3
 .pytest_cache/
 .DS_Store
 .tox/
+.DS_Store
