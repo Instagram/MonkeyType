@@ -132,7 +132,7 @@ def default_code_filter(code: CodeType) -> bool:
 
 
 class DefaultConfig(Config):
-    DB_PATH_VAR = 'MT_DB_PATH'
+    DB_PATH_VAR = 'MONKEYTYPE_DB_LOCATION'
 
     def type_rewriter(self) -> TypeRewriter:
         return DEFAULT_REWRITER
@@ -140,7 +140,7 @@ class DefaultConfig(Config):
     def trace_store(self) -> CallTraceStore:
         """By default we store traces in a local SQLite database.
 
-        The path to this database file can be customized via the `MT_DB_PATH`
+        The path to this database file can be customized via the `MONKEYTYPE_DB_LOCATION`
         environment variable.
         """
         db_path = os.environ.get(self.DB_PATH_VAR, "monkeytype.sqlite3")
