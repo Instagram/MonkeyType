@@ -139,7 +139,7 @@ Subclassing ``Config`` or ``DefaultConfig``
     Returns an instance of :class:`~monkeytype.db.sqlite.SQLiteStore`, which
     stores call traces in a local SQLite database, by default in the file
     ``monkeytype.sqlite3`` in the current directory. You can override the path
-    to the SQLite database by setting the ``MT_DB_PATH`` environment variable.
+    to the SQLite database by setting the ``MONKEYTYPE_DB_LOCATION`` environment variable.
 
   .. method:: code_filter() -> CodeFilter
 
