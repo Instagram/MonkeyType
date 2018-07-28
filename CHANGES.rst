@@ -4,6 +4,9 @@ Changelog
 master
 ------
 
+* Enable ``python -m monkeytype {run,stub,apply} ...``. Merge of #100, fixes
+  #99. Thanks retornam.
+
 
 18.5.1
 ------
