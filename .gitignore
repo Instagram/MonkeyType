@@ -11,3 +11,4 @@ build/
 .idea/
 monkeytype.sqlite3
 .pytest_cache/
+.DS_Store
