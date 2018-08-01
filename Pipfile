@@ -1,9 +1,12 @@
 [[source]]
+
 url = "https://pypi.python.org/simple"
 verify_ssl = true
 name = "pypi"
 
+
 [dev-packages]
+
 "flake8" = "*"
 pytest = "*"
 mypy = "*"
@@ -13,12 +16,14 @@ cython = "*"
 sphinx = "*"
 twine = "*"
 django = "*"
+tox = "*"
+
 
 [requires]
+
 python_version = "3.6"
 
-[pipenv]
-keep_outdated = true
 
-[packages]
-tox = "*"
+[pipenv]
+
+keep_outdated = true
