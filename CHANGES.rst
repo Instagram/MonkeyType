@@ -4,6 +4,9 @@ Changelog
 master
 ------
 
+* Fix crash in ``list_modules`` when there are no traces. Merge of #106, fixes
+  #90.  Thanks tyrinwu.
+
 * Enable ``python -m monkeytype {run,stub,apply} ...``. Merge of #100, fixes
   #99. Thanks retornam.
 
