@@ -6,20 +6,17 @@
 import json
 import logging
 
-# _Any and _Union aren't visible from stubs
-from typing import (  # type: ignore
+from typing import (
     Any,
     Callable,
     Dict,
-    GenericMeta,
     Iterable,
     Optional,
     Type,
     TypeVar,
-    _Any,
-    _Union,
 )
 
+from monkeytype.compat import is_any, is_union, is_generic, qualname_of_generic
 from monkeytype.db.base import CallTraceThunk
 from monkeytype.exceptions import InvalidTypeError
 from monkeytype.tracing import CallTrace
@@ -59,10 +56,12 @@ def type_to_dict(typ: type) -> TypeDict:
         2. Contain enough information to let us reify the type
     """
     # Union and Any are special cases that aren't actually types.
-    if isinstance(typ, _Union):
+    if is_union(typ):
         qualname = 'Union'
-    elif isinstance(typ, _Any):
+    elif is_any(typ):
         qualname = 'Any'
+    elif is_generic(typ):
+        qualname = qualname_of_generic(typ)
     else:
         qualname = typ.__qualname__
     d: TypeDict = {
@@ -70,7 +69,7 @@ def type_to_dict(typ: type) -> TypeDict:
         'qualname': qualname,
     }
     elem_types = getattr(typ, '__args__', None)
-    if elem_types and isinstance(typ, (_Union, GenericMeta)):
+    if elem_types and is_generic(typ):
         d['elem_types'] = [type_to_dict(t) for t in elem_types]
     return d
 
@@ -93,13 +92,17 @@ def type_from_dict(d: TypeDict) -> type:
         typ = _HIDDEN_BUILTIN_TYPES[qualname]
     else:
         typ = get_name_in_module(module, qualname)
-    if not isinstance(typ, (type, _Union, _Any)):
+    if not (
+        isinstance(typ, type) or
+        is_any(typ) or
+        is_generic(typ)
+    ):
         raise InvalidTypeError(
             f"Attribute specified by '{qualname}' in module '{module}' "
-            "is of type {type(typ)}, not type."
+            f"is of type {type(typ)}, not type."
         )
     elem_type_dicts = d.get('elem_types')
-    if elem_type_dicts and isinstance(typ, (_Union, GenericMeta)):
+    if elem_type_dicts and is_generic(typ):
         elem_types = tuple(type_from_dict(e) for e in elem_type_dicts)
         # mypy complains that a value of type `type` isn't indexable. That's
         # true, but we know typ is a subtype that is indexable. Even checking

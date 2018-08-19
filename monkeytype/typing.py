@@ -4,8 +4,6 @@
 # This source code is licensed under the BSD-style license found in the
 # LICENSE file in the root directory of this source tree.
 import inspect
-import re
-import sys
 import types
 from typing import (
     Any,
@@ -19,9 +17,8 @@ from typing import (
     Tuple,
     Type,
     Union,
-    _Any,
-    _Union,
 )
+from monkeytype.compat import is_any, is_generic, is_generic_of, is_union, name_of_generic
 
 
 # The shrink_types and get_type functions construct new types at runtime. Mypy
@@ -81,16 +78,11 @@ def get_type(obj):
     return typ
 
 
-_VARIANCE_RE = re.compile(r'<[^>]+>')
-
 NoneType = type(None)
 
 
 def _get_union_type_str(t):
-    attr = '__args__'
-    if sys.version_info < (3, 6):
-        attr = '__union_params__'
-    elem_types = getattr(t, attr)
+    elem_types = t.__args__
     if NoneType in elem_types:
         # Optionals end up as Union[NoneType, ...], convert it back to
         # Optional[...]
@@ -103,13 +95,10 @@ def _get_union_type_str(t):
 def get_type_str(t):
     mod = t.__module__
     if mod == 'typing':
-        if type(t) is type(Union):
+        if is_union(t):
             s = _get_union_type_str(t)
         else:
             s = str(t)
-        if sys.version_info < (3, 6):
-            # Prior to 3.6 lib/typing.py included variance information
-            s = _VARIANCE_RE.sub('', s)
         return s
     elif mod == 'builtins':
         return t.__qualname__
@@ -145,10 +134,12 @@ class TypeRewriter:
         return typ
 
     def rewrite(self, typ):
-        if isinstance(typ, _Any):
+        if is_any(typ):
             typname = 'Any'
-        elif isinstance(typ, _Union):
+        elif is_union(typ):
             typname = 'Union'
+        elif is_generic(typ):
+            typname = name_of_generic(typ)
         else:
             typname = getattr(typ, '__name__', None)
         rewriter = getattr(
@@ -172,7 +163,7 @@ class RemoveEmptyContainers(TypeRewriter):
 
     def _is_empty(self, typ):
         args = getattr(typ, '__args__', [])
-        return args and all(isinstance(e, _Any) for e in args)
+        return args and all(is_any(e) for e in args)
 
     def rewrite_Union(self, union):
         elems = tuple(
@@ -189,7 +180,7 @@ class RewriteConfigDict(TypeRewriter):
         key_type = None
         value_types = []
         for e in union.__args__:
-            if not issubclass(e, Dict) or not hasattr(e, '__args__'):
+            if not is_generic_of(e, Dict):
                 return union
             key_type = key_type or e.__args__[0]
             if key_type != e.__args__[0]:
@@ -209,7 +200,7 @@ class RewriteLargeUnion(TypeRewriter):
         """Union[Tuple[V, ..., V], Tuple[V, ..., V], ...] -> Tuple[V, ...]"""
         value_type = None
         for t in union.__args__:
-            if not issubclass(t, Tuple) or not hasattr(t, '__args__'):
+            if not is_generic_of(t, Tuple):
                 return None
             value_type = value_type or t.__args__[0]
             if not all(vt is value_type for vt in t.__args__):
@@ -231,7 +222,7 @@ class RewriteLargeUnion(TypeRewriter):
                     all(issubclass(t, ancestor) for t in union.__args__)
                 ):
                     return ancestor
-        except TypeError:
+        except (TypeError, AttributeError):
             pass
         return Any
 

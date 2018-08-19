@@ -3,10 +3,16 @@
 # Check https://circleci.com/docs/2.0/language-python/ for more details
 #
 version: 2
+workflows:
+  version: 2
+  test:
+    jobs:
+      - test-3.7
+      - test-3.6
 jobs:
-  build:
+  test-3.7:
     docker:
-      - image: circleci/python:3.6.1
+      - image: circleci/python:3.7
     environment:
       - WORKON_HOME: "~/.venvs"
     working_directory: ~/repo
@@ -17,9 +23,72 @@ jobs:
       # Download and cache dependencies
       - restore_cache:
           keys:
-          - v3-dependencies-{{ checksum "Pipfile.lock" }}
+          - py37-dependencies-{{ checksum "Pipfile.lock" }}
           # fallback to using the latest cache if no exact match is found
-          - v3-dependencies-
+          - py37-dependencies-
+
+      - run:
+          name: add user installs to PATH
+          command: |
+            echo 'export PATH=$HOME/.local/bin:$PATH' >> $BASH_ENV
+
+      - run:
+          name: install dependencies
+          command: |
+            pip install --user pipenv
+            pipenv install -d
+
+      - save_cache:
+          paths:
+            - ~/.local
+            - ~/.venvs
+          key: v3-dependencies-{{ checksum "Pipfile.lock" }}
+
+      - run:
+          name: lint
+          command: |
+            pipenv run flake8
+
+      - run:
+          name: typecheck
+          command: |
+            pipenv run mypy monkeytype
+
+      - run:
+          name: run tests
+          command: |
+            pipenv run pytest
+
+      - store_artifacts:
+          path: htmlcov
+          destination: htmlcov
+
+      - run:
+          name: build docs
+          command: |
+            cd doc
+            pipenv run make html
+
+      - store_artifacts:
+          path: doc/_build/html
+          destination: doc
+
+  test-3.6:
+    docker:
+      - image: circleci/python:3.6
+    environment:
+      - WORKON_HOME: "~/.venvs"
+    working_directory: ~/repo
+
+    steps:
+      - checkout
+
+      # Download and cache dependencies
+      - restore_cache:
+          keys:
+          - py36-dependencies-{{ checksum "Pipfile.lock" }}
+          # fallback to using the latest cache if no exact match is found
+          - py36-dependencies-
 
       - run:
           name: add user installs to PATH
