@@ -11,6 +11,13 @@ working directory to the Python path, so ensuring that you run ``monkeytype``
 from the root of your code is usually sufficient. Alternatively, you can set the
 ``PYTHONPATH`` environment variable.
 
+.. _monkeytype-list:
+
+monkeytype list_modules
+~~~~~~~~~~~~~~~~~~~~~~~
+
+Print a list of all modules for which call traces have been stored.
+
 .. _monkeytype-stub:
 
 monkeytype stub
