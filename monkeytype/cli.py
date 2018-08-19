@@ -191,9 +191,6 @@ def print_stub_handler(args: argparse.Namespace, stdout: IO, stderr: IO) -> None
 def list_modules_handler(args: argparse.Namespace, stdout: IO, stderr: IO) -> None:
     output, file = None, stdout
     modules = args.config.trace_store().list_modules()
-    if not modules:
-        complain_about_no_traces(args, stderr)
-        return
     output = '\n'.join(modules)
     print(output, file=file)
 

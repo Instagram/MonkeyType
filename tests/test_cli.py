@@ -209,6 +209,17 @@ def test_display_list_of_modules(store_data, stdout, stderr):
     assert ret == 0
 
 
+def test_display_list_of_modules_no_modules(store_data, stdout, stderr):
+    store, db_file = store_data
+    with mock.patch.dict(os.environ, {DefaultConfig.DB_PATH_VAR: db_file.name}):
+        ret = cli.main(['list-modules'], stdout, stderr)
+    expected = ""
+    assert stderr.getvalue() == expected
+    expected = "\n"
+    assert stdout.getvalue() == expected
+    assert ret == 0
+
+
 def test_display_sample_count(capsys, stderr):
     traces = [
         CallTrace(func, {'a': int, 'b': str}, NoneType),
