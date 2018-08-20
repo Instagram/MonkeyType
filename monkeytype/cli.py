@@ -65,6 +65,11 @@ def complain_about_no_traces(args: argparse.Namespace, stderr: IO) -> None:
     module, qualname = args.module_path
     if qualname:
         print(f'No traces found for specifier {module}:{qualname}', file=stderr)
+    # When there is no trace and a top level module's filename is passed, print
+    # a useful error message.
+    elif os.path.exists(module):
+        print(f"No traces found for {module}; did you pass a filename instead of a module name? "
+              f"Maybe try just '{os.path.splitext(module)[0]}'.", file=stderr)
     else:
         print(f'No traces found for module {module}', file=stderr)
 
