@@ -7,7 +7,7 @@ master
 18.8.0
 ------
 
-* Support Python 3.7. Merge of #106, fixes #78.
+* Support Python 3.7. Merge of #107, fixes #78.
 
 * Print useful error message when filename is passed to stub/apply. Merge of
   #88, fixes #65. Thanks rajathagasthya.
