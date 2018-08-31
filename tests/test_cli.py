@@ -70,11 +70,10 @@ class LoudContextConfig(DefaultConfig):
 
 @pytest.fixture
 def store_data():
-    db_file = tempfile.NamedTemporaryFile(prefix='monkeytype_tests')
-    conn = sqlite3.connect(db_file.name)
-    create_call_trace_table(conn)
-    yield SQLiteStore(conn), db_file
-    db_file.close()
+    with tempfile.NamedTemporaryFile(prefix='monkeytype_tests') as db_file:
+        conn = sqlite3.connect(db_file.name)
+        create_call_trace_table(conn)
+        yield SQLiteStore(conn), db_file
 
 
 @pytest.fixture
