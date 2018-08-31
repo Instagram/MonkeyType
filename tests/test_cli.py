@@ -73,7 +73,8 @@ def store_data():
     db_file = tempfile.NamedTemporaryFile(prefix='monkeytype_tests')
     conn = sqlite3.connect(db_file.name)
     create_call_trace_table(conn)
-    return SQLiteStore(conn), db_file
+    yield SQLiteStore(conn), db_file
+    db_file.close()
 
 
 @pytest.fixture
