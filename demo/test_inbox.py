@@ -4,6 +4,7 @@
 Sample code for MonkeyType demonstration exercise at PyCon 2018.
 
 """
+import sys
 from datetime import datetime, timedelta
 from typing import Collection, Dict, List, Optional
 
@@ -65,6 +66,9 @@ def make_user(**kwargs):
 
 
 def now():
+    if sys.platform != 'win32':
+        return datetime.now()
+
     # Workaround for Windows where two close call to datetime.now() return
     # exaclty the same datetime
     return datetime.now() + timedelta(microseconds=last_auto_id)
