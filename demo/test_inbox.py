@@ -70,7 +70,7 @@ def now():
         return datetime.now()
 
     # Workaround for Windows where two close call to datetime.now() return
-    # exaclty the same datetime
+    # exactly the same datetime
     return datetime.now() + timedelta(microseconds=last_auto_id)
 
 
