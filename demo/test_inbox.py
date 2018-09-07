@@ -4,7 +4,8 @@
 Sample code for MonkeyType demonstration exercise at PyCon 2018.
 
 """
-from datetime import datetime
+import sys
+from datetime import datetime, timedelta
 from typing import Collection, Dict, List, Optional
 
 import inbox
@@ -64,13 +65,22 @@ def make_user(**kwargs):
     return models.User(**defaults)
 
 
+def now():
+    if sys.platform != 'win32':
+        return datetime.now()
+
+    # Workaround for Windows where two close call to datetime.now() return
+    # exactly the same datetime
+    return datetime.now() + timedelta(microseconds=last_auto_id)
+
+
 def make_feedentry(**kwargs):
     global last_auto_id
     last_auto_id += 1
     defaults = {
         "id": models.FeedEntryId(last_auto_id),
         "caption": "Test FeedEntry",
-        "published": datetime.now(),
+        "published": now(),
     }
     defaults.update(kwargs)
     return models.FeedEntry(**defaults)
@@ -82,7 +92,7 @@ def make_commented(**kwargs):
     defaults = {
         "id": models.InboxEventId(last_auto_id),
         "comment_text": "Test comment",
-        "published": datetime.now(),
+        "published": now(),
     }
     defaults.update(kwargs)
     return models.CommentedEvent(**defaults)
@@ -91,7 +101,7 @@ def make_commented(**kwargs):
 def make_liked(**kwargs):
     global last_auto_id
     last_auto_id += 1
-    defaults = {"id": models.InboxEventId(last_auto_id), "published": datetime.now()}
+    defaults = {"id": models.InboxEventId(last_auto_id), "published": now()}
     defaults.update(kwargs)
     return models.LikedEvent(**defaults)
 
@@ -99,7 +109,7 @@ def make_liked(**kwargs):
 def make_followed(**kwargs):
     global last_auto_id
     last_auto_id += 1
-    defaults = {"id": models.InboxEventId(last_auto_id), "published": datetime.now()}
+    defaults = {"id": models.InboxEventId(last_auto_id), "published": now()}
     defaults.update(kwargs)
     return models.FollowedEvent(**defaults)
 
@@ -238,7 +248,6 @@ def test_everything():
     like2 = make_liked(user_id=u.id, liker_id=other.id, feedentry_id=second_entry.id)
     repo = FakeRepo(u, other, first_entry, second_entry, like1, like2, comment, follow)
     box = inbox.Inbox(u, repo)
-
     assert (
         box.aggregate()
         == [
@@ -272,7 +281,7 @@ def test_aggregator_interface():
 
     agg.add(
         models.InboxEvent(
-            models.InboxEventId(1), models.UserId(2), published=datetime.now()
+            models.InboxEventId(1), models.UserId(2), published=now()
         )
     )
     assert agg.aggregate() == []
