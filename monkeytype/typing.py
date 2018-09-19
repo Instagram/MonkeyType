@@ -242,8 +242,19 @@ class NoOpRewriter(TypeRewriter):
         return typ
 
 
+class RewriteGenerator(TypeRewriter):
+    """Returns an Iterator, if the send_type and return_type of a Generator is None"""
+
+    def rewrite_Generator(self, typ):
+        args = typ.__args__
+        if args[1] is NoneType and args[2] is NoneType:
+            return Iterator[args[0]]
+        return typ
+
+
 DEFAULT_REWRITER = ChainedRewriter((
     RemoveEmptyContainers(),
     RewriteConfigDict(),
     RewriteLargeUnion(),
+    RewriteGenerator(),
 ))

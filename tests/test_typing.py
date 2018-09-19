@@ -14,6 +14,7 @@ from typing import (
     Tuple,
     Type,
     Union,
+    Generator,
 )
 
 import pytest
@@ -26,7 +27,9 @@ from monkeytype.typing import (
     get_type,
     get_type_str,
     shrink_types,
+    RewriteGenerator,
 )
+
 from .util import Dummy
 
 
@@ -208,4 +211,23 @@ class TestRewriteLargeUnion:
     )
     def test_rewrite(self, typ, expected):
         rewritten = RewriteLargeUnion(2).rewrite(typ)
+        assert rewritten == expected
+
+
+class TestRewriteGenerator:
+    @pytest.mark.parametrize(
+        'typ, expected',
+        [
+            # Should not rewrite
+            (Generator[int, None, int], Generator[int, None, int]),
+
+            # Should not rewrite
+            (Generator[int, int, None], Generator[int, int, None]),
+
+            # Should rewrite to Iterator[int]
+            (Generator[int, NoneType, NoneType], Iterator[int])
+        ],
+    )
+    def test_rewrite(self, typ, expected):
+        rewritten = RewriteGenerator().rewrite(typ)
         assert rewritten == expected
