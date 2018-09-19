@@ -4,6 +4,10 @@ Changelog
 master
 ------
 
+* Rewrite `Generator[..., None, None]` to `Iterator[None]` by default. Merge of
+  #110, fixes #4. Thanks iyanuashiri.
+
+
 18.8.0
 ------
 
