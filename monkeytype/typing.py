@@ -256,7 +256,7 @@ class RewriteGenerator(TypeRewriter):
 
     def rewrite_Generator(self, typ):
         args = typ.__args__
-        if issubclass(args[1], NoneType) is True and issubclass(args[2], NoneType) is True:
+        if args[1] is NoneType and args[2] is NoneType:
             return Iterator[args[0]]
         return typ
 
