@@ -29,6 +29,7 @@ from monkeytype.typing import (
     shrink_types,
     RewriteGenerator,
 )
+
 from .util import Dummy
 
 
@@ -217,12 +218,14 @@ class TestRewriteGenerator:
     @pytest.mark.parametrize(
         'typ, expected',
         [
-            # Should rewrite to Iterator[int, None, None]
-            (Generator[int, None, None], Iterator[int]),
             # Should not rewrite
             (Generator[int, None, int], Generator[int, None, int]),
+
             # Should not rewrite
             (Generator[int, int, None], Generator[int, int, None]),
+
+            # Should rewrite to Iterator[int]
+            (Generator[int, NoneType, NoneType], Iterator[int])
         ],
     )
     def test_rewrite(self, typ, expected):
