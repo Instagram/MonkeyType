@@ -1,4 +1,9 @@
 @ECHO OFF
+REM Copyright (c) 2017-present, Facebook, Inc.
+REM All rights reserved.
+REM
+REM This source code is licensed under the BSD-style license found in the
+REM LICENSE file in the root directory of this source tree.
 
 pushd %~dp0
 
