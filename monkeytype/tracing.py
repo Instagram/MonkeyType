@@ -27,6 +27,8 @@ from typing import (
     cast,
 )
 
+from monkeytype.StructuredDict import StructuredDict
+
 try:
     from django.utils.functional import cached_property  # type: ignore
 except ImportError:
@@ -45,9 +47,9 @@ class CallTrace:
     def __init__(
         self,
         func: Callable,
-        arg_types: Dict[str, type],
-        return_type: Optional[type] = None,
-        yield_type: Optional[type] = None
+        arg_types: Dict[str, Union[type, StructuredDict]],
+        return_type: Optional[Union[type, StructuredDict]] = None,
+        yield_type: Optional[Union[type, StructuredDict]] = None
     ) -> None:
         """
         Args:

@@ -5,7 +5,6 @@
 # LICENSE file in the root directory of this source tree.
 import json
 import logging
-
 from typing import (
     Any,
     Callable,
@@ -14,8 +13,9 @@ from typing import (
     Optional,
     Type,
     TypeVar,
-)
+    Union)
 
+from monkeytype.StructuredDict import StructuredDict, structured_dict_name
 from monkeytype.compat import is_any, is_union, is_generic, qualname_of_generic
 from monkeytype.db.base import CallTraceThunk
 from monkeytype.exceptions import InvalidTypeError
@@ -25,7 +25,6 @@ from monkeytype.util import (
     get_func_in_module,
     get_name_in_module,
 )
-
 
 logger = logging.getLogger(__name__)
 
@@ -48,7 +47,7 @@ logger = logging.getLogger(__name__)
 TypeDict = Dict[str, Any]
 
 
-def type_to_dict(typ: type) -> TypeDict:
+def type_to_dict(typ: Union[type, StructuredDict]) -> TypeDict:
     """Convert a type into a dictionary representation that we can store.
 
     The dictionary must:
@@ -62,12 +61,19 @@ def type_to_dict(typ: type) -> TypeDict:
         qualname = 'Any'
     elif is_generic(typ):
         qualname = qualname_of_generic(typ)
+    elif isinstance(typ, StructuredDict):
+        qualname = structured_dict_name
     else:
         qualname = typ.__qualname__
     d: TypeDict = {
         'module': typ.__module__,
         'qualname': qualname,
     }
+    if isinstance(typ, StructuredDict):
+        structured_dict_attrs = {
+            key: type_to_dict(value) for key, value in typ.items()
+        }
+        d['structured_dict_attrs'] = structured_dict_attrs
     elem_types = getattr(typ, '__args__', None)
     if elem_types and is_generic(typ):
         d['elem_types'] = [type_to_dict(t) for t in elem_types]
@@ -88,12 +94,20 @@ def type_from_dict(d: TypeDict) -> type:
         InvalidTypeError if the named type isn't actually a type
     """
     module, qualname = d['module'], d['qualname']
-    if module == 'builtins' and qualname in _HIDDEN_BUILTIN_TYPES:
+    if qualname == structured_dict_name:
+        structured_dict_attrs = d['structured_dict_attrs']
+        typ = StructuredDict(
+            **{
+                key: type_from_dict(value) for key, value in structured_dict_attrs.items()
+            }
+        )
+    elif module == 'builtins' and qualname in _HIDDEN_BUILTIN_TYPES:
         typ = _HIDDEN_BUILTIN_TYPES[qualname]
     else:
         typ = get_name_in_module(module, qualname)
     if not (
         isinstance(typ, type) or
+        isinstance(typ, StructuredDict) or
         is_any(typ) or
         is_generic(typ)
     ):

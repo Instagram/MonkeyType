@@ -13,6 +13,7 @@ from typing import (
 import pytest
 from django.utils.functional import cached_property
 
+from monkeytype.StructuredDict import StructuredDict
 from monkeytype.tracing import (
     CallTrace,
     CallTraceLogger,
@@ -41,6 +42,10 @@ class TraceCollector(CallTraceLogger):
         self.flushed = True
 
 
+def return_directly(raw_input):
+    return raw_input
+
+
 def simple_add(a: int, b: int) -> int:
     return a + b
 
@@ -50,8 +55,8 @@ def has_optional_kwarg(a: int, b: str = None) -> Optional[FrameType]:
 
 
 def has_locals(foo: str) -> Optional[FrameType]:
-        bar = 'baz'  # noqa - Needed to ensure non-argument locals are present in the returned frame
-        return inspect.currentframe()
+    bar = 'baz'  # noqa - Needed to ensure non-argument locals are present in the returned frame
+    return inspect.currentframe()
 
 
 class GetFuncHelper:
@@ -198,6 +203,12 @@ class LazyValue:
         return result
 
 
+structured_dict = StructuredDict(
+    a=3,
+    b=5,
+)
+
+
 class TestTraceCalls:
     def test_simple_call(self, collector):
         with trace_calls(collector):
@@ -306,6 +317,23 @@ class TestTraceCalls:
         lazy_val = LazyValue(explicit_return_none)
         with trace_calls(collector):
             lazy_val.value
+
+    def test_structured_dict(self, collector):
+        with trace_calls(collector):
+            return_directly(structured_dict)
+        assert collector.traces == [
+            CallTrace(
+                return_directly,
+                {'raw_input': StructuredDict(
+                    a=int,
+                    b=int,
+                )},
+                StructuredDict(
+                    a=int,
+                    b=int,
+                )
+            ),
+        ]
 
     @pytest.mark.skipif(CythonTest is None, reason="cython required for this test")
     def test_cython_wrapper(self, collector):

@@ -16,6 +16,7 @@ from typing import (
 
 import pytest
 
+from monkeytype.StructuredDict import StructuredDict
 from monkeytype.encoding import (
     CallTraceRow,
     maybe_decode_type,
@@ -36,6 +37,11 @@ from unittest.mock import Mock
 
 def dummy_func(a, b):
     return a + b
+
+
+structured_dict = StructuredDict(
+    a=1
+)
 
 
 class TestTypeConversion:
@@ -69,6 +75,13 @@ class TestTypeConversion:
                     Optional[Dict[str, int]]
                 ]
             ],
+            StructuredDict(
+                a=str,
+                b=int,
+                c=StructuredDict(
+                    nested_a=str,
+                ),
+            )
         ],
     )
     def test_type_round_trip(self, typ):

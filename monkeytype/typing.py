@@ -18,6 +18,8 @@ from typing import (
     Type,
     Union,
 )
+
+from monkeytype.StructuredDict import StructuredDict
 from monkeytype.compat import is_any, is_generic, is_generic_of, is_union, name_of_generic
 
 
@@ -60,6 +62,14 @@ def get_type(obj):
         return Callable
     elif isinstance(obj, types.GeneratorType):
         return Iterator[Any]
+
+    elif isinstance(obj, StructuredDict):
+        return StructuredDict(
+            **{
+                key: get_type(value) for key, value in obj.items()
+            }
+        )
+
     typ = type(obj)
     if typ is list:
         elem_type = shrink_types(get_type(e) for e in obj)
@@ -68,6 +78,7 @@ def get_type(obj):
         elem_type = shrink_types(get_type(e) for e in obj)
         return Set[elem_type]
     elif typ is dict:
+
         key_type = shrink_types(get_type(k) for k in obj.keys())
         val_type = shrink_types(get_type(v) for v in obj.values())
         return Dict[key_type, val_type]
