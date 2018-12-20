@@ -148,11 +148,11 @@ def combine_type_metadata(a: TypeMetadata, b: TypeMetadata) -> TypeMetadata:
         )
     elif isinstance(a, UnionTypeMetadata):
         return UnionTypeMetadata(
-            a.val.add(b.val)
+            a.val.union([b])
         )
     elif isinstance(b, UnionTypeMetadata):
         return UnionTypeMetadata(
-            b.val.add(a.val)
+            b.val.union([a])
         )
     else:
         return UnionTypeMetadata(
