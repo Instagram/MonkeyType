@@ -4,6 +4,15 @@ from monkeytype.type_metadata import (
     get_type_metadata, DictTypeMetadata, TypTypeMetadata, ListTypeMetadata, UnionTypeMetadata)
 
 
+class DummyClass:
+    pass
+
+
+class DummyClass2:
+    def __init__(self, val: int):
+        self.val = val
+
+
 class TestTypeMetadata:
 
     def test_get_type_metadata(self):
@@ -27,11 +36,13 @@ class TestTypeMetadata:
             }),
         })
 
-    def test_encode_decode_type_metadata(self):
+    def test_encode_decode_type_metadata1(self):
         type_metadata = get_type_metadata({
             'a': 3,
             'b': {
                 'c': [1, 2, '3'],
+                'd': DummyClass(),
+                'e': DummyClass2(1),
             },
         })
         encoded = encode_type_metadata(type_metadata)
