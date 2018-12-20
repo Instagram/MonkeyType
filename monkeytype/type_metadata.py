@@ -1,8 +1,7 @@
 import json
-from dataclasses import dataclass
 from enum import Enum
 from functools import reduce
-from typing import Dict, Any, Optional, Set
+from typing import Dict, Any, Optional, Set, NamedTuple
 
 from mypy_extensions import TypedDict
 
@@ -14,16 +13,14 @@ class TypeMetadataKind(str, Enum):
     ListTypeMetadata = 'ListTypeMetadata'
     UnionTypeMetadata = 'UnionTypeMetadata'
     TypTypeMetadata = 'TypTypeMetadata'
+    __Base__ = '__BaseTypeMetadataKind'
 
 
-class TypeMetadata:
+class TypeMetadata(NamedTuple):
     val: Any
-    kind: TypeMetadataKind
+    kind: TypeMetadataKind = TypeMetadataKind.__Base__
 
 
-@dataclass(
-    frozen=True,
-)
 class DictTypeMetadata(TypeMetadata):
     val: Dict[
         str,
@@ -32,25 +29,16 @@ class DictTypeMetadata(TypeMetadata):
     kind = TypeMetadataKind.DictTypeMetadata
 
 
-@dataclass(
-    frozen=True,
-)
 class ListTypeMetadata(TypeMetadata):
     val: TypeMetadata
     kind = TypeMetadataKind.ListTypeMetadata
 
 
-@dataclass(
-    frozen=True,
-)
 class UnionTypeMetadata(TypeMetadata):
     val: Set[TypeMetadata]
     kind = TypeMetadataKind.UnionTypeMetadata
 
 
-@dataclass(
-    frozen=True,
-)
 class TypTypeMetadata(TypeMetadata):
     val: type
     kind = TypeMetadataKind.TypTypeMetadata

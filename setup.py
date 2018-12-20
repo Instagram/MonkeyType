@@ -44,7 +44,7 @@ setup(
         ]
     },
     python_requires='>=3.6',
-    install_requires=['retype', 'dataclasses'],
+    install_requires=['retype'],
     classifiers=[
         'Development Status :: 5 - Production/Stable',
         'Intended Audience :: Developers',
