@@ -20,14 +20,13 @@ from monkeytype.encoding import (
     CallTraceRow,
     maybe_decode_type,
     maybe_encode_type,
-    type_from_dict,
     type_from_json,
-    type_to_dict,
     type_to_json,
     serialize_traces,
 )
 from monkeytype.exceptions import InvalidTypeError
 from monkeytype.tracing import CallTrace
+from monkeytype.type_dict import type_to_dict, type_from_dict
 from monkeytype.typing import NoneType
 from .util import Outer
 

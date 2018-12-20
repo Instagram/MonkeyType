@@ -19,6 +19,7 @@ from monkeytype.tracing import (
     get_func,
     trace_calls,
 )
+from monkeytype.type_metadata import get_type_metadata
 from monkeytype.typing import NoneType
 
 # avoid a hard dependency on Cython
@@ -202,7 +203,17 @@ class TestTraceCalls:
     def test_simple_call(self, collector):
         with trace_calls(collector):
             simple_add(1, 2)
-        assert collector.traces == [CallTrace(simple_add, {'a': int, 'b': int}, int)]
+
+        assert collector.traces == [
+            CallTrace(
+                simple_add, {'a': int, 'b': int}, int,
+                arg_types_metadata={
+                    'a': get_type_metadata(1),
+                    'b': get_type_metadata(2),
+                },
+                return_type_metadata=get_type_metadata(1),
+            )
+        ]
 
     def test_flushes(self, collector):
         with trace_calls(collector):
@@ -216,7 +227,13 @@ class TestTraceCalls:
                 throw(should_recover=False)
             except Exception:
                 pass
-        assert collector.traces == [CallTrace(throw, {'should_recover': bool})]
+        assert collector.traces == [
+            CallTrace(
+                throw, {'should_recover': bool},
+                arg_types_metadata={
+                    'should_recover': get_type_metadata(False),
+                }
+            )]
 
     def test_nested_callee_throws_caller_doesnt_recover(self, collector):
         with trace_calls(collector):
@@ -225,22 +242,49 @@ class TestTraceCalls:
             except Exception:
                 pass
         expected = [
-            CallTrace(throw, {'should_recover': bool}),
-            CallTrace(nested_throw, {'should_recover': bool}),
+            CallTrace(
+                throw, {'should_recover': bool},
+                arg_types_metadata={
+                    'should_recover': get_type_metadata(False),
+                }),
+            CallTrace(
+                nested_throw, {'should_recover': bool},
+                arg_types_metadata={
+                    'should_recover': get_type_metadata(False),
+                }
+            ),
         ]
         assert collector.traces == expected
 
     def test_callee_throws_recovers(self, collector):
         with trace_calls(collector):
             throw(should_recover=True)
-        assert collector.traces == [CallTrace(throw, {'should_recover': bool}, NoneType)]
+        assert collector.traces == [
+            CallTrace(
+                throw, {'should_recover': bool}, NoneType,
+                arg_types_metadata={
+                    'should_recover': get_type_metadata(False),
+                },
+            ),
+        ]
 
     def test_nested_callee_throws_recovers(self, collector):
         with trace_calls(collector):
             nested_throw(should_recover=True)
         expected = [
-            CallTrace(throw, {'should_recover': bool}, NoneType),
-            CallTrace(nested_throw, {'should_recover': bool}, str),
+            CallTrace(
+                throw, {'should_recover': bool}, NoneType,
+                arg_types_metadata={
+                    'should_recover': get_type_metadata(True),
+                },
+            ),
+            CallTrace(
+                nested_throw, {'should_recover': bool}, str,
+                arg_types_metadata={
+                    'should_recover': get_type_metadata(True),
+                },
+                return_type_metadata=get_type_metadata('')
+            ),
         ]
         assert collector.traces == expected
 
@@ -248,8 +292,17 @@ class TestTraceCalls:
         with trace_calls(collector):
             recover_from_nested_throw()
         expected = [
-            CallTrace(throw, {'should_recover': bool}),
-            CallTrace(recover_from_nested_throw, {}, str),
+            CallTrace(
+                throw, {'should_recover': bool},
+                arg_types_metadata={
+                    'should_recover': get_type_metadata(False),
+                },
+            ),
+            CallTrace(
+                recover_from_nested_throw, {}, str,
+                arg_types_metadata={},
+                return_type_metadata=get_type_metadata(''),
+            ),
         ]
         assert collector.traces == expected
 
@@ -257,7 +310,14 @@ class TestTraceCalls:
         with trace_calls(collector):
             for _ in squares(3):
                 pass
-        assert collector.traces == [CallTrace(squares, {'n': int}, NoneType, int)]
+        assert collector.traces == [
+            CallTrace(
+                squares, {'n': int}, NoneType, int,
+                arg_types_metadata={
+                    'n': get_type_metadata(3),
+                },
+                yield_type_metadata=get_type_metadata(1),
+            )]
 
     def test_return_none(self, collector):
         """Ensure traces have a return_type of NoneType for functions that return a value of None"""
@@ -275,14 +335,31 @@ class TestTraceCalls:
         o = Oracle()
         with trace_calls(collector):
             o.meaning_of_life
-        assert collector.traces == [CallTrace(Oracle.meaning_of_life.fget, {'self': Oracle}, int)]
+        assert collector.traces == [
+            CallTrace(
+                Oracle.meaning_of_life.fget, {'self': Oracle}, int,
+                arg_types_metadata={
+                    'self': get_type_metadata(o),
+                },
+                return_type_metadata=get_type_metadata(1),
+            ),
+        ]
 
     def test_filtering(self, collector):
         """If supplied, the code filter should decide which code objects are traced"""
         with trace_calls(collector, lambda code: code.co_name == 'simple_add'):
             simple_add(1, 2)
             explicit_return_none()
-        assert collector.traces == [CallTrace(simple_add, {'a': int, 'b': int}, int)]
+        assert collector.traces == [
+            CallTrace(
+                simple_add, {'a': int, 'b': int}, int,
+                arg_types_metadata={
+                    'a': get_type_metadata(1),
+                    'b': get_type_metadata(2),
+                },
+                return_type_metadata=get_type_metadata(3)
+            ),
+        ]
 
     def test_lazy_value(self, collector):
         """Check that function lookup does not invoke custom descriptors.

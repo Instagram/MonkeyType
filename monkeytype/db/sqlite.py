@@ -34,12 +34,16 @@ DEFAULT_TABLE = 'monkeytype_call_traces'
 def create_call_trace_table(conn: sqlite3.Connection, table: str = DEFAULT_TABLE) -> None:
     query = """
 CREATE TABLE IF NOT EXISTS {table} (
-  created_at  TEXT,
-  module      TEXT,
-  qualname    TEXT,
-  arg_types   TEXT,
-  return_type TEXT,
-  yield_type  TEXT);
+  created_at            TEXT,
+  module                TEXT,
+  qualname              TEXT,
+  arg_types             TEXT,
+  return_type           TEXT,
+  yield_type            TEXT,
+  arg_types_metadata    TEXT,
+  return_types_metadata TEXT,
+  yield_types_metadata  TEXT
+);
 """.format(table=table)
     with conn:
         conn.execute(query)
@@ -52,7 +56,11 @@ ParameterizedQuery = Tuple[str, List[QueryValue]]
 def make_query(table: str, module: str, qualname: Optional[str], limit: int) -> ParameterizedQuery:
     raw_query = """
     SELECT
-        module, qualname, arg_types, return_type, yield_type
+        module, qualname,
+        arg_types, return_type, yield_type,
+        arg_types_metadata,
+        return_types_metadata,
+        yield_types_metadata
     FROM {table}
     WHERE
         module == ?
@@ -85,11 +93,20 @@ class SQLiteStore(CallTraceStore):
     def add(self, traces: Iterable[CallTrace]) -> None:
         values = []
         for row in serialize_traces(traces):
-            values.append((datetime.datetime.now(), row.module, row.qualname,
-                           row.arg_types, row.return_type, row.yield_type))
+            values.append((
+                datetime.datetime.now(),
+                row.module, row.qualname,
+                row.arg_types, row.return_type, row.yield_type,
+                row.arg_types_metadata,
+                row.return_type_metadata,
+                row.yield_type_metadata,
+            ))
         with self.conn:
             self.conn.executemany(
-                'INSERT INTO {table} VALUES (?, ?, ?, ?, ?, ?)'.format(table=self.table),
+                '''
+                INSERT INTO {table} VALUES
+                (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                '''.format(table=self.table),
                 values
             )
 

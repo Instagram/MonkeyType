@@ -196,7 +196,11 @@ def test_no_traces(store_data, stdout, stderr, arg, error):
 def test_display_list_of_modules(store_data, stdout, stderr):
     store, db_file = store_data
     traces = [
-        CallTrace(func, {'a': int, 'b': str}, NoneType),
+        CallTrace(
+            func=func,
+            arg_types={'a': int, 'b': str},
+            return_type=NoneType,
+        ),
     ]
     store.add(traces)
     with mock.patch.dict(os.environ, {DefaultConfig.DB_PATH_VAR: db_file.name}):
@@ -222,11 +226,31 @@ def test_display_list_of_modules_no_modules(store_data, stdout, stderr):
 
 def test_display_sample_count(capsys, stderr):
     traces = [
-        CallTrace(func, {'a': int, 'b': str}, NoneType),
-        CallTrace(func, {'a': str, 'b': str}, NoneType),
-        CallTrace(func2, {'a': str, 'b': int}, NoneType),
-        CallTrace(func2, {'a': int, 'b': str}, NoneType),
-        CallTrace(func2, {'a': str, 'b': int}, NoneType)
+        CallTrace(
+            func=func,
+            arg_types={'a': int, 'b': str},
+            return_type=NoneType,
+        ),
+        CallTrace(
+            func=func,
+            arg_types={'a': str, 'b': str},
+            return_type=NoneType,
+        ),
+        CallTrace(
+            func=func2,
+            arg_types={'a': str, 'b': int},
+            return_type=NoneType
+        ),
+        CallTrace(
+            func=func2,
+            arg_types={'a': int, 'b': str},
+            return_type=NoneType,
+        ),
+        CallTrace(
+            func=func2,
+            arg_types={'a': str, 'b': int},
+            return_type=NoneType,
+        ),
     ]
     cli.display_sample_count(traces, stderr)
     expected = """Annotation for tests.test_cli.func based on 2 call trace(s).
@@ -238,8 +262,16 @@ Annotation for tests.test_cli.func2 based on 3 call trace(s).
 def test_display_sample_count_from_cli(store_data, stdout, stderr):
     store, db_file = store_data
     traces = [
-        CallTrace(func, {'a': int, 'b': str}, NoneType),
-        CallTrace(func2, {'a': int, 'b': int}, NoneType),
+        CallTrace(
+            func=func,
+            arg_types={'a': int, 'b': str},
+            return_type=NoneType,
+        ),
+        CallTrace(
+            func=func2,
+            arg_types={'a': int, 'b': int},
+            return_type=NoneType,
+        ),
     ]
     store.add(traces)
     with mock.patch.dict(os.environ, {DefaultConfig.DB_PATH_VAR: db_file.name}):
@@ -333,7 +365,13 @@ def my_test_function(a, b):
             f.write(src)
         with mock.patch('sys.path', sys.path + [tempdir]):
             import my_test_module as mtm
-            traces = [CallTrace(mtm.my_test_function, {'a': int, 'b': str}, NoneType)]
+            traces = [
+                CallTrace(
+                    func=mtm.my_test_function,
+                    arg_types={'a': int, 'b': str},
+                    return_type=NoneType
+                ),
+            ]
             store, db_file = store_data
             store.add(traces)
             with mock.patch.dict(os.environ, {DefaultConfig.DB_PATH_VAR: db_file.name}):

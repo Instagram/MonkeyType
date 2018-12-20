@@ -27,6 +27,12 @@ from typing import (
     cast,
 )
 
+from monkeytype.type_metadata import (
+    TypeMetadata,
+    get_type_metadata,
+    combine_type_metadata,
+)
+
 try:
     from django.utils.functional import cached_property  # type: ignore
 except ImportError:
@@ -47,7 +53,10 @@ class CallTrace:
         func: Callable,
         arg_types: Dict[str, type],
         return_type: Optional[type] = None,
-        yield_type: Optional[type] = None
+        yield_type: Optional[type] = None,
+        arg_types_metadata: Dict[str, TypeMetadata] = {},
+        return_type_metadata: Optional[TypeMetadata] = None,
+        yield_type_metadata: Optional[TypeMetadata] = None,
     ) -> None:
         """
         Args:
@@ -60,8 +69,11 @@ class CallTrace:
         """
         self.func = func
         self.arg_types = arg_types
+        self.arg_types_metadata = arg_types_metadata
         self.return_type = return_type
+        self.return_type_metadata = return_type_metadata
         self.yield_type = yield_type
+        self.yield_type_metadata = yield_type_metadata
 
     def __eq__(self, other: object) -> bool:
         if isinstance(other, self.__class__):
@@ -69,16 +81,38 @@ class CallTrace:
         return NotImplemented
 
     def __repr__(self) -> str:
-        return "CallTrace(%s, %s, %s, %s)" % (self.func, self.arg_types, self.return_type, self.yield_type)
+        func = f'func={self.func}'
+        arg_types = f'arg_types={self.arg_types}'
+        return_type = f'return_type={self.return_type}'
+        yield_type = f'yield_type={self.yield_type}'
+        arg_types_metadata = f'arg_types_metadata={self.arg_types_metadata}'
+        return_type_metadata = f'return_type_metadata={self.return_type_metadata}'
+        yield_type_metadata = f'yield_type_metadata={self.yield_type_metadata}'
+
+        return "CallTrace(%s, %s, %s, %s, %s, %s, %s)" % (
+            func,
+            arg_types, return_type, yield_type,
+            arg_types_metadata,
+            return_type_metadata,
+            yield_type_metadata,
+        )
 
     def __hash__(self) -> int:
         return hash((self.func, frozenset(self.arg_types.items()), self.return_type, self.yield_type))
 
-    def add_yield_type(self, typ: type) -> None:
+    def add_yield_type(self, typ: type, type_metadata: Optional[TypeMetadata]) -> None:
+        if type_metadata is None:
+            return
         if self.yield_type is None:
             self.yield_type = typ
         else:
             self.yield_type = Union[self.yield_type, typ]
+        if self.yield_type_metadata is None:
+            self.yield_type_metadata = type_metadata
+        else:
+            self.yield_type_metadata = combine_type_metadata(
+                self.yield_type_metadata, type_metadata,
+            )
 
     @property
     def funcname(self) -> str:
@@ -218,28 +252,44 @@ class CallTracer:
             return
         arg_names = code.co_varnames[0:code.co_argcount]
         arg_types = {}
+        arg_types_metadata: Dict[str, TypeMetadata] = {}
         for name in arg_names:
             if name in frame.f_locals:
-                arg_types[name] = get_type(frame.f_locals[name])
-        self.traces[frame] = CallTrace(func, arg_types)
+                arg_value = frame.f_locals[name]
+                arg_types[name] = get_type(arg_value)
+                arg_value_type_metadata = get_type_metadata(arg_value)
+                if arg_value_type_metadata is not None:
+                    arg_types_metadata[name] = arg_value_type_metadata
 
-    def handle_return(self, frame: FrameType, arg: Any) -> None:
+        self.traces[frame] = CallTrace(
+            func=func,
+            arg_types=arg_types,
+            arg_types_metadata=arg_types_metadata,
+        )
+
+    def handle_return(self, frame: FrameType, return_or_yield_value: Any) -> None:
         # In the case of a 'return' event, arg contains the return value, or
         # None, if the block returned because of an unhandled exception. We
         # need to distinguish the exceptional case (not a valid return type)
         # from a function returning (or yielding) None. In the latter case, the
         # the last instruction that was executed should always be a return or a
         # yield.
-        typ = get_type(arg)
+        typ = get_type(return_or_yield_value)
+        type_metadata = get_type_metadata(
+            return_or_yield_value
+        ) if return_or_yield_value is not None \
+            else None
+
         last_opcode = frame.f_code.co_code[frame.f_lasti]
         trace = self.traces.get(frame)
         if trace is None:
             return
         elif last_opcode == YIELD_VALUE_OPCODE:
-            trace.add_yield_type(typ)
+            trace.add_yield_type(typ, type_metadata)
         else:
             if last_opcode == RETURN_VALUE_OPCODE:
                 trace.return_type = typ
+                trace.return_type_metadata = type_metadata
             del self.traces[frame]
             self.logger.log(trace)
 
