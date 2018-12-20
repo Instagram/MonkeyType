@@ -18,7 +18,6 @@ class TypeMetadataKind(str, Enum):
 
 class TypeMetadata(NamedTuple):
     val: Any
-    kind: TypeMetadataKind = TypeMetadataKind.__Base__
 
 
 class DictTypeMetadata(TypeMetadata):

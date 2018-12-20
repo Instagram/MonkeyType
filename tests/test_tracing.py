@@ -394,5 +394,11 @@ class TestTraceCalls:
         with trace_calls(collector):
             cython_test_obj.cython_testfunc()
 
-        trace = CallTrace(cython_test_obj.cython_testfunc.__wrapped__, {'self': CythonTest}, int)
+        trace = CallTrace(
+            cython_test_obj.cython_testfunc.__wrapped__, {'self': CythonTest}, int,
+            arg_types_metadata={
+                'self': get_type_metadata(cython_test_obj),
+            },
+            return_type_metadata=get_type_metadata(1)
+        )
         assert trace in collector.traces
