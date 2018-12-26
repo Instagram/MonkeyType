@@ -72,6 +72,14 @@ class CallTraceRow(CallTraceThunk):
         self.return_type_metadata = return_type_metadata
         self.yield_type_metadata = yield_type_metadata
 
+    def __repr__(self) -> str:
+        return 'CallTraceRow(%s, %s, %s, %s)' % (
+            f'module={self.module}',
+            f'qualname={self.qualname}',
+            f'arg_types={self.arg_types}',
+            f'arg_types_metadata={self.arg_types_metadata}',
+        )
+
     @classmethod
     def from_trace(cls: Type[CallTraceRowT], trace: CallTrace) -> CallTraceRowT:
         return cls(
@@ -85,10 +93,11 @@ class CallTraceRow(CallTraceThunk):
                 for (key, value) in trace.arg_types_metadata.items()
             }) if trace.arg_types_metadata is not None
             else None,
-            return_type_metadata=json.dumps(
+            return_type_metadata=trace.return_type_metadata and json.dumps(
                 encode_type_metadata(trace.return_type_metadata)
-            ),
-            yield_type_metadata=json.dumps(
+            ) if trace.return_type_metadata is not None
+            else None,
+            yield_type_metadata=trace.yield_type_metadata and json.dumps(
                 encode_type_metadata(trace.yield_type_metadata)
             ),
         )
@@ -108,10 +117,12 @@ class CallTraceRow(CallTraceThunk):
             ) or {},
             return_type_metadata=decode_type_metadata_from_json(
                 self.return_type_metadata,
-            ),
+            ) if self.return_type_metadata is not None
+            else None,
             yield_type_metadata=decode_type_metadata_from_json(
                 self.yield_type_metadata,
-            )
+            ) if self.yield_type_metadata is not None
+            else None,
         )
 
     def __eq__(self, other: object) -> bool:

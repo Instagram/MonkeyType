@@ -81,38 +81,28 @@ class CallTrace:
         return NotImplemented
 
     def __repr__(self) -> str:
-        func = f'func={self.func}'
-        arg_types = f'arg_types={self.arg_types}'
-        return_type = f'return_type={self.return_type}'
-        yield_type = f'yield_type={self.yield_type}'
-        arg_types_metadata = f'arg_types_metadata={self.arg_types_metadata}'
-        return_type_metadata = f'return_type_metadata={self.return_type_metadata}'
-        yield_type_metadata = f'yield_type_metadata={self.yield_type_metadata}'
-
         return "CallTrace(%s, %s, %s, %s, %s, %s, %s)" % (
-            func,
-            arg_types, return_type, yield_type,
-            arg_types_metadata,
-            return_type_metadata,
-            yield_type_metadata,
+            f'func={self.func}',
+            f'arg_types={self.arg_types}',
+            f'return_type={self.return_type}',
+            f'yield_type={self.yield_type}',
+            f'arg_types_metadata={self.arg_types_metadata}',
+            f'return_type_metadata={self.return_type_metadata}',
+            f'yield_type_metadata={self.yield_type_metadata}',
         )
 
     def __hash__(self) -> int:
         return hash((self.func, frozenset(self.arg_types.items()), self.return_type, self.yield_type))
 
     def add_yield_type(self, typ: type, type_metadata: Optional[TypeMetadata]) -> None:
-        if type_metadata is None:
-            return
         if self.yield_type is None:
             self.yield_type = typ
-        else:
-            self.yield_type = Union[self.yield_type, typ]
-        if self.yield_type_metadata is None:
             self.yield_type_metadata = type_metadata
         else:
-            self.yield_type_metadata = combine_type_metadata(
-                self.yield_type_metadata, type_metadata,
-            )
+            self.yield_type = Union[self.yield_type, typ]
+        self.yield_type_metadata = combine_type_metadata(
+            self.yield_type_metadata, type_metadata,
+        )
 
     @property
     def funcname(self) -> str:
