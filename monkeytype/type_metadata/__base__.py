@@ -3,6 +3,7 @@ from functools import reduce
 from typing import (
     NamedTuple, Dict, Set,
     Any, Optional,
+    Callable,
 )
 
 
@@ -49,7 +50,7 @@ class AnyTypeMetadata(TypeMetadata):
 def combine(
         recursion_nth: int,
         recursion_max: int,
-):
+) -> Callable[[UnionTypeMetadata, Any], UnionTypeMetadata]:
     def __combine(
             union_meta: UnionTypeMetadata,
             current: Any,
