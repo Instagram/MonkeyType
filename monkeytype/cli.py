@@ -27,6 +27,7 @@ from monkeytype import trace
 from monkeytype.config import Config
 from monkeytype.exceptions import MonkeyTypeError
 from monkeytype.stubs import (
+    ExistingAnnotationStrategy,
     Stub,
     build_module_stubs_from_traces,
 )
@@ -117,7 +118,7 @@ def get_stub(args: argparse.Namespace, stdout: IO, stderr: IO) -> Optional[Stub]
         rewriter = NoOpRewriter()
     stubs = build_module_stubs_from_traces(
         traces,
-        ignore_existing_annotations=args.ignore_existing_annotations,
+        existing_annotation_strategy=args.existing_annotation_strategy,
         rewriter=rewriter,
     )
     if args.sample_count:
@@ -130,7 +131,7 @@ class HandlerError(Exception):
 
 
 def apply_stub_handler(args: argparse.Namespace, stdout: IO, stderr: IO) -> None:
-    args.ignore_existing_annotations = False
+    args.existing_annotation_strategy = ExistingAnnotationStrategy.OMIT
     stub = get_stub(args, stdout, stderr)
     if stub is None:
         complain_about_no_traces(args, stderr)
@@ -162,9 +163,9 @@ def apply_stub_handler(args: argparse.Namespace, stdout: IO, stderr: IO) -> None
 
 
 def get_diff(args: argparse.Namespace, stdout: IO, stderr: IO) -> Optional[str]:
-    args.ignore_existing_annotations = False
+    args.existing_annotation_strategy = ExistingAnnotationStrategy.REPLICATE
     stub = get_stub(args, stdout, stderr)
-    args.ignore_existing_annotations = True
+    args.existing_annotation_strategy = ExistingAnnotationStrategy.IGNORE
     stub_ignore_anno = get_stub(args, stdout, stderr)
     if stub is None or stub_ignore_anno is None:
         return None
@@ -310,11 +311,22 @@ qualname format.""")
         default=False,
         help='Print to stderr the numbers of traces stubs are based on'
         )
-    stub_parser.add_argument(
+    group = stub_parser.add_mutually_exclusive_group()
+    group.add_argument(
         "--ignore-existing-annotations",
-        action='store_true',
-        default=False,
+        action='store_const',
+        dest='existing_annotation_strategy',
+        default=ExistingAnnotationStrategy.REPLICATE,
+        const=ExistingAnnotationStrategy.IGNORE,
         help='Ignore existing annotations and generate stubs only from traces.',
+        )
+    group.add_argument(
+        "--omit-existing-annotations",
+        action='store_const',
+        dest='existing_annotation_strategy',
+        default=ExistingAnnotationStrategy.REPLICATE,
+        const=ExistingAnnotationStrategy.OMIT,
+        help='Omit from stub any existing annotations in source. Implied by --apply.',
         )
     stub_parser.add_argument(
         "--diff",
