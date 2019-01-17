@@ -1,7 +1,7 @@
 Changelog
 =========
 
-master
+19.1.0
 ------
 
 * Add ``--omit-existing-annotations`` option, implied by ``apply``. Merge of
