@@ -168,6 +168,10 @@ def has_newtype_param(user_id: UserId) -> None:
     pass
 
 
+def has_forward_ref() -> Optional["TestFunctionStub"]:
+    pass
+
+
 class TestHasUnparsableDefaults:
     @pytest.mark.parametrize(
         'func, expected',
@@ -297,6 +301,12 @@ class TestFunctionStub:
                                     ignore_existing_annotations=True)
         stub = FunctionStub('test', sig, FunctionKind.MODULE)
         expected = 'def test(a: Dict[str, None], b) -> int: ...'
+        assert stub.render() == expected
+
+    def test_forward_ref_annotation(self):
+        """Forward refs should be rendered as strings, not _ForwardRef(...)."""
+        stub = FunctionStub('has_forward_ref', inspect.signature(has_forward_ref), FunctionKind.MODULE)
+        expected = "def has_forward_ref() -> Optional['TestFunctionStub']: ..."
         assert stub.render() == expected
 
 

@@ -4,6 +4,8 @@ Changelog
 master
 ------
 
+* Render forward references (from existing annotations) correctly. Merge of #127.
+
 * Rewrite `Generator[..., None, None]` to `Iterator[None]` by default. Merge of
   #110, fixes #4. Thanks iyanuashiri.
 
