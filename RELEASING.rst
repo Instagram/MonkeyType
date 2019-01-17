@@ -12,9 +12,9 @@ How to release MonkeyType
    the real version).
 4. Tag this commit (signed tag): ``git tag -s vYY.M.X``. Tag message can also
    just be ``vYY.M.X``.
-5. Build wheel and sdist packages: ``python setup.py sdist bdist_wheel``.
+5. Build wheel and sdist packages: ``pipenv run python setup.py sdist bdist_wheel``.
 6. Upload the packages to PyPI:
-   ``twine upload -s dist/MonkeyType-YY.M.X-py3-none-any.whl dist/MonkeyType-YY.M.X.tar.gz``
+   ``pipenv run twine upload -s dist/MonkeyType-YY.M.X-py3-none-any.whl dist/MonkeyType-YY.M.X.tar.gz``
 7. Add a new "master" heading to ``CHANGES.rst`` and bump the version number in
    ``monkeytype/__init__.py`` to the next micro version, with ``.dev1`` appended
    (e.g. after releasing ``18.5.1``, bump to ``18.5.2.dev1``). Commit this.
