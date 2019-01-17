@@ -4,10 +4,13 @@ Changelog
 master
 ------
 
-* Render `...` for all parameter defaults in stubs. Remove the
-  `--include-unparsable-defaults` and `--exclude-unparsable-defaults` CLI
-  options, as well as the `include_unparsable_defaults()` config method. Merge
-  of #128, fixes #123.
+* Add ``--omit-existing-annotations`` option, implied by ``apply``. Merge of
+  #129. Fixes #11 and #81.
+
+* Render ``...`` for all parameter defaults in stubs. Remove the
+  ``--include-unparsable-defaults`` and ``--exclude-unparsable-defaults`` CLI
+  options, as well as the ``include_unparsable_defaults()``` config method.
+  Merge of #128, fixes #123.
 
 * Render forward references (from existing annotations) correctly. Merge of #127.
 
