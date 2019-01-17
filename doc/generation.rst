@@ -91,22 +91,6 @@ Both ``monkeytype stub`` and ``monkeytype apply`` accept the following options:
 
   Don't apply your configured :ref:`rewriters` to the output types.
 
-.. option:: --include-unparsable-defaults
-
-  Include stubs for functions with argument defaults whose reprs are not valid
-  Python syntax.
-
-  See the :meth:`~monkeytype.config.Config.include_unparsable_defaults` config
-  method.
-
-.. option:: --exclude-unparsable-defaults
-
-  Exclude stubs for functions with argument defaults whose reprs are not valid
-  Python syntax.
-
-  See the :meth:`~monkeytype.config.Config.include_unparsable_defaults` config
-  method.
-
 Additionally, ``monkeytype stub`` accepts:
 
 .. option:: --ignore-existing-annotations

@@ -85,10 +85,6 @@ class Config(metaclass=ABCMeta):
         """Maximum number of traces to query from the call trace store."""
         return 2000
 
-    def include_unparsable_defaults(self) -> bool:
-        """Output stubs for functions with defaults with invalid reprs?"""
-        return False
-
 
 lib_paths = {sysconfig.get_path(n) for n in ['stdlib', 'purelib', 'platlib']}
 # if in a virtualenv, also exclude the real stdlib location
