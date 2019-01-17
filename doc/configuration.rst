@@ -79,26 +79,6 @@ Subclassing ``Config`` or ``DefaultConfig``
 
     Defaults to 2000.
 
-  .. method:: include_unparsable_defaults() -> bool
-
-    In order to output complete and correct stubs, MonkeyType imports your code
-    and inspects function signatures via the ``inspect`` standard library
-    module, and then turns this introspected signature back into a code string
-    when generating a stub.
-
-    Some function arguments may have complex default values whose ``repr()`` is
-    not a valid Python expression. These cannot round-trip successfully through
-    the introspection process, since importing your code does not give
-    MonkeyType access to the original expression for the default value, as a
-    string of Python code.
-
-    By default MonkeyType will simply exclude such functions from stub file
-    output, in order to ensure a valid stub file. Return ``True`` from this
-    config method to instead include these functions, invalid syntax and all;
-    you'll have to manually fix them up before the stub file will be usable.
-
-    Defaults to ``False``.
-
   .. method:: cli_context(command: str) -> Iterator[None]
 
     A context manager which wraps the execution of the CLI command.

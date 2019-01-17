@@ -8,7 +8,6 @@ import collections
 import enum
 import inspect
 import logging
-import parser
 import re
 from abc import (
     ABCMeta,
@@ -296,18 +295,6 @@ class ImportBlockStub(Stub):
         return 'ImportBlockStub(%s)' % (repr(self.imports),)
 
 
-def has_unparsable_defaults(sig: inspect.Signature) -> bool:
-    """Return whether or not the reprs for all defaults in the signature are valid python expressions"""
-    for param in sig.parameters.values():
-        if param.default is inspect.Parameter.empty:
-            continue
-        try:
-            parser.expr(repr(param.default))
-        except SyntaxError:
-            return True
-    return False
-
-
 def _is_optional(anno: Any) -> bool:
     """Is the supplied annotation an instance of the 'virtual' Optional type?
 
@@ -375,7 +362,7 @@ def render_parameter(param: inspect.Parameter) -> str:
         formatted = '{}: {}'.format(formatted, rendered)
 
     if param.default is not inspect.Parameter.empty:
-        formatted = '{} = {}'.format(formatted, repr(param.default))
+        formatted = '{} = ...'.format(formatted)
 
     if kind == inspect.Parameter.VAR_POSITIONAL:
         formatted = '*' + formatted
@@ -572,7 +559,6 @@ def build_module_stubs(entries: Iterable[FunctionDefinition]) -> Dict[str, Modul
 
 def build_module_stubs_from_traces(
     traces: Iterable[CallTrace],
-    include_unparsable_defaults: bool = False,
     ignore_existing_annotations: bool = False,
     rewriter: Optional[TypeRewriter] = None
 ) -> Dict[str, ModuleStub]:
@@ -583,13 +569,7 @@ def build_module_stubs_from_traces(
     defns = []
     for func, traces in index.items():
         defn = get_updated_definition(func, traces, rewriter, ignore_existing_annotations)
-        if has_unparsable_defaults(defn.signature) and not include_unparsable_defaults:
-            logger.warning(
-                "Omitting stub for function %s.%s; it contains unparsable default values." +
-                " Re-run with --include-unparsable-defaults to include it.",
-                func.__module__, func.__qualname__)
-        else:
-            defns.append(defn)
+        defns.append(defn)
     return build_module_stubs(defns)
 
 

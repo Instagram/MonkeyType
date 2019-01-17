@@ -117,7 +117,6 @@ def get_stub(args: argparse.Namespace, stdout: IO, stderr: IO) -> Optional[Stub]
         rewriter = NoOpRewriter()
     stubs = build_module_stubs_from_traces(
         traces,
-        include_unparsable_defaults=args.include_unparsable_defaults,
         ignore_existing_annotations=args.ignore_existing_annotations,
         rewriter=rewriter,
     )
@@ -218,8 +217,6 @@ def update_args_from_config(args: argparse.Namespace) -> None:
     """Pull values from config for unspecified arguments."""
     if args.limit is None:
         args.limit = args.config.query_limit()
-    if args.include_unparsable_defaults is None:
-        args.include_unparsable_defaults = args.config.include_unparsable_defaults()
 
 
 def main(argv: List[str], stdout: IO, stderr: IO) -> int:
@@ -230,23 +227,6 @@ def main(argv: List[str], stdout: IO, stderr: IO) -> int:
         '--disable-type-rewriting',
         action='store_true', default=False,
         help="Show types without rewrite rules applied (default: False)",
-    )
-    group = parser.add_mutually_exclusive_group()
-    group.add_argument(
-        '--include-unparsable-defaults',
-        action='store_true', default=None,
-        help=(
-            "Include functions whose default values aren't valid Python expressions"
-            " (default: False, unless changed in your config)"
-        ),
-    )
-    group.add_argument(
-        '--exclude-unparsable-defaults',
-        action='store_false', default=None, dest='include_unparsable_defaults',
-        help=(
-            "Exclude functions whose default values aren't valid Python expressions"
-            " (default: True, unless changed in your config)"
-        ),
     )
     parser.add_argument(
         '--limit', '-l',

@@ -36,9 +36,7 @@ from monkeytype.stubs import (
     ModuleStub,
     StubIndexBuilder,
     build_module_stubs,
-    build_module_stubs_from_traces,
     get_imports_for_annotation,
-    has_unparsable_defaults,
     render_signature,
     shrink_traced_types,
     update_signature_args,
@@ -125,22 +123,6 @@ def strip_modules_helper(d1: Dummy, d2: Dummy) -> None:
     pass
 
 
-class HasInvalidRepr:
-    def __init__(self, value: int) -> None:
-        self.value = value
-
-    def __repr__(self) -> str:
-        return '<HasInvalidRepr: %s>' % (self.value,)
-
-
-def has_parsable_defaults(x: int = 1234, gate: bool = True, opt: str = None, s: str = '123') -> None:
-    pass
-
-
-def has_unparsable_default(x: HasInvalidRepr = HasInvalidRepr(123)) -> None:
-    pass
-
-
 def has_optional_param(x: Optional[int] = None) -> None:
     pass
 
@@ -170,23 +152,6 @@ def has_newtype_param(user_id: UserId) -> None:
 
 def has_forward_ref() -> Optional["TestFunctionStub"]:
     pass
-
-
-class TestHasUnparsableDefaults:
-    @pytest.mark.parametrize(
-        'func, expected',
-        [
-            # No defaults
-            (simple_add, False),
-            # All parsable
-            (has_parsable_defaults, False),
-            # Unparsable
-            (has_unparsable_default, True),
-        ],
-    )
-    def test_has_unparsable_defaults(self, func, expected):
-        sig = inspect.signature(func)
-        assert has_unparsable_defaults(sig) == expected
 
 
 class TestFunctionStub:
@@ -250,7 +215,7 @@ class TestFunctionStub:
     def test_optional_parameter_annotation(self):
         """Optional should always be included in parameter annotations, even if the default value is None"""
         stub = FunctionStub('test', inspect.signature(has_optional_param), FunctionKind.MODULE)
-        expected = 'def test(x: Optional[int] = None) -> None: ...'
+        expected = 'def test(x: Optional[int] = ...) -> None: ...'
         assert stub.render() == expected
 
     def test_optional_union_parameter_annotation(self):
@@ -286,7 +251,7 @@ class TestFunctionStub:
 
     def test_default_none_parameter_annotation(self):
         stub = FunctionStub('test', inspect.signature(default_none_parameter), FunctionKind.MODULE)
-        expected = 'def test(x: Optional[int] = None) -> None: ...'
+        expected = 'def test(x: Optional[int] = ...) -> None: ...'
         assert stub.render() == expected
 
     def test_newtype_parameter_annotation(self):
@@ -683,15 +648,3 @@ class TestGetImportsForAnnotation:
 
     def test_nested_class(self):
         assert get_imports_for_annotation(Parent.Child) == {Parent.__module__: {'Parent'}}
-
-
-class TestBuildModuleStubsFromTraces:
-    def test_remove_funcs_with_unparsable_defaults(self):
-        """We should remove stubs for functions with default values whose reprs are unparsable.
-
-        During application, retype needs to parse the stubs that we give it. We
-        use repr() to produce what is used for the default value.
-        """
-        trace = CallTrace(has_unparsable_default, {})
-        stubs = build_module_stubs_from_traces([trace])
-        assert stubs == {}
