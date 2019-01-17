@@ -26,7 +26,7 @@ from typing import (
     Union,
 )
 
-from monkeytype.compat import is_any, is_union, is_generic, qualname_of_generic
+from monkeytype.compat import is_any, is_union, is_generic, qualname_of_generic, is_forward_ref
 
 try:
     from django.utils.functional import cached_property  # type: ignore
@@ -336,6 +336,8 @@ def render_annotation(anno: Any) -> str:
         rendered = 'Optional[' + render_annotation(elem_type) + ']'
     elif hasattr(anno, '__supertype__'):
         rendered = anno.__name__
+    elif is_forward_ref(anno):
+        rendered = repr(anno.__forward_arg__)
     elif getattr(anno, '__module__', None) == 'typing':
         rendered = repr(anno).replace('typing.', '')
     elif isinstance(anno, NoneType):
