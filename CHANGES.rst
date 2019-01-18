@@ -1,7 +1,7 @@
 Changelog
 =========
 
-master
+19.1.1
 ------
 
 * Pass ``--incremental`` to retype when applying stubs, so it doesn't choke on
