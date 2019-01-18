@@ -151,6 +151,7 @@ def apply_stub_handler(args: argparse.Namespace, stdout: IO, stderr: IO) -> None
             f.write(stub.render())
         retype_args = [
             'retype',
+            '--incremental',
             '--pyi-dir', pyi_dir,
             '--target-dir', src_dir,
             src_path
