@@ -4,6 +4,9 @@ Changelog
 master
 ------
 
+* Pass ``--incremental`` to retype when applying stubs, so it doesn't choke on
+  partial stubs (which can result from e.g. failures to decode some traces).
+
 19.1.0
 ------
 
