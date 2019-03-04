@@ -24,7 +24,7 @@ running ``myscript.py`` with ``MonkeyType``. One way is to run::
 
   $ monkeytype run myscript.py
 
-By default this will dump call traces into a sqlite database in the file
+By default, this will dump call traces into a SQLite database in the file
 ``monkeytype.sqlite3`` in the current working directory. You can then use the
 ``monkeytype`` command to generate a stub file for a module, or apply the type
 annotations directly to your code.
