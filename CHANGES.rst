@@ -1,7 +1,7 @@
 Changelog
 =========
 
-master
+19.5.0
 ------
 
 * Mark ``monkeytype`` package as typed per PEP 561. Thanks Vasily Zakharov for 
