@@ -23,6 +23,7 @@ from monkeytype.db.sqlite import (
     create_call_trace_table,
     SQLiteStore,
     )
+from monkeytype.exceptions import MonkeyTypeError
 from monkeytype.tracing import CallTrace
 from monkeytype.typing import NoneType
 
@@ -252,6 +253,30 @@ def test_display_sample_count_from_cli(store, db_file, stdout, stderr):
 Annotation for tests.test_cli.func2 based on 1 call trace(s).
 """
     assert stderr.getvalue() == expected
+    assert ret == 0
+
+
+def test_quiet_failed_traces(store, db_file, stdout, stderr):
+    traces = [
+        CallTrace(func, {'a': int, 'b': str}, NoneType),
+        CallTrace(func2, {'a': int, 'b': int}, NoneType),
+    ]
+    store.add(traces)
+    with mock.patch("monkeytype.encoding.CallTraceRow.to_trace", side_effect=MonkeyTypeError("the-trace")):
+        ret = cli.main(['stub', func.__module__], stdout, stderr)
+    assert "2 traces failed to decode" in stderr.getvalue()
+    assert ret == 0
+
+
+def test_verbose_failed_traces(store, db_file, stdout, stderr):
+    traces = [
+        CallTrace(func, {'a': int, 'b': str}, NoneType),
+        CallTrace(func2, {'a': int, 'b': int}, NoneType),
+    ]
+    store.add(traces)
+    with mock.patch("monkeytype.encoding.CallTraceRow.to_trace", side_effect=MonkeyTypeError("the-trace")):
+        ret = cli.main(['-v', 'stub', func.__module__], stdout, stderr)
+    assert "WARNING: Failed decoding trace: the-trace" in stderr.getvalue()
     assert ret == 0
 
 

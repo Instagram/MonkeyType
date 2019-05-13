@@ -106,11 +106,16 @@ def get_stub(args: argparse.Namespace, stdout: IO, stderr: IO) -> Optional[Stub]
     module, qualname = args.module_path
     thunks = args.config.trace_store().filter(module, qualname, args.limit)
     traces = []
+    failed_to_decode_count = 0
     for thunk in thunks:
         try:
             traces.append(thunk.to_trace())
         except MonkeyTypeError as mte:
-            print(f'ERROR: Failed decoding trace: {mte}', file=stderr)
+            if args.verbose:
+                print(f'WARNING: Failed decoding trace: {mte}', file=stderr)
+            failed_to_decode_count += 1
+    if failed_to_decode_count and not args.verbose:
+        print(f'{failed_to_decode_count} traces failed to decode; use -v for details', file=stderr)
     if not traces:
         return None
     rewriter = args.config.type_rewriter()
@@ -237,6 +242,11 @@ def main(argv: List[str], stdout: IO, stderr: IO) -> int:
             "How many traces to return from storage"
             " (default: 2000, unless changed in your config)"
         ),
+    )
+    parser.add_argument(
+        '--verbose', '-v',
+        action='store_true', default=False,
+        help="Show verbose output (e.g. include trace-decoding-failed errors)"
     )
     parser.add_argument(
         '--config', '-c',

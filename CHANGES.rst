@@ -6,6 +6,8 @@ master
 
 * Mark ``monkeytype`` package as typed per PEP 561. Thanks Vasily Zakharov for 
   the report.
+* Add ``-v`` option; don't display individual traces that fail to decode unless
+  it is given.
 
 19.1.1
 ------
