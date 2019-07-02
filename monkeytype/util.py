@@ -36,9 +36,7 @@ def get_func_in_module(module: str, qualname: str) -> Callable:
         InvalidTypeError if we the name isn't a function
     """
     func = get_name_in_module(module, qualname)
-    # TODO: Incorrect typeshed stub, stop arg should be optional
-    # https://github.com/python/typeshed/blob/master/stdlib/3/inspect.pyi#L213
-    func = inspect.unwrap(func)  # type: ignore
+    func = inspect.unwrap(func)
     if isinstance(func, types.MethodType):
         func = func.__func__
     elif isinstance(func, property):
