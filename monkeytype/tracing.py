@@ -114,7 +114,7 @@ def get_func_in_mro(obj: Any, code: CodeType) -> Optional[Callable]:
     if val is None:
         return None
     if isinstance(val, (classmethod, staticmethod)):
-        cand = cast(Callable, val.__func__)
+        cand = val.__func__
     elif isinstance(val, property) and (val.fset is None) and (val.fdel is None):
         cand = cast(Callable, val.fget)
     elif cached_property and isinstance(val, cached_property):
