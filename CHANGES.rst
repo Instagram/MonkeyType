@@ -4,6 +4,13 @@ Changelog
 master
 ------
 
+* Load config after argument parsing instead of during it, to avoid argparse
+  catching TypeError/ValueError at import time of a custom config and replacing
+  with a generic "invalid value" message. See
+  https://bugs.python.org/issue30220. Thanks Daniel G Holmes for the report.
+  Merge of #142, fixes #141.
+
+
 19.5.0
 ------
 
