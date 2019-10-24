@@ -75,7 +75,7 @@ def complain_about_no_traces(args: argparse.Namespace, stderr: IO) -> None:
         print(f'No traces found for module {module}', file=stderr)
 
 
-def monkeytype_config(path: str) -> Config:
+def get_monkeytype_config(path: str) -> Config:
     """Imports the config instance specified by path.
 
     Path should be in the form module:qualname. Optionally, path may end with (),
@@ -250,7 +250,7 @@ def main(argv: List[str], stdout: IO, stderr: IO) -> int:
     )
     parser.add_argument(
         '--config', '-c',
-        type=monkeytype_config,
+        type=str,
         default='monkeytype.config:get_default_config()',
         help=(
             "The <module>:<qualname> of the config to use"
@@ -354,6 +354,7 @@ qualname format.""")
     list_modules_parser.set_defaults(handler=list_modules_handler)
 
     args = parser.parse_args(argv)
+    args.config = get_monkeytype_config(args.config)
     update_args_from_config(args)
 
     handler = getattr(args, 'handler', None)
