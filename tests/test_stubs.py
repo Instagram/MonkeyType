@@ -26,7 +26,9 @@ from typing import (
 
 import pytest
 
+from monkeytype.compat import make_forward_ref, repr_forward_ref
 from monkeytype.stubs import (
+    AttributeStub,
     ClassStub,
     ExistingAnnotationStrategy,
     FunctionDefinition,
@@ -44,7 +46,8 @@ from monkeytype.stubs import (
     update_signature_return,
 )
 from monkeytype.tracing import CallTrace
-from monkeytype.typing import NoneType
+from monkeytype.typing import NoneType, DUMMY_TYPED_DICT_NAME
+from mypy_extensions import TypedDict
 from .util import Dummy
 
 UserId = NewType('UserId', int)
@@ -153,6 +156,22 @@ def has_newtype_param(user_id: UserId) -> None:
 
 def has_forward_ref() -> Optional["TestFunctionStub"]:
     pass
+
+
+def has_forward_ref_within_generator() -> Generator['TestFunctionStub', None, int]:
+    pass
+
+
+class TestAttributeStub:
+    @pytest.mark.parametrize(
+        'stub, expected',
+        [
+            (AttributeStub(name='foo', typ=int), '    foo: int'),
+            (AttributeStub(name='foo', typ=make_forward_ref('Foo')), '    foo: \'Foo\''),
+        ],
+    )
+    def test_simple_attribute(self, stub, expected):
+        assert stub.render('    ') == expected
 
 
 class TestFunctionStub:
@@ -275,6 +294,14 @@ class TestFunctionStub:
         expected = "def has_forward_ref() -> Optional['TestFunctionStub']: ..."
         assert stub.render() == expected
 
+    @pytest.mark.xfail(reason='We get Generator[ForwardRef(), ...].')
+    def test_forward_ref_annotation_within_generator(self):
+        stub = FunctionStub('foo',
+                            inspect.signature(has_forward_ref_within_generator),
+                            FunctionKind.MODULE)
+        expected = "def foo() -> Generator['TestFunctionStub', None, int]: ..."
+        assert stub.render() == expected
+
 
 def _func_stub_from_callable(func: Callable, strip_modules: List[str] = None):
     kind = FunctionKind.from_callable(func)
@@ -286,13 +313,91 @@ class TestClassStub:
     def test_render(self):
         cm_stub = _func_stub_from_callable(Dummy.a_class_method.__func__)
         im_stub = _func_stub_from_callable(Dummy.an_instance_method)
-        class_stub = ClassStub('Test', function_stubs=(cm_stub, im_stub))
-        expected = "\n".join([
+        class_stub = ClassStub('Test', function_stubs=(cm_stub, im_stub),
+                               attribute_stubs=[
+                                   AttributeStub('foo', int),
+                                   AttributeStub('bar', str),
+                                ])
+        expected = '\n'.join([
             'class Test:',
-            cm_stub.render(prefix='    '),
-            im_stub.render(prefix='    '),
+            '    bar: str',
+            '    foo: int',
+            '    @classmethod',
+            '    def a_class_method(cls, foo: Any) -> Optional[frame]: ...',
+            '    def an_instance_method(self, foo: Any, bar: Any) -> Optional[frame]: ...',
         ])
         assert class_stub.render() == expected
+
+    @pytest.mark.parametrize(
+        'typ, expected',
+        [
+            (
+                TypedDict(DUMMY_TYPED_DICT_NAME, {'a': int, 'b': str}),
+                [ClassStub(name='FooBar(TypedDict)', function_stubs=[], attribute_stubs=[
+                    AttributeStub(name='a', typ=int),
+                    AttributeStub(name='b', typ=str),
+                ])],
+            ),
+        ],
+    )
+    def test_stubs_from_typed_dict(self, typ, expected):
+        assert ClassStub.stubs_from_typed_dict(typ, class_name='FooBar') == expected
+
+
+typed_dict_import_map = ImportMap()
+typed_dict_import_map['mypy_extensions'] = {'TypedDict'}
+module_stub_for_method_with_typed_dict = {
+    'tests.util': ModuleStub(
+        function_stubs=(),
+        class_stubs=[
+            ClassStub(
+                name='Dummy',
+                function_stubs=[
+                    FunctionStub(
+                        name='an_instance_method',
+                        signature=Signature(
+                            parameters=[
+                                Parameter(name='self',
+                                          kind=Parameter.POSITIONAL_OR_KEYWORD,
+                                          annotation=Parameter.empty),
+                                Parameter(name='foo',
+                                          kind=Parameter.POSITIONAL_OR_KEYWORD,
+                                          annotation=make_forward_ref('FooTypedDict')),
+                                Parameter(name='bar',
+                                          kind=Parameter.POSITIONAL_OR_KEYWORD,
+                                          annotation=int),
+                            ],
+                            return_annotation=make_forward_ref('DummyAnInstanceMethodTypedDict'),
+                        ),
+                        kind=FunctionKind.INSTANCE,
+                        strip_modules=['mypy_extensions'],
+                        is_async=False,
+                    ),
+                ],
+            ),
+        ],
+        imports_stub=ImportBlockStub(typed_dict_import_map),
+        typed_dict_class_stubs=[
+            ClassStub(
+                name='FooTypedDict(TypedDict)',
+                function_stubs=[],
+                attribute_stubs=[
+                    AttributeStub('a', int),
+                    AttributeStub('b', str),
+                ]
+            ),
+            ClassStub(
+                # We use the name of the method, `Dummy.an_instance_method`,
+                # to get `DummyAnInstanceMethodTypedDict`.
+                name='DummyAnInstanceMethodTypedDict(TypedDict)',
+                function_stubs=[],
+                attribute_stubs=[
+                    AttributeStub('c', int),
+                ]
+            ),
+        ],
+    )
+}
 
 
 class TestModuleStub:
@@ -302,15 +407,117 @@ class TestModuleStub:
         func_stubs = (cm_stub, im_stub)
         test_stub = ClassStub('Test', function_stubs=func_stubs)
         test2_stub = ClassStub('Test2', function_stubs=func_stubs)
-        class_stubs = (test_stub, test2_stub)
-        mod_stub = ModuleStub(function_stubs=func_stubs, class_stubs=class_stubs)
-        expected = "\n\n\n".join([
-            cm_stub.render(),
-            im_stub.render(),
-            test_stub.render(),
-            test2_stub.render(),
+        other_class_stubs = module_stub_for_method_with_typed_dict['tests.util'].class_stubs.values()
+        class_stubs = (*other_class_stubs, test_stub, test2_stub)
+        typed_dict_class_stubs = module_stub_for_method_with_typed_dict['tests.util'].typed_dict_class_stubs
+        mod_stub = ModuleStub(function_stubs=func_stubs,
+                              class_stubs=class_stubs,
+                              typed_dict_class_stubs=typed_dict_class_stubs)
+        expected = '\n'.join([
+            'class DummyAnInstanceMethodTypedDict(TypedDict):',
+            '    c: int',
+            '',
+            '',
+            'class FooTypedDict(TypedDict):',
+            '    a: int',
+            '    b: str',
+            '',
+            '',
+            '@classmethod',
+            'def a_class_method(foo: Any) -> Optional[frame]: ...',
+            '',
+            '',
+            'def an_instance_method(self, foo: Any, bar: Any) -> Optional[frame]: ...',
+            '',
+            '',
+            'class Dummy:',
+            '    def an_instance_method(self, foo: \'FooTypedDict\', bar: int) '
+            + '-> \'DummyAnInstanceMethodTypedDict\': ...',
+            '',
+            '',
+            'class Test:',
+            '    @classmethod',
+            '    def a_class_method(foo: Any) -> Optional[frame]: ...',
+            '    def an_instance_method(self, foo: Any, bar: Any) -> Optional[frame]: ...',
+            '',
+            '',
+            'class Test2:',
+            '    @classmethod',
+            '    def a_class_method(foo: Any) -> Optional[frame]: ...',
+            '    def an_instance_method(self, foo: Any, bar: Any) -> Optional[frame]: ...',
         ])
         assert mod_stub.render() == expected
+
+    def test_render_nested_typed_dict(self):
+        function = FunctionDefinition.from_callable_and_traced_types(
+            Dummy.an_instance_method,
+            {
+                'foo': TypedDict(DUMMY_TYPED_DICT_NAME,
+                                 {
+                                     # Naming the key 'z' to test a class name
+                                     # that comes last in alphabetical order.
+                                     'z': TypedDict(DUMMY_TYPED_DICT_NAME, {'a': int, 'b': str}),
+                                     'b': str,
+                                 }),
+                'bar': int,
+            },
+            int,
+            None,
+            existing_annotation_strategy=ExistingAnnotationStrategy.IGNORE
+        )
+        entries = [function]
+        expected = '\n'.join([
+            'from mypy_extensions import TypedDict',
+            '',
+            '',
+            'class FooTypedDict(TypedDict):',
+            '    b: str',
+            # We can forward-reference a class that is defined afterwards.
+            '    z: \'ZTypedDict\'',
+            '',
+            '',
+            'class ZTypedDict(TypedDict):',
+            '    a: int',
+            '    b: str',
+            '',
+            '',
+            'class Dummy:',
+            '    def an_instance_method(self, foo: \'FooTypedDict\', bar: int) -> int: ...'])
+        self.maxDiff = None
+        assert build_module_stubs(entries)['tests.util'].render() == expected
+
+    def test_render_yield_typed_dict(self):
+        function = FunctionDefinition.from_callable_and_traced_types(
+            Dummy.an_instance_method,
+            {
+                'foo': int,
+                'bar': int,
+            },
+            int,
+            yield_type=TypedDict(DUMMY_TYPED_DICT_NAME, {'a': int, 'b': str}),
+            existing_annotation_strategy=ExistingAnnotationStrategy.IGNORE
+        )
+        entries = [function]
+        expected = '\n'.join([
+            'from mypy_extensions import TypedDict',
+            'from typing import Generator',
+            '',
+            '',
+            'class DummyAnInstanceMethodYieldTypedDict(TypedDict):',
+            '    a: int',
+            '    b: str',
+            '',
+            '',
+            'class Dummy:',
+            '    def an_instance_method(',
+            '        self,',
+            '        foo: int,',
+            '        bar: int',
+            f'    ) -> Generator[{repr_forward_ref()}'
+            + '(\'DummyAnInstanceMethodYieldTypedDict\'), None, int]: ...',
+        ])
+        self.maxDiff = None
+        assert build_module_stubs(entries)['tests.util'].render() == expected
 
 
 class TestBuildModuleStubs:
@@ -333,6 +540,22 @@ class TestBuildModuleStubs:
             'tests.test_stubs': ModuleStub(function_stubs=[simple_add_stub]),
             'tests.util': ModuleStub(class_stubs=[dummy_stub], imports_stub=ImportBlockStub(imports)),
         }
+        self.maxDiff = None
+        assert build_module_stubs(entries) == expected
+
+    def test_build_module_stubs_typed_dict_parameter(self):
+        function = FunctionDefinition.from_callable_and_traced_types(
+            Dummy.an_instance_method,
+            {
+                'foo': TypedDict(DUMMY_TYPED_DICT_NAME, {'a': int, 'b': str}),
+                'bar': int,
+            },
+            TypedDict(DUMMY_TYPED_DICT_NAME, {'c': int}),
+            None,
+            existing_annotation_strategy=ExistingAnnotationStrategy.IGNORE
+        )
+        entries = [function]
+        expected = module_stub_for_method_with_typed_dict
         self.maxDiff = None
         assert build_module_stubs(entries) == expected
 
@@ -597,6 +820,85 @@ class TestFunctionDefinition:
     def test_from_callable(self, func, expected):
         defn = FunctionDefinition.from_callable(func)
         assert defn == expected
+
+    @pytest.mark.parametrize(
+        'func, arg_types, return_type, yield_type, expected',
+        [
+            # Non-TypedDict case.
+            (
+                Dummy.an_instance_method,
+                {'foo': int, 'bar': List[str]},
+                int,
+                None,
+                FunctionDefinition(
+                    'tests.util',
+                    'Dummy.an_instance_method',
+                    FunctionKind.INSTANCE,
+                    Signature(
+                        parameters=[
+                            Parameter(name='self', kind=Parameter.POSITIONAL_OR_KEYWORD, annotation=Parameter.empty),
+                            Parameter(name='foo', kind=Parameter.POSITIONAL_OR_KEYWORD, annotation=int),
+                            Parameter(name='bar', kind=Parameter.POSITIONAL_OR_KEYWORD, annotation=List[str]),
+                        ],
+                        return_annotation=int,
+                    ),
+                    False,
+                    [],
+                )
+            ),
+            # TypedDict: Add class definitions and use the class names as types.
+            (
+                Dummy.an_instance_method,
+                {
+                    'foo': TypedDict(DUMMY_TYPED_DICT_NAME, {'a': int, 'b': str}),
+                    'bar': TypedDict(DUMMY_TYPED_DICT_NAME, {'c': int}),
+                },
+                int,
+                None,
+                FunctionDefinition(
+                    'tests.util',
+                    'Dummy.an_instance_method',
+                    FunctionKind.INSTANCE,
+                    Signature(
+                        parameters=[
+                            Parameter(name='self', kind=Parameter.POSITIONAL_OR_KEYWORD, annotation=Parameter.empty),
+                            Parameter(name='foo', kind=Parameter.POSITIONAL_OR_KEYWORD,
+                                      annotation=make_forward_ref('FooTypedDict')),
+                            Parameter(name='bar', kind=Parameter.POSITIONAL_OR_KEYWORD,
+                                      annotation=make_forward_ref('BarTypedDict')),
+                        ],
+                        return_annotation=int,
+                    ),
+                    False,
+                    [
+                        ClassStub(
+                            name='FooTypedDict(TypedDict)',
+                            function_stubs=[],
+                            attribute_stubs=[
+                                AttributeStub('a', int),
+                                AttributeStub('b', str),
+                            ]
+                        ),
+                        ClassStub(
+                            name='BarTypedDict(TypedDict)',
+                            function_stubs=[],
+                            attribute_stubs=[
+                                AttributeStub('c', int),
+                            ]
+                        ),
+                    ],
+                )
+            ),
+        ],
+    )
+    def test_from_callable_and_traced_types(self, func, arg_types,
+                                            return_type, yield_type, expected):
+        function = FunctionDefinition.from_callable_and_traced_types(
+            func, arg_types,
+            return_type, yield_type,
+            existing_annotation_strategy=ExistingAnnotationStrategy.IGNORE
+        )
+        assert function == expected
 
 
 def tie_helper(a, b):

@@ -26,14 +26,59 @@ from monkeytype.typing import (
     RewriteLargeUnion,
     get_type,
     get_type_str,
+    is_typed_dict,
     shrink_types,
+    shrink_typed_dict_types,
+    typed_dict_to_dict,
     RewriteGenerator,
+    DUMMY_TYPED_DICT_NAME,
 )
+
+from mypy_extensions import TypedDict
 
 from .util import Dummy
 
 
 class TestShrinkType:
+    @pytest.mark.parametrize(
+        'types, expected_type',
+        [
+            (
+                (
+                    TypedDict(DUMMY_TYPED_DICT_NAME, {'a': int, 'b': int}),
+                    TypedDict(DUMMY_TYPED_DICT_NAME, {'a': int, 'b': int}),
+                ),
+                TypedDict(DUMMY_TYPED_DICT_NAME, {'a': int, 'b': int}),
+            ),
+            # Extra key in one dictionary - fall back to Union, which gives Dict[str, int].
+            (
+                (
+                    TypedDict(DUMMY_TYPED_DICT_NAME, {'a': int, 'b': int}),
+                    TypedDict(DUMMY_TYPED_DICT_NAME, {'a': int}),
+                ),
+                Dict[str, int],
+            ),
+            # Same key has different value type - fall back to Union.
+            (
+                (
+                    TypedDict(DUMMY_TYPED_DICT_NAME, {'a': str, 'b': int}),
+                    TypedDict(DUMMY_TYPED_DICT_NAME, {'a': int, 'b': int}),
+                ),
+                Union[Dict[str, Union[str, int]], Dict[str, int]],
+            ),
+            # Different keys -- fall back to union.
+            (
+                (
+                    TypedDict(DUMMY_TYPED_DICT_NAME, {'a': str}),
+                    TypedDict(DUMMY_TYPED_DICT_NAME, {'b': int}),
+                ),
+                Union[Dict[str, str], Dict[str, int]],
+            ),
+        ],
+    )
+    def test_shrink_typed_dict_types(self, types, expected_type):
+        assert shrink_typed_dict_types(types) == expected_type
+
     @pytest.mark.parametrize(
         'types, expected_type',
         [
@@ -47,6 +92,102 @@ class TestShrinkType:
     )
     def test_shrink_types(self, types, expected_type):
         assert shrink_types(types) == expected_type
+
+    @pytest.mark.parametrize(
+        'types, expected_type',
+        [
+            # If all are TypedDicts, we get the shrunk TypedDict.
+            (
+                (
+                    TypedDict(DUMMY_TYPED_DICT_NAME, {'a': int, 'b': int}),
+                    TypedDict(DUMMY_TYPED_DICT_NAME, {'a': int, 'b': int}),
+                ),
+                TypedDict(DUMMY_TYPED_DICT_NAME, {'a': int, 'b': int}),
+            ),
+            # If not all are TypedDicts, we get the Dict equivalents.
+            (
+                (
+                    TypedDict(DUMMY_TYPED_DICT_NAME, {'a': int, 'b': int}),
+                    Dict[int, int]
+                ),
+                Union[Dict[str, int], Dict[int, int]],
+            ),
+        ],
+    )
+    def test_shrink_types_mixed_dicts(self, types, expected_type):
+        assert shrink_types(types) == expected_type
+
+
+class TestTypedDictToDict:
+    @pytest.mark.parametrize(
+        'typ, expected_type',
+        [
+            # TypedDicts would have been constructed only for string literal keys.
+            (TypedDict(DUMMY_TYPED_DICT_NAME, {'a': int, 'b': int}), Dict[str, int]),
+            (TypedDict(DUMMY_TYPED_DICT_NAME, {'a': str, 'b': int}), Dict[str, Union[str, int]]),
+            (TypedDict(DUMMY_TYPED_DICT_NAME, {}), Dict[Any, Any]),
+        ],
+    )
+    def test_typed_dict_to_dict(self, typ, expected_type):
+        assert typed_dict_to_dict(typ) == expected_type
+
+
+class TestTypedDictHelpers:
+    @pytest.mark.parametrize(
+        'typ, expected',
+        [
+            (TypedDict(DUMMY_TYPED_DICT_NAME, {'a': int, 'b': int}), True),
+            (Dict[str, int], False),
+            # Regression test.
+            (lambda x: x, False),
+        ],
+    )
+    def test_is_typed_dict(self, typ, expected):
+        assert is_typed_dict(typ) == expected
+
+    @pytest.mark.parametrize(
+        'type1, type2, expected_value',
+        [
+            (
+                TypedDict(DUMMY_TYPED_DICT_NAME, {'a': int, 'b': int}),
+                TypedDict(DUMMY_TYPED_DICT_NAME, {'a': int, 'b': int}),
+                True,
+            ),
+            (
+                TypedDict(DUMMY_TYPED_DICT_NAME, {'a': int, 'b': int}, total=False),
+                TypedDict(DUMMY_TYPED_DICT_NAME, {'a': int, 'b': int}),
+                False,
+            ),
+            (
+                TypedDict(DUMMY_TYPED_DICT_NAME, {'a': int, 'b': int}),
+                Dict[str, int],
+                False,
+            ),
+            (
+                Dict[str, int],
+                TypedDict(DUMMY_TYPED_DICT_NAME, {'a': int, 'b': int}),
+                False,
+            ),
+            (Dict[str, int], Dict[str, int], True),
+            # Recursive equality checks.
+            (
+                TypedDict(DUMMY_TYPED_DICT_NAME,
+                          {'a': TypedDict(DUMMY_TYPED_DICT_NAME, {'a': int, 'b': str})}),
+                TypedDict(DUMMY_TYPED_DICT_NAME,
+                          {'a': TypedDict(DUMMY_TYPED_DICT_NAME, {'a': int, 'b': str})}),
+                True,
+            ),
+            (
+                TypedDict(DUMMY_TYPED_DICT_NAME,
+                          {'a': TypedDict(DUMMY_TYPED_DICT_NAME, {'a': int, 'b': str})}),
+                TypedDict(DUMMY_TYPED_DICT_NAME,
+                          {'a': TypedDict(DUMMY_TYPED_DICT_NAME, {'a': str, 'b': str})}),
+                False,
+            ),
+        ],
+    )
+    def test_are_dict_types_equal(self, type1, type2, expected_value):
+        assert (type1 == type2) == expected_value
 
 
 def helper() -> None:
@@ -72,8 +213,6 @@ class TestGetType:
             ([], List[Any]),
             ([1, 2, 3], List[int]),
             ([1, True], List[Union[int, bool]]),
-            ({'a': 1, 'b': 2}, Dict[str, int]),
-            ({'a': 1, 2: 'b'}, Dict[Union[str, int], Union[str, int]]),
             (tuple(), typing_Tuple[()]),
             (helper, Callable),
             (lambda x: x, Callable),
@@ -85,6 +224,20 @@ class TestGetType:
     def test_builtin_types(self, value, expected_type):
         """Return the appropriate type for builtins"""
         assert get_type(value) == expected_type
+
+    @pytest.mark.parametrize(
+        'value, max_typed_dict_size, expected_dict_type',
+        [
+            ({}, None, TypedDict(DUMMY_TYPED_DICT_NAME, {})),
+            ({'a': 1, 'b': 2}, None, TypedDict(DUMMY_TYPED_DICT_NAME, {'a': int, 'b': int})),
+            ({'a': 1, 'b': 2}, 2, TypedDict(DUMMY_TYPED_DICT_NAME, {'a': int, 'b': int})),
+            ({'a': 1, 'b': 2}, 1, Dict[str, int]),
+            ({'a': 1, 2: 'b'}, None, Dict[Union[str, int], Union[str, int]]),
+        ],
+    )
+    def test_dict_type(self, value, max_typed_dict_size, expected_dict_type):
+        """Return the appropriate type for dictionaries."""
+        assert get_type(value, max_typed_dict_size) == expected_dict_type
 
     def test_instance_type(self):
         """Return appropriate type for an instance of a user defined class"""
@@ -103,6 +256,8 @@ class TestGetTypeStr:
             (Dummy, 'tests.util.Dummy'),
             (Optional[str], 'typing.Optional[str]'),
             (Dict[str, Dummy], 'typing.Dict[str, tests.util.Dummy]'),
+            (TypedDict(DUMMY_TYPED_DICT_NAME, {'a': int, 'b': int}),
+             'tests.test_typing.' + DUMMY_TYPED_DICT_NAME),
         ],
     )
     def test_get_type_str(self, typ, typ_str):
