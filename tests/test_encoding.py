@@ -26,9 +26,10 @@ from monkeytype.encoding import (
     type_to_json,
     serialize_traces,
 )
+from mypy_extensions import TypedDict
 from monkeytype.exceptions import InvalidTypeError
 from monkeytype.tracing import CallTrace
-from monkeytype.typing import NoneType, NotImplementedType, mappingproxy
+from monkeytype.typing import DUMMY_TYPED_DICT_NAME, NoneType, NotImplementedType, mappingproxy
 from .util import Outer
 
 from unittest.mock import Mock
@@ -78,6 +79,141 @@ class TestTypeConversion:
     def test_type_round_trip(self, typ):
         assert type_from_dict(type_to_dict(typ)) == typ
         assert type_from_json(type_to_json(typ)) == typ
+
+    @pytest.mark.parametrize(
+        'typ, expected',
+        [
+            (
+                Dict[str, int],
+                {
+                    'elem_types': [
+                        {'module': 'builtins', 'qualname': 'str'},
+                        {'module': 'builtins', 'qualname': 'int'},
+                    ],
+                    'module': 'typing',
+                    'qualname': 'Dict',
+                },
+            ),
+            (
+                TypedDict(DUMMY_TYPED_DICT_NAME, {'a': int, 'b': str}),
+                {
+                    'elem_types': {
+                        'a': {'module': 'builtins', 'qualname': 'int'},
+                        'b': {'module': 'builtins', 'qualname': 'str'},
+                    },
+                    'is_typed_dict': True,
+                    'module': 'tests.test_encoding',
+                    'qualname': DUMMY_TYPED_DICT_NAME,
+                },
+            ),
+            (
+                TypedDict(DUMMY_TYPED_DICT_NAME, {'a': TypedDict(DUMMY_TYPED_DICT_NAME, {'a': int, 'b': str})}),
+                {
+                    'elem_types': {
+                        'a': {
+                            'elem_types': {
+                                'a': {'module': 'builtins', 'qualname': 'int'},
+                                'b': {'module': 'builtins', 'qualname': 'str'},
+                            },
+                            'is_typed_dict': True,
+                            'module': 'tests.test_encoding',
+                            'qualname': DUMMY_TYPED_DICT_NAME,
+                        },
+                    },
+                    'is_typed_dict': True,
+                    'module': 'tests.test_encoding',
+                    'qualname': DUMMY_TYPED_DICT_NAME,
+                },
+            ),
+        ],
+    )
+    def test_type_to_dict(self, typ, expected):
+        assert type_to_dict(typ) == expected
+
+    @pytest.mark.parametrize(
+        'type_dict, expected',
+        [
+            (
+                {
+                    'elem_types': {
+                        'a': {'module': 'builtins', 'qualname': 'int'},
+                        'b': {'module': 'builtins', 'qualname': 'str'},
+                    },
+                    'is_typed_dict': True,
+                    'module': 'tests.test_encoding',
+                    'qualname': DUMMY_TYPED_DICT_NAME,
+                },
+                TypedDict(DUMMY_TYPED_DICT_NAME, {'a': int, 'b': str}),
+            ),
+        ],
+    )
+    def test_type_from_dict(self, type_dict, expected):
+        assert type_from_dict(type_dict) == expected
+
+    @pytest.mark.parametrize(
+        'type_dict, expected',
+        [
+            (
+                {
+                    'elem_types': {
+                        'a': {
+                            'elem_types': {
+                                'a': {'module': 'builtins', 'qualname': 'int'},
+                                'b': {'module': 'builtins', 'qualname': 'str'},
+                            },
+                            'is_typed_dict': True,
+                            'module': 'tests.test_encoding',
+                            'qualname': DUMMY_TYPED_DICT_NAME,
+                        },
+                    },
+                    'is_typed_dict': True,
+                    'module': 'tests.test_encoding',
+                    'qualname': DUMMY_TYPED_DICT_NAME,
+                },
+                TypedDict(DUMMY_TYPED_DICT_NAME, {'a': TypedDict(DUMMY_TYPED_DICT_NAME, {'a': int, 'b': str})}),
+            ),
+        ],
+    )
+    def test_type_from_dict_nested(self, type_dict, expected):
+        assert type_from_dict(type_dict) == expected
+
+    @pytest.mark.parametrize(
+        'type_dict, expected',
+        [
+            (
+                TypedDict(DUMMY_TYPED_DICT_NAME, {'a': int, 'b': str}),
+                '{"elem_types": {"a": {"module": "builtins", "qualname": "int"},'
+                + ' "b": {"module": "builtins", "qualname": "str"}},'
+                + ' "is_typed_dict": true, "module": "tests.test_encoding", "qualname": "DUMMY_NAME"}',
+            ),
+        ],
+    )
+    def test_type_to_json(self, type_dict, expected):
+        assert type_to_json(type_dict) == expected
+
+    @pytest.mark.parametrize(
+        'type_dict_string, expected',
+        [
+            (
+                '{"elem_types": {"a": {"module": "builtins", "qualname": "int"},'
+                + ' "b": {"module": "builtins", "qualname": "str"}},'
+                + ' "is_typed_dict": true, "module": "tests.test_encoding", "qualname": "DUMMY_NAME"}',
+                TypedDict(DUMMY_TYPED_DICT_NAME, {'a': int, 'b': str}),
+            ),
+        ],
+    )
+    def test_type_from_json(self, type_dict_string, expected):
+        assert type_from_json(type_dict_string) == expected
+
+    @pytest.mark.parametrize(
+        'type_dict',
+        [
+            (TypedDict(DUMMY_TYPED_DICT_NAME, {'a': int, 'b': str})),
+        ],
+    )
+    def test_type_round_trip_typed_dict(self, type_dict):
+        assert type_from_dict(type_to_dict(type_dict)) == type_dict
+        assert type_from_json(type_to_json(type_dict)) == type_dict
 
     def test_trace_round_trip(self):
         trace = CallTrace(dummy_func, {'a': int, 'b': int}, int)

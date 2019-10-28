@@ -1,16 +1,14 @@
 [[source]]
-
 url = "https://pypi.python.org/simple"
 verify_ssl = true
 name = "pypi"
 
 [dev-packages]
-
 "flake8" = "*"
 pytest = "*"
 mypy = "*"
 pytest-smartcov = "*"
-"e1839a8" = {path = ".", editable = true}
+e1839a8 = {path = ".",editable = true}
 cython = "*"
 sphinx = "*"
 twine = "*"
@@ -18,5 +16,7 @@ django = "*"
 tox = "*"
 
 [pipenv]
-
 keep_outdated = true
+
+[packages]
+stringcase = "*"

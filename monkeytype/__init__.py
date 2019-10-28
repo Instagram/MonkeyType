@@ -29,4 +29,5 @@ def trace(config: Optional[Config] = None) -> ContextManager:
         logger=config.trace_logger(),
         code_filter=config.code_filter(),
         sample_rate=config.sample_rate(),
+        max_typed_dict_size=config.max_typed_dict_size(),
     )

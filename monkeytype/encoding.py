@@ -20,11 +20,12 @@ from monkeytype.compat import is_any, is_union, is_generic, qualname_of_generic
 from monkeytype.db.base import CallTraceThunk
 from monkeytype.exceptions import InvalidTypeError
 from monkeytype.tracing import CallTrace
-from monkeytype.typing import NoneType, NotImplementedType, mappingproxy
+from monkeytype.typing import NoneType, NotImplementedType, is_typed_dict, mappingproxy
 from monkeytype.util import (
     get_func_in_module,
     get_name_in_module,
 )
+from mypy_extensions import TypedDict
 
 
 logger = logging.getLogger(__name__)
@@ -48,6 +49,18 @@ logger = logging.getLogger(__name__)
 TypeDict = Dict[str, Any]
 
 
+def typed_dict_to_dict(typ: type) -> TypeDict:
+    elem_types: Dict[str, Any] = {}
+    for k, v in typ.__annotations__.items():
+        elem_types[k] = type_to_dict(v)
+    return {
+        'module': typ.__module__,
+        'qualname': typ.__qualname__,
+        'elem_types': elem_types,
+        'is_typed_dict': True,
+    }
+
+
 def type_to_dict(typ: type) -> TypeDict:
     """Convert a type into a dictionary representation that we can store.
 
@@ -55,6 +68,9 @@ def type_to_dict(typ: type) -> TypeDict:
         1. Be encodable as JSON
         2. Contain enough information to let us reify the type
     """
+    if is_typed_dict(typ):
+        return typed_dict_to_dict(typ)
+
     # Union and Any are special cases that aren't actually types.
     if is_union(typ):
         qualname = 'Union'
@@ -86,6 +102,12 @@ _HIDDEN_BUILTIN_TYPES: Dict[str, type] = {
 }
 
 
+def typed_dict_from_dict(d: TypeDict) -> type:
+    return TypedDict(d['qualname'],
+                     {k: type_from_dict(v)
+                      for k, v in d['elem_types'].items()})
+
+
 def type_from_dict(d: TypeDict) -> type:
     """Given a dictionary produced by type_to_dict, return the equivalent type.
 
@@ -94,6 +116,8 @@ def type_from_dict(d: TypeDict) -> type:
         InvalidTypeError if the named type isn't actually a type
     """
     module, qualname = d['module'], d['qualname']
+    if d.get('is_typed_dict', False):
+        return typed_dict_from_dict(d)
     if module == 'builtins' and qualname in _HIDDEN_BUILTIN_TYPES:
         typ = _HIDDEN_BUILTIN_TYPES[qualname]
     else:

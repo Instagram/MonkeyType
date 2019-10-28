@@ -9,6 +9,7 @@ import enum
 import inspect
 import logging
 import re
+from stringcase import pascalcase  # type: ignore
 from abc import (
     ABCMeta,
     abstractmethod,
@@ -19,13 +20,23 @@ from typing import (
     DefaultDict,
     Dict,
     Iterable,
+    List,
     Optional,
     Set,
     Tuple,
     Union,
 )
 
-from monkeytype.compat import is_any, is_union, is_generic, qualname_of_generic, is_forward_ref
+from monkeytype.compat import (
+    is_any,
+    is_union,
+    is_generic,
+    qualname_of_generic,
+    is_forward_ref,
+    make_forward_ref,
+)
+from monkeytype.typing import is_anonymous_typed_dict
+
 
 try:
     from django.utils.functional import cached_property  # type: ignore
@@ -87,49 +98,6 @@ class ExistingAnnotationStrategy(enum.Enum):
     # Generate a stub that omits annotations anywhere the existing source has
     # them. Maximizes likelihood that the stub will cleanly apply using retype.
     OMIT = 2
-
-
-class FunctionDefinition:
-    _KIND_WITH_SELF = {
-        FunctionKind.CLASS,
-        FunctionKind.INSTANCE,
-        FunctionKind.PROPERTY,
-        FunctionKind.DJANGO_CACHED_PROPERTY,
-    }
-
-    def __init__(
-        self,
-        module: str,
-        qualname: str,
-        kind: FunctionKind,
-        sig: inspect.Signature,
-        is_async: bool = False
-    ) -> None:
-        self.module = module
-        self.qualname = qualname
-        self.kind = kind
-        self.signature = sig
-        self.is_async = is_async
-
-    @classmethod
-    def from_callable(cls, func: Callable, kind: FunctionKind = None) -> 'FunctionDefinition':
-        kind = FunctionKind.from_callable(func)
-        sig = inspect.Signature.from_callable(func)
-        is_async = asyncio.iscoroutinefunction(func)
-        return FunctionDefinition(func.__module__, func.__qualname__, kind, sig, is_async)
-
-    @property
-    def has_self(self) -> bool:
-        return self.kind in self._KIND_WITH_SELF
-
-    def __eq__(self, other: Any) -> bool:
-        if isinstance(other, self.__class__):
-            return self.__dict__ == other.__dict__
-        return NotImplemented
-
-    def __repr__(self) -> str:
-        return "FunctionDefinition('%s', '%s', %s, %s, %s)" % (
-            self.module, self.qualname, self.kind, self.signature, self.is_async)
 
 
 class ImportMap(collections.defaultdict):
@@ -265,26 +233,9 @@ def shrink_traced_types(traces: Iterable[CallTrace]) -> Tuple[Dict[str, type], O
     return (shrunken_arg_types, return_type, yield_type)
 
 
-def get_updated_definition(
-    func: Callable,
-    traces: Iterable[CallTrace],
-    rewriter: Optional[TypeRewriter] = None,
-    existing_annotation_strategy: ExistingAnnotationStrategy = ExistingAnnotationStrategy.REPLICATE,
-) -> FunctionDefinition:
-    """Update the definition for func using the types collected in traces."""
-    if rewriter is None:
-        rewriter = NoOpRewriter()
-    defn = FunctionDefinition.from_callable(func)
-    arg_types, return_type, yield_type = shrink_traced_types(traces)
-    arg_types = {name: rewriter.rewrite(typ) for name, typ in arg_types.items()}
-    if return_type is not None:
-        return_type = rewriter.rewrite(return_type)
-    if yield_type is not None:
-        yield_type = rewriter.rewrite(yield_type)
-    sig = defn.signature
-    sig = update_signature_args(sig, arg_types, defn.has_self, existing_annotation_strategy)
-    sig = update_signature_return(sig, return_type, yield_type, existing_annotation_strategy)
-    return FunctionDefinition(defn.module, defn.qualname, defn.kind, sig, defn.is_async)
+def get_typed_dict_class_name(parameter_name: str) -> str:
+    """Return the name for a TypedDict class generated for parameter `parameter_name`."""
+    return f'{pascalcase(parameter_name)}TypedDict'
 
 
 class Stub(metaclass=ABCMeta):
@@ -468,6 +419,22 @@ def render_signature(
     return '\n'.join(rendered_multi_lines)
 
 
+class AttributeStub(Stub):
+    def __init__(
+        self,
+        name: str,
+        typ: type,
+    ) -> None:
+        self.name = name
+        self.typ = typ
+
+    def render(self, prefix: str = '') -> str:
+        return f'{prefix}{self.name}: {render_annotation(self.typ)}'
+
+    def __repr__(self) -> str:
+        return f'AttributeStub({self.name}, {self.typ})'
+
+
 class FunctionStub(Stub):
     def __init__(
             self,
@@ -509,21 +476,49 @@ class FunctionStub(Stub):
 
 
 class ClassStub(Stub):
-    def __init__(self, name: str, function_stubs: Iterable[FunctionStub] = None) -> None:
+    def __init__(
+        self,
+        name: str,
+        function_stubs: Iterable[FunctionStub] = None,
+        attribute_stubs: Iterable[AttributeStub] = None,
+    ) -> None:
         self.name = name
         self.function_stubs: Dict[str, FunctionStub] = {}
+        self.attribute_stubs = attribute_stubs or []
         if function_stubs is not None:
             self.function_stubs = {stub.name: stub for stub in function_stubs}
 
     def render(self) -> str:
-        parts = ['class %s:' % (self.name,)]
-        for name in sorted(self.function_stubs):
-            stub = self.function_stubs[name]
-            parts.append(stub.render(prefix='    '))
+        parts = [
+            f'class {self.name}:',
+            *[stub.render(prefix='    ')
+              for stub in sorted(self.attribute_stubs, key=lambda stub: stub.name)],
+            *[stub.render(prefix='    ')
+              for _, stub in sorted(self.function_stubs.items())],
+        ]
         return "\n".join(parts)
 
     def __repr__(self) -> str:
-        return 'ClassStub(%s, %s)' % (repr(self.name), tuple(self.function_stubs.values()))
+        return 'ClassStub(%s, %s, %s)' % (repr(self.name),
+                                          tuple(self.function_stubs.values()),
+                                          tuple(self.attribute_stubs))
+
+    @staticmethod
+    def stubs_from_typed_dict(type_dict: type, class_name: str) -> List['ClassStub']:
+        """Return a list of class stubs for all TypedDicts found within `type_dict`."""
+        assert is_anonymous_typed_dict(type_dict)
+        class_stubs = []
+        attribute_stubs = []
+        for name, typ in type_dict.__annotations__.items():
+            if is_anonymous_typed_dict(typ):
+                _class_name = get_typed_dict_class_name(name)
+                class_stubs.extend(ClassStub.stubs_from_typed_dict(typ, _class_name))
+                typ = make_forward_ref(_class_name)
+            attribute_stubs.append(AttributeStub(name, typ))
+        class_stubs.append(ClassStub(name=f'{class_name}(TypedDict)',
+                                     function_stubs=[],
+                                     attribute_stubs=attribute_stubs))
+        return class_stubs
 
 
 class ModuleStub(Stub):
@@ -531,7 +526,8 @@ class ModuleStub(Stub):
             self,
             function_stubs: Iterable[FunctionStub] = None,
             class_stubs: Iterable[ClassStub] = None,
-            imports_stub: ImportBlockStub = None
+            imports_stub: ImportBlockStub = None,
+            typed_dict_class_stubs: Iterable[ClassStub] = None,
     ) -> None:
         self.function_stubs: Dict[str, FunctionStub] = {}
         if function_stubs is not None:
@@ -540,11 +536,16 @@ class ModuleStub(Stub):
         if class_stubs is not None:
             self.class_stubs = {stub.name: stub for stub in class_stubs}
         self.imports_stub = imports_stub if imports_stub else ImportBlockStub()
+        self.typed_dict_class_stubs: List[ClassStub] = []
+        if typed_dict_class_stubs is not None:
+            self.typed_dict_class_stubs = list(typed_dict_class_stubs)
 
     def render(self) -> str:
         parts = []
         if self.imports_stub.imports:
             parts.append(self.imports_stub.render())
+        for typed_dict_class_stub in sorted(self.typed_dict_class_stubs, key=lambda s: s.name):
+            parts.append(typed_dict_class_stub.render())
         for func_stub in sorted(self.function_stubs.values(), key=lambda s: s.name):
             parts.append(func_stub.render())
         for class_stub in sorted(self.class_stubs.values(), key=lambda s: s.name):
@@ -552,8 +553,118 @@ class ModuleStub(Stub):
         return "\n\n\n".join(parts)
 
     def __repr__(self) -> str:
-        return 'ModuleStub(%s, %s, %s)' % (
-            tuple(self.function_stubs.values()), tuple(self.class_stubs.values()), repr(self.imports_stub))
+        return 'ModuleStub(%s, %s, %s, %s)' % (
+            tuple(self.function_stubs.values()),
+            tuple(self.class_stubs.values()),
+            repr(self.imports_stub),
+            tuple(self.typed_dict_class_stubs),
+        )
+
+
+class FunctionDefinition:
+    _KIND_WITH_SELF = {
+        FunctionKind.CLASS,
+        FunctionKind.INSTANCE,
+        FunctionKind.PROPERTY,
+        FunctionKind.DJANGO_CACHED_PROPERTY,
+    }
+
+    def __init__(
+        self,
+        module: str,
+        qualname: str,
+        kind: FunctionKind,
+        sig: inspect.Signature,
+        is_async: bool = False,
+        typed_dict_class_stubs: Iterable[ClassStub] = None,
+    ) -> None:
+        self.module = module
+        self.qualname = qualname
+        self.kind = kind
+        self.signature = sig
+        self.is_async = is_async
+        self.typed_dict_class_stubs = typed_dict_class_stubs or []
+
+    @classmethod
+    def from_callable(cls, func: Callable, kind: FunctionKind = None) -> 'FunctionDefinition':
+        kind = FunctionKind.from_callable(func)
+        sig = inspect.Signature.from_callable(func)
+        is_async = asyncio.iscoroutinefunction(func)
+        return FunctionDefinition(func.__module__, func.__qualname__, kind, sig, is_async)
+
+    @classmethod
+    def from_callable_and_traced_types(
+        cls,
+        func: Callable,
+        arg_types: Dict[str, type],
+        return_type: Optional[type],
+        yield_type: Optional[type],
+        existing_annotation_strategy: ExistingAnnotationStrategy = ExistingAnnotationStrategy.REPLICATE,
+    ) -> 'FunctionDefinition':
+        typed_dict_class_stubs: List[ClassStub] = []
+        new_arg_types = {}
+        for name, typ in arg_types.items():
+            if is_anonymous_typed_dict(typ):
+                class_name = get_typed_dict_class_name(name)
+                typed_dict_class_stubs.extend(ClassStub.stubs_from_typed_dict(typ, class_name))
+                typ = make_forward_ref(class_name)
+            new_arg_types[name] = typ
+
+        if return_type and is_anonymous_typed_dict(return_type):
+            # Replace the dot in a qualified name.
+            class_name = get_typed_dict_class_name(func.__qualname__.replace('.', '_'))
+            typed_dict_class_stubs.extend(ClassStub.stubs_from_typed_dict(return_type, class_name))
+            return_type = make_forward_ref(class_name)
+
+        if yield_type and is_anonymous_typed_dict(yield_type):
+            # Replace the dot in a qualified name.
+            class_name = get_typed_dict_class_name(func.__qualname__.replace('.', '_') + 'Yield')
+            typed_dict_class_stubs.extend(ClassStub.stubs_from_typed_dict(yield_type, class_name))
+            yield_type = make_forward_ref(class_name)
+
+        function = FunctionDefinition.from_callable(func)
+        signature = function.signature
+        signature = update_signature_args(signature, new_arg_types,
+                                          function.has_self, existing_annotation_strategy)
+        signature = update_signature_return(signature, return_type,
+                                            yield_type, existing_annotation_strategy)
+        return FunctionDefinition(function.module, function.qualname,
+                                  function.kind, signature,
+                                  function.is_async, typed_dict_class_stubs)
+
+    @property
+    def has_self(self) -> bool:
+        return self.kind in self._KIND_WITH_SELF
+
+    def __eq__(self, other: Any) -> bool:
+        if isinstance(other, self.__class__):
+            return self.__dict__ == other.__dict__
+        return NotImplemented
+
+    def __repr__(self) -> str:
+        return "FunctionDefinition('%s', '%s', %s, %s, %s, %s)" % (
+            self.module, self.qualname, self.kind,
+            self.signature, self.is_async, self.typed_dict_class_stubs
+        )
+
+
+def get_updated_definition(
+    func: Callable,
+    traces: Iterable[CallTrace],
+    rewriter: Optional[TypeRewriter] = None,
+    existing_annotation_strategy: ExistingAnnotationStrategy = ExistingAnnotationStrategy.REPLICATE,
+) -> FunctionDefinition:
+    """Update the definition for func using the types collected in traces."""
+    if rewriter is None:
+        rewriter = NoOpRewriter()
+    arg_types, return_type, yield_type = shrink_traced_types(traces)
+    arg_types = {name: rewriter.rewrite(typ) for name, typ in arg_types.items()}
+    if return_type is not None:
+        return_type = rewriter.rewrite(return_type)
+    if yield_type is not None:
+        yield_type = rewriter.rewrite(yield_type)
+    return FunctionDefinition.from_callable_and_traced_types(func, arg_types, return_type,
+                                                             yield_type, existing_annotation_strategy)
 
 
 def build_module_stubs(entries: Iterable[FunctionDefinition]) -> Dict[str, ModuleStub]:
@@ -562,14 +673,18 @@ def build_module_stubs(entries: Iterable[FunctionDefinition]) -> Dict[str, Modul
     for entry in entries:
         path = entry.qualname.split('.')
         name = path.pop()
+        class_path = path
         # TODO: Handle nested classes
         klass = None
-        if len(path) > 0:
-            klass = '.'.join(path)
+        if len(class_path) > 0:
+            klass = '.'.join(class_path)
         if entry.module not in mod_stubs:
             mod_stubs[entry.module] = ModuleStub()
         mod_stub = mod_stubs[entry.module]
         imports = get_imports_for_signature(entry.signature)
+        # Import TypedDict, if needed.
+        if entry.typed_dict_class_stubs:
+            imports['mypy_extensions'].add('TypedDict')
         func_stub = FunctionStub(name, entry.signature, entry.kind, list(imports.keys()), entry.is_async)
         # Don't need to import anything from the same module
         imports.pop(entry.module, None)
@@ -581,6 +696,9 @@ def build_module_stubs(entries: Iterable[FunctionDefinition]) -> Dict[str, Modul
             class_stub.function_stubs[func_stub.name] = func_stub
         else:
             mod_stub.function_stubs[func_stub.name] = func_stub
+
+        mod_stub.typed_dict_class_stubs.extend(entry.typed_dict_class_stubs)
+
     return mod_stubs
 
 

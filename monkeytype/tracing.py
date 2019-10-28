@@ -191,13 +191,15 @@ class CallTracer:
         self,
         logger: CallTraceLogger,
         code_filter: Optional[CodeFilter] = None,
-        sample_rate: Optional[int] = None
+        sample_rate: Optional[int] = None,
+        max_typed_dict_size: Optional[int] = None,
     ) -> None:
         self.logger = logger
         self.traces: Dict[FrameType, CallTrace] = {}
         self.sample_rate = sample_rate
         self.cache: Dict[CodeType, Optional[Callable]] = {}
         self.should_trace = code_filter
+        self.max_typed_dict_size = max_typed_dict_size
 
     def _get_func(self, frame: FrameType) -> Optional[Callable]:
         code = frame.f_code
@@ -220,7 +222,8 @@ class CallTracer:
         arg_types = {}
         for name in arg_names:
             if name in frame.f_locals:
-                arg_types[name] = get_type(frame.f_locals[name])
+                arg_types[name] = get_type(frame.f_locals[name],
+                                           max_typed_dict_size=self.max_typed_dict_size)
         self.traces[frame] = CallTrace(func, arg_types)
 
     def handle_return(self, frame: FrameType, arg: Any) -> None:
@@ -230,7 +233,7 @@ class CallTracer:
         # from a function returning (or yielding) None. In the latter case, the
         # the last instruction that was executed should always be a return or a
         # yield.
-        typ = get_type(arg)
+        typ = get_type(arg, max_typed_dict_size=self.max_typed_dict_size)
         last_opcode = frame.f_code.co_code[frame.f_lasti]
         trace = self.traces.get(frame)
         if trace is None:
@@ -268,10 +271,11 @@ def trace_calls(
     logger: CallTraceLogger,
     code_filter: Optional[CodeFilter] = None,
     sample_rate: Optional[int] = None,
+    max_typed_dict_size: Optional[int] = None,
 ) -> Iterator[None]:
     """Enable call tracing for a block of code"""
     old_trace = sys.getprofile()
-    sys.setprofile(CallTracer(logger, code_filter, sample_rate))
+    sys.setprofile(CallTracer(logger, code_filter, sample_rate, max_typed_dict_size))
     try:
         yield
     finally:

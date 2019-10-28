@@ -30,6 +30,13 @@ try:
     def is_forward_ref(typ: Any) -> bool:
         return isinstance(typ, ForwardRef)
 
+    def make_forward_ref(s: str) -> type:
+        return ForwardRef(s)
+
+    def repr_forward_ref() -> str:
+        """For checking the test output when ForwardRef is printed."""
+        return 'ForwardRef'
+
 except ImportError:
     # Python 3.6
     from typing import _Any, _Union, GenericMeta, _ForwardRef  # type: ignore
@@ -54,3 +61,10 @@ except ImportError:
 
     def is_forward_ref(typ: Any) -> bool:
         return isinstance(typ, _ForwardRef)
+
+    def make_forward_ref(s: str) -> type:
+        return _ForwardRef(s)
+
+    def repr_forward_ref() -> str:
+        """For checking the test output when ForwardRef is printed."""
+        return '_ForwardRef'
