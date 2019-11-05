@@ -104,14 +104,16 @@ def get_type_str(t):
         return s
     elif mod == 'builtins':
         return t.__qualname__
-    return t.__module__ + '.' + t.__qualname__
+    return mod + '.' + t.__qualname__
 
 
 class TypeRewriter:
     """TypeRewriter provides a visitor for rewriting parts of types"""
 
     def _rewrite_container(self, cls, container):
-        if container.__args__ is None:
+        if container.__module__ != "typing":
+            return container
+        if getattr(container, '__args__', None) is None:
             return container
         elems = tuple(self.rewrite(elem) for elem in container.__args__)
         return cls[elems]

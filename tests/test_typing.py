@@ -11,7 +11,7 @@ from typing import (
     List,
     Optional,
     Set,
-    Tuple,
+    Tuple as typing_Tuple,
     Type,
     Union,
     Generator,
@@ -65,7 +65,7 @@ class TestGetType:
             ('foo', str),
             (Dummy, Type[Dummy]),
             (1.1, float),
-            (('a', 1, True), Tuple[str, int, bool]),
+            (('a', 1, True), typing_Tuple[str, int, bool]),
             (set(), Set[Any]),
             ({'a', 'b', 'c'}, Set[str]),
             ({'a', 1}, Set[Union[str, int]]),
@@ -74,7 +74,7 @@ class TestGetType:
             ([1, True], List[Union[int, bool]]),
             ({'a': 1, 'b': 2}, Dict[str, int]),
             ({'a': 1, 2: 'b'}, Dict[Union[str, int], Union[str, int]]),
-            (tuple(), Tuple),
+            (tuple(), typing_Tuple),
             (helper, Callable),
             (lambda x: x, Callable),
             (Dummy().an_instance_method, Callable),
@@ -109,6 +109,11 @@ class TestGetTypeStr:
         assert get_type_str(typ) == typ_str
 
 
+class Tuple:
+    """A name conflict that is not generic."""
+    pass
+
+
 class TestRemoveEmptyContainers:
     @pytest.mark.parametrize(
         'typ, expected',
@@ -121,7 +126,8 @@ class TestRemoveEmptyContainers:
             ),
             (Union[str, int], Union[str, int]),
             (Dict[str, Union[List[str], List[Any]]], Dict[str, List[str]]),
-            (Union[List[Any], Set[Any]], Union[List[Any], Set[Any]])
+            (Union[List[Any], Set[Any]], Union[List[Any], Set[Any]]),
+            (Tuple, Tuple),
         ],
     )
     def test_rewrite(self, typ, expected):
@@ -194,16 +200,30 @@ class TestRewriteLargeUnion:
             # Too few elements; shouldn't rewrite
             (Union[int, str], Union[int, str]),
             # Not all tuples; should rewrite to Any
-            (Union[Tuple[int, int], List[int], Tuple[int]], Any),
+            (Union[typing_Tuple[int, int], List[int], typing_Tuple[int]], Any),
             # Not the same value type for all tuples; should rewrite to Any
-            (Union[Tuple[int, str], Tuple[int, int], Tuple[int]], Any),
+            (
+                Union[
+                    typing_Tuple[int, str], typing_Tuple[int, int], typing_Tuple[int]
+                ],
+                Any,
+            ),
             # Should rewrite to Tuple[int, ...]
             (
-                Union[Tuple[int, int], Tuple[int, int, int], Tuple[int]],
-                Tuple[int, ...],
+                Union[
+                    typing_Tuple[int, int],
+                    typing_Tuple[int, int, int],
+                    typing_Tuple[int],
+                ],
+                typing_Tuple[int, ...],
             ),
             # Should rewrite to Tuple[G, ...]
-            (Union[Tuple[G, G], Tuple[G, G, G], Tuple[G]], Tuple[G, ...]),
+            (
+                Union[
+                    typing_Tuple[G, G], typing_Tuple[G, G, G], typing_Tuple[G]
+                ],
+                typing_Tuple[G, ...],
+            ),
             (Union[B, D, E], B),
             (Union[D, E, F, G], A),
             (Union[int, str, float, bytes], Any),
