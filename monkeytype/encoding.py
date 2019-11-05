@@ -20,7 +20,7 @@ from monkeytype.compat import is_any, is_union, is_generic, qualname_of_generic
 from monkeytype.db.base import CallTraceThunk
 from monkeytype.exceptions import InvalidTypeError
 from monkeytype.tracing import CallTrace
-from monkeytype.typing import NoneType
+from monkeytype.typing import NoneType, NotImplementedType, mappingproxy
 from monkeytype.util import (
     get_func_in_module,
     get_name_in_module,
@@ -75,8 +75,10 @@ def type_to_dict(typ: type) -> TypeDict:
 
 
 _HIDDEN_BUILTIN_TYPES: Dict[str, type] = {
-    # NoneType is only accessible via type(None)
+    # Types that are inaccessible by their names in the builtins module.
     'NoneType': NoneType,
+    'NotImplementedType': NotImplementedType,
+    'mappingproxy': mappingproxy,
 }
 
 
