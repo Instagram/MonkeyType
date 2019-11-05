@@ -360,6 +360,8 @@ def render_annotation(anno: Any) -> str:
             rendered = anno.__qualname__
         else:
             rendered = anno.__module__ + '.' + anno.__qualname__
+    elif isinstance(anno, str):
+        rendered = anno
     else:
         rendered = repr(anno)
 
