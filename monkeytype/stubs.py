@@ -89,6 +89,16 @@ class ExistingAnnotationStrategy(enum.Enum):
     OMIT = 2
 
 
+class ImportStrategy(enum.Enum):
+    """How to handle automatic imports."""
+    # Import types directly, e.g. "from package.subpackage import SomeType".
+    # Then the stubbed type is addressed directly.
+    TYPES = 0
+    # Import just modules, e.g. "from package import subpackage".
+    # Then the stubbed type is addressed with the subpackage prefix.
+    MODULES = 1
+
+
 class FunctionDefinition:
     _KIND_WITH_SELF = {
         FunctionKind.CLASS,
@@ -148,7 +158,9 @@ def _get_import_for_qualname(qualname: str) -> str:
     return qualname.split('.')[0]
 
 
-def get_imports_for_annotation(anno: Any) -> ImportMap:
+def get_imports_for_annotation(
+    anno: Any, strategy: ImportStrategy = ImportStrategy.TYPES
+) -> ImportMap:
     """Return the imports (module, name) needed for the type in the annotation"""
     imports = ImportMap()
     if (
@@ -163,7 +175,7 @@ def get_imports_for_annotation(anno: Any) -> ImportMap:
     elif _is_optional(anno):
         imports['typing'].add('Optional')
         elem_type = _get_optional_elem(anno)
-        elem_imports = get_imports_for_annotation(elem_type)
+        elem_imports = get_imports_for_annotation(elem_type, strategy)
         imports.merge(elem_imports)
     elif is_generic(anno):
         if is_union(anno):
@@ -173,21 +185,32 @@ def get_imports_for_annotation(anno: Any) -> ImportMap:
                 _get_import_for_qualname(qualname_of_generic(anno)))
         elem_types = anno.__args__ or []
         for et in elem_types:
-            elem_imports = get_imports_for_annotation(et)
+            elem_imports = get_imports_for_annotation(et, strategy)
             imports.merge(elem_imports)
-    else:
+    elif strategy == ImportStrategy.TYPES:
         name = _get_import_for_qualname(anno.__qualname__)
         imports[anno.__module__].add(name)
+    elif strategy == ImportStrategy.MODULES:
+        modsplit = anno.__module__.split(".")
+        if len(modsplit) > 1:
+            imports[".".join(modsplit[:-1])].add(modsplit[-1])
+        else:
+            name = _get_import_for_qualname(anno.__qualname__)
+            imports[anno.__module__].add(name)
+    else:
+        raise NotImplementedError(f"Import strategy {strategy} not implemented")
     return imports
 
 
-def get_imports_for_signature(sig: inspect.Signature) -> ImportMap:
+def get_imports_for_signature(
+    sig: inspect.Signature, import_strategy: ImportStrategy = ImportStrategy.TYPES
+) -> ImportMap:
     """Return the imports (module, name) needed for all types in annotations"""
     imports = ImportMap()
     for param in sig.parameters.values():
-        param_imports = get_imports_for_annotation(param.annotation)
+        param_imports = get_imports_for_annotation(param.annotation, import_strategy)
         imports.merge(param_imports)
-    return_imports = get_imports_for_annotation(sig.return_annotation)
+    return_imports = get_imports_for_annotation(sig.return_annotation, import_strategy)
     imports.merge(return_imports)
     return imports
 
@@ -364,7 +387,6 @@ def render_annotation(anno: Any) -> str:
         rendered = anno
     else:
         rendered = repr(anno)
-
     # Temporary hacky workaround for #76 to fix remaining NoneType hints by search-replace
     return rendered.replace('NoneType', 'None')
 
@@ -556,7 +578,10 @@ class ModuleStub(Stub):
             tuple(self.function_stubs.values()), tuple(self.class_stubs.values()), repr(self.imports_stub))
 
 
-def build_module_stubs(entries: Iterable[FunctionDefinition]) -> Dict[str, ModuleStub]:
+def build_module_stubs(
+    entries: Iterable[FunctionDefinition],
+    import_strategy: ImportStrategy = ImportStrategy.TYPES,
+) -> Dict[str, ModuleStub]:
     """Given an iterable of function definitions, build the corresponding stubs"""
     mod_stubs: Dict[str, ModuleStub] = {}
     for entry in entries:
@@ -569,7 +594,7 @@ def build_module_stubs(entries: Iterable[FunctionDefinition]) -> Dict[str, Modul
         if entry.module not in mod_stubs:
             mod_stubs[entry.module] = ModuleStub()
         mod_stub = mod_stubs[entry.module]
-        imports = get_imports_for_signature(entry.signature)
+        imports = get_imports_for_signature(entry.signature, import_strategy)
         func_stub = FunctionStub(name, entry.signature, entry.kind, list(imports.keys()), entry.is_async)
         # Don't need to import anything from the same module
         imports.pop(entry.module, None)
@@ -587,6 +612,7 @@ def build_module_stubs(entries: Iterable[FunctionDefinition]) -> Dict[str, Modul
 def build_module_stubs_from_traces(
     traces: Iterable[CallTrace],
     existing_annotation_strategy: ExistingAnnotationStrategy = ExistingAnnotationStrategy.REPLICATE,
+    import_strategy: ImportStrategy = ImportStrategy.TYPES,
     rewriter: Optional[TypeRewriter] = None
 ) -> Dict[str, ModuleStub]:
     """Given an iterable of call traces, build the corresponding stubs."""
@@ -597,7 +623,7 @@ def build_module_stubs_from_traces(
     for func, traces in index.items():
         defn = get_updated_definition(func, traces, rewriter, existing_annotation_strategy)
         defns.append(defn)
-    return build_module_stubs(defns)
+    return build_module_stubs(defns, import_strategy)
 
 
 class StubIndexBuilder(CallTraceLogger):
@@ -612,6 +638,8 @@ class StubIndexBuilder(CallTraceLogger):
             return
         self.index[trace.func].add(trace)
 
-    def get_stubs(self) -> Dict[str, ModuleStub]:
+    def get_stubs(
+        self, import_strategy: ImportStrategy = ImportStrategy.TYPES
+    ) -> Dict[str, ModuleStub]:
         defs = (get_updated_definition(func, traces) for func, traces in self.index.items())
-        return build_module_stubs(defs)
+        return build_module_stubs(defs, import_strategy)

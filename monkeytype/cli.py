@@ -28,6 +28,7 @@ from monkeytype.config import Config
 from monkeytype.exceptions import MonkeyTypeError
 from monkeytype.stubs import (
     ExistingAnnotationStrategy,
+    ImportStrategy,
     Stub,
     build_module_stubs_from_traces,
 )
@@ -124,6 +125,7 @@ def get_stub(args: argparse.Namespace, stdout: IO, stderr: IO) -> Optional[Stub]
     stubs = build_module_stubs_from_traces(
         traces,
         existing_annotation_strategy=args.existing_annotation_strategy,
+        import_strategy=args.import_strategy,
         rewriter=rewriter,
     )
     if args.sample_count:
@@ -300,6 +302,14 @@ qualname format.""")
         default=False,
         help='Print to stderr the numbers of traces stubs are based on'
         )
+    apply_parser.add_argument(
+        "--import-modules",
+        action='store_const',
+        dest='import_strategy',
+        default=ImportStrategy.TYPES,
+        const=ImportStrategy.MODULES,
+        help="Don't import types directly, just modules.",
+        )
     apply_parser.set_defaults(handler=apply_stub_handler)
 
     stub_parser = subparsers.add_parser(
@@ -338,6 +348,14 @@ qualname format.""")
         default=ExistingAnnotationStrategy.REPLICATE,
         const=ExistingAnnotationStrategy.OMIT,
         help='Omit from stub any existing annotations in source. Implied by --apply.',
+        )
+    stub_parser.add_argument(
+        "--import-modules",
+        action='store_const',
+        dest='import_strategy',
+        default=ImportStrategy.TYPES,
+        const=ImportStrategy.MODULES,
+        help="Don't import types directly, just modules.",
         )
     stub_parser.add_argument(
         "--diff",
