@@ -9,6 +9,7 @@ doc/_build
 dist/
 build/
 .idea/
+.vscode/
 monkeytype.sqlite3
 .pytest_cache/
 .DS_Store
