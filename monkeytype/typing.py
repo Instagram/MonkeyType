@@ -79,6 +79,8 @@ def get_type(obj):
 
 
 NoneType = type(None)
+NotImplementedType = type(NotImplemented)
+mappingproxy = type(range.__dict__)
 
 
 def _get_union_type_str(t):

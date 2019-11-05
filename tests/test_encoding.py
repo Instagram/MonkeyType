@@ -28,7 +28,7 @@ from monkeytype.encoding import (
 )
 from monkeytype.exceptions import InvalidTypeError
 from monkeytype.tracing import CallTrace
-from monkeytype.typing import NoneType
+from monkeytype.typing import NoneType, NotImplementedType, mappingproxy
 from .util import Outer
 
 from unittest.mock import Mock
@@ -44,6 +44,8 @@ class TestTypeConversion:
         [
             # Non-generics
             NoneType,
+            NotImplementedType,
+            mappingproxy,
             int,
             Outer,
             Outer.Inner,
