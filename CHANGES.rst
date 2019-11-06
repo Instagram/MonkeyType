@@ -4,6 +4,9 @@ Changelog
 master
 ------
 
+* Don't add stringified annotations to type stubs. Thanks Łukasz Langa. Merge
+  of #148.
+
 * Don't crash in type rewriter on user-defined types that name-collide with
   container types from the `typing` module. Thanks Łukasz Langa. Merge of #146.
 
