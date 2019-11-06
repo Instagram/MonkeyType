@@ -4,6 +4,9 @@ Changelog
 master
 ------
 
+* Don't crash in type rewriter on user-defined types that name-collide with
+  container types from the `typing` module. Thanks Łukasz Langa. Merge of #146.
+
 * Load config after argument parsing instead of during it, to avoid argparse
   catching TypeError/ValueError at import time of a custom config and replacing
   with a generic "invalid value" message. See
