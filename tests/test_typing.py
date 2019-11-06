@@ -74,7 +74,7 @@ class TestGetType:
             ([1, True], List[Union[int, bool]]),
             ({'a': 1, 'b': 2}, Dict[str, int]),
             ({'a': 1, 2: 'b'}, Dict[Union[str, int], Union[str, int]]),
-            (tuple(), typing_Tuple),
+            (tuple(), typing_Tuple[()]),
             (helper, Callable),
             (lambda x: x, Callable),
             (Dummy().an_instance_method, Callable),
@@ -128,6 +128,7 @@ class TestRemoveEmptyContainers:
             (Dict[str, Union[List[str], List[Any]]], Dict[str, List[str]]),
             (Union[List[Any], Set[Any]], Union[List[Any], Set[Any]]),
             (Tuple, Tuple),
+            (typing_Tuple[()], typing_Tuple[()]),
         ],
     )
     def test_rewrite(self, typ, expected):
