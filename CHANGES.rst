@@ -4,6 +4,9 @@ Changelog
 master
 ------
 
+* Fix crash with empty tuples. Thanks akayunov for the report, Christophe
+  Simonis for the simplest-case repro. Fixes #136.
+
 * Don't add stringified annotations to type stubs. Thanks Łukasz Langa. Merge
   of #148.
 

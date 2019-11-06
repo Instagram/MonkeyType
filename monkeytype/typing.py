@@ -72,8 +72,6 @@ def get_type(obj):
         val_type = shrink_types(get_type(v) for v in obj.values())
         return Dict[key_type, val_type]
     elif typ is tuple:
-        if not obj:
-            return Tuple
         return Tuple[tuple(get_type(e) for e in obj)]
     return typ
 
@@ -113,9 +111,13 @@ class TypeRewriter:
     def _rewrite_container(self, cls, container):
         if container.__module__ != "typing":
             return container
-        if getattr(container, '__args__', None) is None:
+        args = getattr(container, '__args__', None)
+        if args is None:
             return container
-        elems = tuple(self.rewrite(elem) for elem in container.__args__)
+        elif args == ((),):  # special case of empty tuple `Tuple[()]`
+            elems = ()
+        else:
+            elems = tuple(self.rewrite(elem) for elem in container.__args__)
         return cls[elems]
 
     def rewrite_Dict(self, dct):

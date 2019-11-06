@@ -57,6 +57,8 @@ class TestTypeConversion:
             Optional[str],
             Set[int],
             Tuple[int, str, str],
+            Tuple,  # unparameterized tuple
+            Tuple[()],  # empty tuple
             Type[Outer],
             Union[Outer.Inner, str, None],
             # Nested generics
