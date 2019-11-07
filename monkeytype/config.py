@@ -85,10 +85,9 @@ class Config(metaclass=ABCMeta):
         """Maximum number of traces to query from the call trace store."""
         return 2000
 
-    @abstractmethod
     def max_typed_dict_size(self) -> int:
         """Size up to which a dictionary will be traced as a TypedDict."""
-        pass
+        return 10
 
 
 lib_paths = {sysconfig.get_path(n) for n in ['stdlib', 'purelib', 'platlib']}
@@ -150,10 +149,6 @@ class DefaultConfig(Config):
     def code_filter(self) -> CodeFilter:
         """Default code filter excludes standard library & site-packages."""
         return default_code_filter
-
-    def max_typed_dict_size(self) -> int:
-        """Size up to which a dictionary will be traced as a TypedDict."""
-        return 10
 
 
 def get_default_config() -> Config:
