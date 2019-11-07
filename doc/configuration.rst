@@ -107,6 +107,15 @@ Subclassing ``Config`` or ``DefaultConfig``
     .. _context manager: https://docs.python.org/3/reference/datamodel.html#with-statement-context-managers
     .. _contextlib.contextmanager: https://docs.python.org/3/library/contextlib.html#contextlib.contextmanager
 
+ .. method:: max_typed_dict_size() -> int
+
+   The maximum size of string-keyed dictionary for which per-key value types
+   will be stored, and (if the traced keys and value types are consistent), a
+   `TypedDict` will be emitted instead of `Dict`. Return `0` to disable per-key
+   type tracking and TypedDict generation.
+
+   Defaults to 10.
+
 .. class:: DefaultConfig()
 
   ``DefaultConfig`` is the config MonkeyType uses if you don't provide your own;

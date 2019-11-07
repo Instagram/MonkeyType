@@ -4,6 +4,11 @@ Changelog
 master
 ------
 
+* Trace per-key value types for dictionaries (up to a configured max size) and
+  if the traced types are consistent, output a TypedDict in the stub instead of
+  a homogenous dict. Thanks Pradeep Kumar Srinivasan. Merge of #143, fixes
+  #105.
+
 * Fix crash with empty tuples. Thanks akayunov for the report, Christophe
   Simonis for the simplest-case repro. Fixes #136.
 
