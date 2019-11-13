@@ -3,12 +3,14 @@
 #
 # This source code is licensed under the BSD-style license found in the
 # LICENSE file in the root directory of this source tree.
+from collections import defaultdict
 import inspect
 import types
 from typing import (
     Any,
     Callable,
     Dict,
+    DefaultDict,
     Generator,
     Iterable,
     Iterator,
@@ -143,6 +145,10 @@ def get_type(obj, max_typed_dict_size=None):
         return Set[elem_type]
     elif typ is dict:
         return get_dict_type(obj, max_typed_dict_size)
+    elif typ is defaultdict:
+        key_type = shrink_types(get_type(k) for k in obj.keys())
+        val_type = shrink_types(get_type(v) for v in obj.values())
+        return DefaultDict[key_type, val_type]
     elif typ is tuple:
         return Tuple[tuple(get_type(e) for e in obj)]
     return typ
