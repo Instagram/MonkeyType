@@ -24,6 +24,7 @@ master
   https://bugs.python.org/issue30220. Thanks Daniel G Holmes for the report.
   Merge of #142, fixes #141.
 
+* Typing support for collections.defaultdict
 
 19.5.0
 ------
