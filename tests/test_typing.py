@@ -3,9 +3,11 @@
 #
 # This source code is licensed under the BSD-style license found in the
 # LICENSE file in the root directory of this source tree.
+from collections import defaultdict
 from typing import (
     Any,
     Callable,
+    DefaultDict,
     Dict,
     Iterator,
     List,
@@ -198,7 +200,20 @@ def generator() -> Iterator[int]:
     yield 1
 
 
+def get_default_dict(key, value):
+    m = defaultdict(lambda: 1)
+    m[key] += value
+    return m
+
+
+def get_nested_default_dict(key, value):
+    m = defaultdict(lambda: defaultdict(lambda: 1))
+    m[key][key] += value
+    return m
+
+
 class TestGetType:
+
     @pytest.mark.parametrize(
         'value, expected_type',
         [
@@ -233,6 +248,8 @@ class TestGetType:
             ({'a': 1, 'b': 2}, 2, TypedDict(DUMMY_TYPED_DICT_NAME, {'a': int, 'b': int})),
             ({'a': 1, 'b': 2}, 1, Dict[str, int]),
             ({'a': 1, 2: 'b'}, None, Dict[Union[str, int], Union[str, int]]),
+            (get_default_dict(key=1, value=1), None, DefaultDict[int, int]),
+            (get_nested_default_dict(key=1, value=1.0), None, DefaultDict[int, DefaultDict[int, float]]),
         ],
     )
     def test_dict_type(self, value, max_typed_dict_size, expected_dict_type):
