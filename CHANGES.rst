@@ -4,6 +4,10 @@ Changelog
 master
 ------
 
+* Add setup.py dependences for mypy-extensions and stringcase. Thanks Nicholas
+  Bollweg for the report.
+
+
 19.11.0
 -------
 
