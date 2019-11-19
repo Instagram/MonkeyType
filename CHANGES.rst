@@ -1,8 +1,8 @@
 Changelog
 =========
 
-master
-------
+19.11.0
+-------
 
 * Trace per-key value types for dictionaries (up to a configured max size) and
   if the traced types are consistent, output a TypedDict in the stub instead of
