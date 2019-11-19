@@ -1,6 +1,10 @@
 Changelog
 =========
 
+master
+------
+
+
 19.11.1
 -------
 
@@ -33,6 +37,7 @@ Changelog
 
 * Typing support for collections.defaultdict. Thanks Dinesh Kesavan. Merge of #152.
 
+
 19.5.0
 ------
 
@@ -41,11 +46,13 @@ Changelog
 * Add ``-v`` option; don't display individual traces that fail to decode unless
   it is given.
 
+
 19.1.1
 ------
 
 * Pass ``--incremental`` to retype when applying stubs, so it doesn't choke on
   partial stubs (which can result from e.g. failures to decode some traces).
+
 
 19.1.0
 ------
