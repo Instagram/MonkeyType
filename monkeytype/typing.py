@@ -159,30 +159,6 @@ NotImplementedType = type(NotImplemented)
 mappingproxy = type(range.__dict__)
 
 
-def _get_union_type_str(t):
-    elem_types = t.__args__
-    if NoneType in elem_types:
-        # Optionals end up as Union[NoneType, ...], convert it back to
-        # Optional[...]
-        elem_type_strs = [
-            get_type_str(e) for e in elem_types if e is not NoneType]
-        return 'typing.Optional[' + ','.join(elem_type_strs) + ']'
-    return str(t)
-
-
-def get_type_str(t):
-    mod = t.__module__
-    if mod == 'typing':
-        if is_union(t):
-            s = _get_union_type_str(t)
-        else:
-            s = str(t)
-        return s
-    elif mod == 'builtins':
-        return t.__qualname__
-    return mod + '.' + t.__qualname__
-
-
 class TypeRewriter:
     """TypeRewriter provides a visitor for rewriting parts of types"""
 

@@ -27,7 +27,6 @@ from monkeytype.typing import (
     RewriteConfigDict,
     RewriteLargeUnion,
     get_type,
-    get_type_str,
     is_typed_dict,
     shrink_types,
     shrink_typed_dict_types,
@@ -263,22 +262,6 @@ class TestGetType:
     def test_class_type(self):
         """Return the correct type for classes"""
         assert get_type(Dummy) == Type[Dummy]
-
-
-class TestGetTypeStr:
-    @pytest.mark.parametrize(
-        'typ, typ_str',
-        [
-            (str, 'str'),
-            (Dummy, 'tests.util.Dummy'),
-            (Optional[str], 'typing.Optional[str]'),
-            (Dict[str, Dummy], 'typing.Dict[str, tests.util.Dummy]'),
-            (TypedDict(DUMMY_TYPED_DICT_NAME, {'a': int, 'b': int}),
-             'tests.test_typing.' + DUMMY_TYPED_DICT_NAME),
-        ],
-    )
-    def test_get_type_str(self, typ, typ_str):
-        assert get_type_str(typ) == typ_str
 
 
 class Tuple:
