@@ -1,8 +1,8 @@
 Changelog
 =========
 
-master
-------
+19.11.1
+-------
 
 * Add setup.py dependences for mypy-extensions and stringcase. Thanks Nicholas
   Bollweg for the report.
