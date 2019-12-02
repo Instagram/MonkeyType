@@ -4,6 +4,8 @@ Changelog
 master
 ------
 
+* Disable TypedDict generation by default for now, since it breaks `--apply`.
+
 
 19.11.1
 -------

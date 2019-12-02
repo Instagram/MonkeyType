@@ -87,7 +87,7 @@ class Config(metaclass=ABCMeta):
 
     def max_typed_dict_size(self) -> int:
         """Size up to which a dictionary will be traced as a TypedDict."""
-        return 10
+        return 0
 
 
 lib_paths = {sysconfig.get_path(n) for n in ['stdlib', 'purelib', 'platlib']}
