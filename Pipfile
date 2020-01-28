@@ -17,6 +17,3 @@ tox = "*"
 
 [pipenv]
 keep_outdated = true
-
-[packages]
-stringcase = "*"

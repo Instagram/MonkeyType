@@ -9,7 +9,6 @@ import enum
 import inspect
 import logging
 import re
-from stringcase import pascalcase  # type: ignore
 from abc import (
     ABCMeta,
     abstractmethod,
@@ -36,6 +35,7 @@ from monkeytype.compat import (
     make_forward_ref,
 )
 from monkeytype.typing import is_anonymous_typed_dict
+from monkeytype.util import pascal_case
 
 
 try:
@@ -235,7 +235,7 @@ def shrink_traced_types(traces: Iterable[CallTrace]) -> Tuple[Dict[str, type], O
 
 def get_typed_dict_class_name(parameter_name: str) -> str:
     """Return the name for a TypedDict class generated for parameter `parameter_name`."""
-    return f'{pascalcase(parameter_name)}TypedDict'
+    return f'{pascal_case(parameter_name)}TypedDict'
 
 
 class Stub(metaclass=ABCMeta):
