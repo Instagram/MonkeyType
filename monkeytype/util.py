@@ -6,6 +6,7 @@
 import importlib
 import inspect
 import types
+import re
 
 try:
     from django.utils.functional import cached_property  # type: ignore
@@ -84,3 +85,7 @@ def get_name_in_module(
                 % (module, '.'.join(walked))
             )
     return obj
+
+
+def pascal_case(s: str) -> str:
+    return ''.join(a[0].upper() + a[1:] for a in re.split('([^a-zA-Z0-9])', s) if a.isalnum())

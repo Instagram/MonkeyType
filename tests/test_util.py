@@ -12,6 +12,7 @@ from monkeytype.exceptions import (
 from monkeytype.util import (
     get_func_in_module,
     get_name_in_module,
+    pascal_case,
 )
 from .util import Dummy, Outer
 
@@ -77,3 +78,18 @@ class TestGetFuncInModule:
 class Derived(Dummy):
     def an_instance_method(self):
         pass
+
+
+class TestPascalCase:
+    @pytest.mark.parametrize(
+        'input_string, expected',
+        [
+            ("foo", "Foo"),
+            ("foo_bar", "FooBar"),
+            ("fooBar", "FooBar"),
+            ("FooBar", "FooBar"),
+            ("_foo___bar_baz__", "FooBarBaz"),
+        ],
+    )
+    def test_pascal_case(self, input_string: str, expected: str):
+        assert pascal_case(input_string) == expected
