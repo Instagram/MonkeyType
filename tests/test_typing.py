@@ -21,6 +21,8 @@ from typing import (
 
 import pytest
 
+from monkeytype.compat import name_of_generic
+
 from monkeytype.typing import (
     NoneType,
     RemoveEmptyContainers,
@@ -32,6 +34,7 @@ from monkeytype.typing import (
     shrink_typed_dict_types,
     typed_dict_to_dict,
     RewriteGenerator,
+    TypeRewriter,
     DUMMY_TYPED_DICT_NAME,
 )
 
@@ -211,6 +214,12 @@ def get_nested_default_dict(key, value):
     return m
 
 
+def get_default_dict_with_dict(key, value):
+    m = defaultdict(lambda: {'a': 1, 'b': 2})
+    m[key]['a'] = value
+    return m
+
+
 class TestGetType:
 
     @pytest.mark.parametrize(
@@ -237,36 +246,118 @@ class TestGetType:
     )
     def test_builtin_types(self, value, expected_type):
         """Return the appropriate type for builtins"""
-        assert get_type(value) == expected_type
+        assert get_type(value, max_typed_dict_size=None) == expected_type
+        assert get_type(value, max_typed_dict_size=0) == expected_type
 
     @pytest.mark.parametrize(
-        'value, max_typed_dict_size, expected_dict_type',
+        'value, expected_when_max_size_is_zero, expected_when_max_size_is_none',
         [
-            ({}, None, TypedDict(DUMMY_TYPED_DICT_NAME, {})),
-            ({'a': 1, 'b': 2}, None, TypedDict(DUMMY_TYPED_DICT_NAME, {'a': int, 'b': int})),
-            ({'a': 1, 'b': 2}, 2, TypedDict(DUMMY_TYPED_DICT_NAME, {'a': int, 'b': int})),
-            ({'a': 1, 'b': 2}, 1, Dict[str, int]),
-            ({'a': 1, 2: 'b'}, None, Dict[Union[str, int], Union[str, int]]),
-            (get_default_dict(key=1, value=1), None, DefaultDict[int, int]),
-            (get_nested_default_dict(key=1, value=1.0), None, DefaultDict[int, DefaultDict[int, float]]),
+            ({}, Dict[Any, Any], Dict[Any, Any]),
+            ({'a': 1, 'b': 2}, Dict[str, int], TypedDict(DUMMY_TYPED_DICT_NAME, {'a': int, 'b': int})),
+            ({'a': 1, 2: 'b'}, Dict[Union[str, int], Union[str, int]], Dict[Union[str, int], Union[str, int]]),
+            (get_default_dict(key=1, value=1), DefaultDict[int, int], DefaultDict[int, int]),
+            (get_nested_default_dict(key=1, value=1.0),
+             DefaultDict[int, DefaultDict[int, float]],
+             DefaultDict[int, DefaultDict[int, float]]),
+            ({
+                'foo': {
+                    'a': 1,
+                    'b': "hello"
+                }
+            },
+             Dict[str, Dict[str, Union[str, int]]],
+             TypedDict(
+                 DUMMY_TYPED_DICT_NAME, {
+                     'foo': TypedDict(DUMMY_TYPED_DICT_NAME, {
+                         'a': int,
+                         'b': str
+                     }),
+                 })),
         ],
     )
-    def test_dict_type(self, value, max_typed_dict_size, expected_dict_type):
+    def test_dict_type(self, value, expected_when_max_size_is_zero, expected_when_max_size_is_none):
         """Return the appropriate type for dictionaries."""
-        assert get_type(value, max_typed_dict_size) == expected_dict_type
+        assert get_type(value, max_typed_dict_size=0) == expected_when_max_size_is_zero
+        assert get_type(value, max_typed_dict_size=None) == expected_when_max_size_is_none
+
+    @pytest.mark.parametrize(
+        'value, expected_when_max_size_is_zero, expected_when_max_size_is_none',
+        [
+            (get_default_dict_with_dict(key=1, value=3),
+             DefaultDict[int, Dict[str, int]],
+             DefaultDict[int, TypedDict(DUMMY_TYPED_DICT_NAME, {'a': int, 'b': int})]),
+            ([{'a': 1, 'b': 2}], List[Dict[str, int]], List[TypedDict(DUMMY_TYPED_DICT_NAME, {'a': int, 'b': int})]),
+            (({'a': 1, 'b': 2},),
+             typing_Tuple[Dict[str, int]],
+             typing_Tuple[TypedDict(DUMMY_TYPED_DICT_NAME, {'a': int, 'b': int})]),
+
+        ],
+    )
+    def test_dict_nested_within_generic(self, value, expected_when_max_size_is_zero, expected_when_max_size_is_none):
+        """Return the appropriate type for dictionaries."""
+        actual_when_zero = get_type(value, max_typed_dict_size=0)
+        actual_when_none = get_type(value, max_typed_dict_size=None)
+
+        def are_generic_types_equal(actual, expected) -> bool:
+            """Compare manually because the module name causes errors in 3.6.
+            List[tests.test_typing.FooTypedDict] != List[monkeytype.typing.FooTypedDict]."""
+            return name_of_generic(actual) == name_of_generic(expected) and actual.__args__ == expected.__args__
+
+        assert (are_generic_types_equal(actual_when_zero, expected_when_max_size_is_zero))
+        assert (are_generic_types_equal(actual_when_none, expected_when_max_size_is_none))
+
+    @pytest.mark.parametrize(
+        'value, max_typed_dict_size, expected',
+        [
+            ({'a': 1, 'b': 2}, 1, Dict[str, int]),
+            ({
+                'foo': {
+                    'a': 1,
+                    'b': "hello"
+                }
+            }, 1,
+             TypedDict(
+                 DUMMY_TYPED_DICT_NAME, {
+                     'foo': Dict[str, Union[str, int]],
+                 })),
+        ]
+    )
+    def test_dict_type_with_other_max_sizes(self, value, max_typed_dict_size, expected):
+        assert get_type(value, max_typed_dict_size) == expected
 
     def test_instance_type(self):
         """Return appropriate type for an instance of a user defined class"""
-        assert get_type(Dummy()) == Dummy
+        assert get_type(Dummy(), max_typed_dict_size=None) == Dummy
 
     def test_class_type(self):
         """Return the correct type for classes"""
-        assert get_type(Dummy) == Type[Dummy]
+        assert get_type(Dummy, max_typed_dict_size=None) == Type[Dummy]
 
 
 class Tuple:
     """A name conflict that is not generic."""
     pass
+
+
+class RewriteListToInt(TypeRewriter):
+    """Dummy rewriter for testing."""
+    def rewrite_List(self, lst):
+        return int
+
+
+class TestTypeRewriter:
+    @pytest.mark.parametrize(
+        'typ, expected',
+        [
+            (List[str], int),
+            (TypedDict('Foo', {'a': List[str], 'b': int}), TypedDict('Foo', {'a': int, 'b': int})),
+            (TypedDict('Foo', {'a': List[str], 'b': int}, total=False),
+             TypedDict('Foo', {'a': int, 'b': int}, total=False)),
+        ],
+    )
+    def test_rewrite_TypedDict(self, typ, expected):
+        rewritten = RewriteListToInt().rewrite(typ)
+        assert rewritten == expected
 
 
 class TestRemoveEmptyContainers:
