@@ -116,19 +116,24 @@ _BUILTIN_CALLABLE_TYPES = (
 )
 
 
-def get_dict_type(dct, max_typed_dict_size=None):
+def get_dict_type(dct, max_typed_dict_size):
     """Return a TypedDict for `dct` if all the keys are strings.
     Else, default to the union of the keys and of the values."""
+    if len(dct) == 0:
+        # Special-case this because returning an empty TypedDict is
+        # unintuitive, especially when you've "disabled" TypedDict generation
+        # by setting `max_typed_dict_size` to 0.
+        return Dict[Any, Any]
     if (all(isinstance(k, str) for k in dct.keys())
             and (max_typed_dict_size is None or len(dct) <= max_typed_dict_size)):
-        return TypedDict(DUMMY_TYPED_DICT_NAME, {k: get_type(v) for k, v in dct.items()})
+        return TypedDict(DUMMY_TYPED_DICT_NAME, {k: get_type(v, max_typed_dict_size) for k, v in dct.items()})
     else:
-        key_type = shrink_types(get_type(k) for k in dct.keys())
-        val_type = shrink_types(get_type(v) for v in dct.values())
+        key_type = shrink_types(get_type(k, max_typed_dict_size) for k in dct.keys())
+        val_type = shrink_types(get_type(v, max_typed_dict_size) for v in dct.values())
         return Dict[key_type, val_type]
 
 
-def get_type(obj, max_typed_dict_size=None):
+def get_type(obj, max_typed_dict_size):
     """Return the static type that would be used in a type hint"""
     if isinstance(obj, type):
         return Type[obj]
@@ -138,19 +143,19 @@ def get_type(obj, max_typed_dict_size=None):
         return Iterator[Any]
     typ = type(obj)
     if typ is list:
-        elem_type = shrink_types(get_type(e) for e in obj)
+        elem_type = shrink_types(get_type(e, max_typed_dict_size) for e in obj)
         return List[elem_type]
     elif typ is set:
-        elem_type = shrink_types(get_type(e) for e in obj)
+        elem_type = shrink_types(get_type(e, max_typed_dict_size) for e in obj)
         return Set[elem_type]
     elif typ is dict:
         return get_dict_type(obj, max_typed_dict_size)
     elif typ is defaultdict:
-        key_type = shrink_types(get_type(k) for k in obj.keys())
-        val_type = shrink_types(get_type(v) for v in obj.values())
+        key_type = shrink_types(get_type(k, max_typed_dict_size) for k in obj.keys())
+        val_type = shrink_types(get_type(v, max_typed_dict_size) for v in obj.values())
         return DefaultDict[key_type, val_type]
     elif typ is tuple:
-        return Tuple[tuple(get_type(e) for e in obj)]
+        return Tuple[tuple(get_type(e, max_typed_dict_size) for e in obj)]
     return typ
 
 
@@ -186,6 +191,12 @@ class TypeRewriter:
     def rewrite_Tuple(self, tup):
         return self._rewrite_container(Tuple, tup)
 
+    def rewrite_TypedDict(self, typed_dict):
+        return TypedDict(typed_dict.__name__,
+                         {name: self.rewrite(typ)
+                          for name, typ in typed_dict.__annotations__.items()},
+                         total=typed_dict.__total__)
+
     def rewrite_Union(self, union):
         return self._rewrite_container(Union, union)
 
@@ -198,6 +209,8 @@ class TypeRewriter:
             typname = 'Any'
         elif is_union(typ):
             typname = 'Union'
+        elif is_typed_dict(typ):
+            typname = 'TypedDict'
         elif is_generic(typ):
             typname = name_of_generic(typ)
         else:

@@ -37,6 +37,7 @@ from monkeytype.stubs import (
     ImportBlockStub,
     ImportMap,
     ModuleStub,
+    ReplaceTypedDictsWithStubs,
     StubIndexBuilder,
     build_module_stubs,
     get_imports_for_annotation,
@@ -328,20 +329,106 @@ class TestClassStub:
         ])
         assert class_stub.render() == expected
 
+
+class TestReplaceTypedDictsWithStubs:
+    SIMPLE_TYPED_DICT_STUB: ClassStub = ClassStub(
+        name='FooBarTypedDict(TypedDict)',
+        function_stubs=[],
+        attribute_stubs=[
+            AttributeStub(name='a', typ=int),
+            AttributeStub(name='b', typ=str),
+        ])
+    SIMPLE_TYPED_DICT_STUB2: ClassStub = ClassStub(
+        name='FooBar2TypedDict(TypedDict)',
+        function_stubs=[],
+        attribute_stubs=[
+            AttributeStub(name='a', typ=int),
+            AttributeStub(name='b', typ=str),
+        ])
+
     @pytest.mark.parametrize(
         'typ, expected',
         [
+            (int, (int, [])),
+            (List[int], (List[int], [])),
+            (Set[int], (Set[int], [])),
+            (Dict[str, int], (Dict[str, int], [])),
+            (Tuple[str, int], (Tuple[str, int], [])),
+            (List[List[Dict[str, int]]], (List[List[Dict[str, int]]], []),),
+            (List[List[Dict[str, int]]], (List[List[Dict[str, int]]], []),),
+            (
+                List[List[TypedDict(DUMMY_TYPED_DICT_NAME, {'a': int, 'b': str})]],
+                (List[List[make_forward_ref('FooBarTypedDict')]], [SIMPLE_TYPED_DICT_STUB]),
+            ),
+            (
+                Dict[str, TypedDict(DUMMY_TYPED_DICT_NAME, {'a': int, 'b': str})],
+                (Dict[str, make_forward_ref('FooBar2TypedDict')], [SIMPLE_TYPED_DICT_STUB2]),
+            ),
+            (
+                Set[TypedDict(DUMMY_TYPED_DICT_NAME, {'a': int, 'b': str})],
+                (Set[make_forward_ref('FooBarTypedDict')], [SIMPLE_TYPED_DICT_STUB]),
+            ),
+            (
+                Tuple[int, TypedDict(DUMMY_TYPED_DICT_NAME, {'a': int, 'b': str})],
+                (Tuple[int, make_forward_ref('FooBar2TypedDict')], [SIMPLE_TYPED_DICT_STUB2]),
+            ),
             (
                 TypedDict(DUMMY_TYPED_DICT_NAME, {'a': int, 'b': str}),
-                [ClassStub(name='FooBar(TypedDict)', function_stubs=[], attribute_stubs=[
-                    AttributeStub(name='a', typ=int),
-                    AttributeStub(name='b', typ=str),
-                ])],
+                (make_forward_ref('FooBarTypedDict'), [SIMPLE_TYPED_DICT_STUB]),
+            ),
+            (
+                TypedDict('GenuineTypedDict', {'a': int, 'b': str}),
+                (TypedDict('GenuineTypedDict', {'a': int, 'b': str}), []),
+            ),
+            (
+                TypedDict(
+                    DUMMY_TYPED_DICT_NAME, {
+                        'a': int,
+                        'b': TypedDict(DUMMY_TYPED_DICT_NAME, {
+                            'a': int,
+                            'b': str
+                        })
+                    }),
+                (make_forward_ref('FooBarTypedDict'), [
+                    ClassStub(
+                        name='BTypedDict(TypedDict)',
+                        function_stubs=[],
+                        attribute_stubs=[
+                            AttributeStub(name='a', typ=int),
+                            AttributeStub(name='b', typ=str),
+                        ]),
+                    ClassStub(
+                        name='FooBarTypedDict(TypedDict)',
+                        function_stubs=[],
+                        attribute_stubs=[
+                            AttributeStub(name='a', typ=int),
+                            AttributeStub(name='b', typ=make_forward_ref('BTypedDict')),
+                        ])
+                ]),
+            ),
+            (
+                Tuple[TypedDict(DUMMY_TYPED_DICT_NAME, {'a': int}),
+                      TypedDict(DUMMY_TYPED_DICT_NAME, {'b': str})],
+                (Tuple[make_forward_ref('FooBarTypedDict'), make_forward_ref('FooBar2TypedDict')],
+                 [ClassStub(
+                     name='FooBarTypedDict(TypedDict)',
+                     function_stubs=[],
+                     attribute_stubs=[
+                         AttributeStub(name='a', typ=int),
+                     ]),
+                  ClassStub(
+                      name='FooBar2TypedDict(TypedDict)',
+                      function_stubs=[],
+                      attribute_stubs=[
+                          AttributeStub(name='b', typ=str),
+                      ])]),
             ),
         ],
     )
-    def test_stubs_from_typed_dict(self, typ, expected):
-        assert ClassStub.stubs_from_typed_dict(typ, class_name='FooBar') == expected
+    def test_replace_typed_dict_with_stubs(self, typ, expected):
+        rewritten_type, stubs = ReplaceTypedDictsWithStubs.rewrite_and_get_stubs(typ, class_name_hint='foo_bar')
+        actual = rewritten_type, stubs
+        assert actual == expected
 
 
 typed_dict_import_map = ImportMap()
@@ -486,6 +573,33 @@ class TestModuleStub:
         self.maxDiff = None
         assert build_module_stubs(entries)['tests.util'].render() == expected
 
+    def test_render_return_typed_dict(self):
+        function = FunctionDefinition.from_callable_and_traced_types(
+            Dummy.an_instance_method,
+            {
+                'foo': int,
+                'bar': int,
+            },
+            TypedDict(DUMMY_TYPED_DICT_NAME, {'a': int, 'b': str}),
+            yield_type=None,
+            existing_annotation_strategy=ExistingAnnotationStrategy.IGNORE
+        )
+        entries = [function]
+        expected = '\n'.join([
+            'from mypy_extensions import TypedDict',
+            '',
+            '',
+            'class DummyAnInstanceMethodTypedDict(TypedDict):',
+            '    a: int',
+            '    b: str',
+            '',
+            '',
+            'class Dummy:',
+            '    def an_instance_method(self, foo: int, bar: int) -> \'DummyAnInstanceMethodTypedDict\': ...',
+        ])
+        self.maxDiff = None
+        assert build_module_stubs(entries)['tests.util'].render() == expected
+
     def test_render_yield_typed_dict(self):
         function = FunctionDefinition.from_callable_and_traced_types(
             Dummy.an_instance_method,
@@ -516,6 +630,32 @@ class TestModuleStub:
             f'    ) -> Generator[{repr_forward_ref()}'
             + '(\'DummyAnInstanceMethodYieldTypedDict\'), None, int]: ...',
         ])
+        self.maxDiff = None
+        assert build_module_stubs(entries)['tests.util'].render() == expected
+
+    def test_render_typed_dict_in_list(self):
+        function = FunctionDefinition.from_callable_and_traced_types(
+            Dummy.an_instance_method,
+            {
+                'foo': List[TypedDict(DUMMY_TYPED_DICT_NAME, {'a': int})],
+                'bar': int,
+            },
+            int,
+            None,
+            existing_annotation_strategy=ExistingAnnotationStrategy.IGNORE,
+        )
+        entries = [function]
+        expected = '\n'.join([
+            'from mypy_extensions import TypedDict',
+            'from typing import List',
+            '',
+            '',
+            'class FooTypedDict(TypedDict):',
+            '    a: int',
+            '',
+            '',
+            'class Dummy:',
+            f'    def an_instance_method(self, foo: List[{make_forward_ref("FooTypedDict")}], bar: int) -> int: ...'])
         self.maxDiff = None
         assert build_module_stubs(entries)['tests.util'].render() == expected
 

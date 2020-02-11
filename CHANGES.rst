@@ -4,6 +4,10 @@ Changelog
 master
 ------
 
+* Generate stubs for TypedDicts nested within generic types. Disable
+  TypedDicts completely when the max size is zero. Thanks Pradeep Kumar
+  Srinivasan. Fixes #159.
+
 
 19.11.2
 -------
@@ -47,7 +51,7 @@ master
 19.5.0
 ------
 
-* Mark ``monkeytype`` package as typed per PEP 561. Thanks Vasily Zakharov for 
+* Mark ``monkeytype`` package as typed per PEP 561. Thanks Vasily Zakharov for
   the report.
 * Add ``-v`` option; don't display individual traces that fail to decode unless
   it is given.
