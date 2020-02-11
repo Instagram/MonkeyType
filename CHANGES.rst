@@ -6,7 +6,9 @@ master
 
 * Generate stubs for TypedDicts nested within generic types. Disable
   TypedDicts completely when the max size is zero. Thanks Pradeep Kumar
-  Srinivasan. Fixes #159.
+  Srinivasan. Merge of #162, fixes #159.
+
+* Remove ``stringcase`` dependency, just hand-roll ``pascal_case`` function.
 
 
 19.11.2
