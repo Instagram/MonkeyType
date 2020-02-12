@@ -32,8 +32,8 @@ from monkeytype.typing import (
     is_typed_dict,
     shrink_types,
     shrink_typed_dict_types,
-    typed_dict_to_dict,
     RewriteGenerator,
+    RewriteTypedDictToDict,
     TypeRewriter,
     DUMMY_TYPED_DICT_NAME,
 )
@@ -120,20 +120,6 @@ class TestShrinkType:
     )
     def test_shrink_types_mixed_dicts(self, types, expected_type):
         assert shrink_types(types) == expected_type
-
-
-class TestTypedDictToDict:
-    @pytest.mark.parametrize(
-        'typ, expected_type',
-        [
-            # TypedDicts would have been constructed only for string literal keys.
-            (TypedDict(DUMMY_TYPED_DICT_NAME, {'a': int, 'b': int}), Dict[str, int]),
-            (TypedDict(DUMMY_TYPED_DICT_NAME, {'a': str, 'b': int}), Dict[str, Union[str, int]]),
-            (TypedDict(DUMMY_TYPED_DICT_NAME, {}), Dict[Any, Any]),
-        ],
-    )
-    def test_typed_dict_to_dict(self, typ, expected_type):
-        assert typed_dict_to_dict(typ) == expected_type
 
 
 class TestTypedDictHelpers:
@@ -353,6 +339,8 @@ class TestTypeRewriter:
             (TypedDict('Foo', {'a': List[str], 'b': int}), TypedDict('Foo', {'a': int, 'b': int})),
             (TypedDict('Foo', {'a': List[str], 'b': int}, total=False),
              TypedDict('Foo', {'a': int, 'b': int}, total=False)),
+            (TypedDict('Foo', {'a': TypedDict('Bar', {'b': List[str]})}),
+             TypedDict('Foo', {'a': TypedDict('Bar', {'b': int})})),
         ],
     )
     def test_rewrite_TypedDict(self, typ, expected):
@@ -497,4 +485,19 @@ class TestRewriteGenerator:
     )
     def test_rewrite(self, typ, expected):
         rewritten = RewriteGenerator().rewrite(typ)
+        assert rewritten == expected
+
+
+class TestRewriteTypedDictToDict:
+    @pytest.mark.parametrize(
+        'typ, expected',
+        [
+            (TypedDict('Foo', {'a': int, 'b': str}), Dict[str, Union[int, str]]),
+            (TypedDict('Foo', {}), Dict[Any, Any]),
+            (TypedDict('Foo', {'a': TypedDict('Bar', {'b': int})}), Dict[str, Dict[str, int]]),
+            (Dict[str, TypedDict('Foo', {'a': int})], Dict[str, Dict[str, int]]),
+        ],
+    )
+    def test_rewrite(self, typ, expected):
+        rewritten = RewriteTypedDictToDict().rewrite(typ)
         assert rewritten == expected

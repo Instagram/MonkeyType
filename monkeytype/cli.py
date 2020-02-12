@@ -32,7 +32,12 @@ from monkeytype.stubs import (
     build_module_stubs_from_traces,
 )
 from monkeytype.tracing import CallTrace
-from monkeytype.typing import NoOpRewriter
+from monkeytype.typing import (
+    ChainedRewriter,
+    NoOpRewriter,
+    RewriteTypedDictToDict,
+    TypeRewriter,
+    )
 from monkeytype.util import get_name_in_module
 
 
@@ -102,7 +107,12 @@ def display_sample_count(traces: List[CallTrace], stderr: IO) -> None:
         print(f"Annotation for {name} based on {count} call trace(s).", file=stderr)
 
 
-def get_stub(args: argparse.Namespace, stdout: IO, stderr: IO) -> Optional[Stub]:
+def get_stub(
+    args: argparse.Namespace,
+    stdout: IO,
+    stderr: IO,
+    rewriter: Optional[TypeRewriter] = None
+) -> Optional[Stub]:
     module, qualname = args.module_path
     thunks = args.config.trace_store().filter(module, qualname, args.limit)
     traces = []
@@ -118,7 +128,7 @@ def get_stub(args: argparse.Namespace, stdout: IO, stderr: IO) -> Optional[Stub]
         print(f'{failed_to_decode_count} traces failed to decode; use -v for details', file=stderr)
     if not traces:
         return None
-    rewriter = args.config.type_rewriter()
+    rewriter = rewriter or args.config.type_rewriter()
     if args.disable_type_rewriting:
         rewriter = NoOpRewriter()
     stubs = build_module_stubs_from_traces(
@@ -136,8 +146,14 @@ class HandlerError(Exception):
 
 
 def apply_stub_handler(args: argparse.Namespace, stdout: IO, stderr: IO) -> None:
+    typed_dict_disabling_rewriter: Optional[TypeRewriter] = None
+    if not args.config.is_typed_dict_apply_enabled():
+        typed_dict_disabling_rewriter = ChainedRewriter(
+            (args.config.type_rewriter(), RewriteTypedDictToDict())
+        )
+
     args.existing_annotation_strategy = ExistingAnnotationStrategy.OMIT
-    stub = get_stub(args, stdout, stderr)
+    stub = get_stub(args, stdout, stderr, rewriter=typed_dict_disabling_rewriter)
     if stub is None:
         complain_about_no_traces(args, stderr)
         return

@@ -5,6 +5,7 @@
 # LICENSE file in the root directory of this source tree.
 from contextlib import contextmanager
 import io
+import importlib
 import os
 import os.path
 import pytest
@@ -12,6 +13,7 @@ import sqlite3
 import subprocess
 import sys
 import tempfile
+from pathlib import Path
 from typing import Iterator
 
 from unittest import mock
@@ -25,7 +27,12 @@ from monkeytype.db.sqlite import (
     )
 from monkeytype.exceptions import MonkeyTypeError
 from monkeytype.tracing import CallTrace
-from monkeytype.typing import NoneType
+from monkeytype.typing import (
+    NoneType,
+    DUMMY_TYPED_DICT_NAME,
+)
+
+from mypy_extensions import TypedDict
 
 from .testmodule import Foo
 from .test_tracing import trace_calls
@@ -67,6 +74,17 @@ class LoudContextConfig(DefaultConfig):
         print(f"IN SETUP: {command}")
         yield
         print(f"IN TEARDOWN: {command}")
+
+
+# Create explicit config classes so that we can pass them in as command-line arguments.
+class TypedDictAppliedConfig(DefaultConfig):
+    def is_typed_dict_apply_enabled(self) -> bool:
+        return True
+
+
+class TypedDictNotAppliedConfig(DefaultConfig):
+    def is_typed_dict_apply_enabled(self) -> bool:
+        return False
 
 
 @pytest.fixture
@@ -363,4 +381,56 @@ def my_test_function(a, b):
             with mock.patch.dict(os.environ, {DefaultConfig.DB_PATH_VAR: db_file.name}):
                 ret = cli.main(['apply', 'my_test_module'], stdout, stderr)
     assert ret == 0
+    assert 'warning:' not in stdout.getvalue()
+
+
+typed_dict_source = """
+def my_test_function(d):
+  pass
+"""
+
+
+typed_dict_expected_source = """
+from typing import Dict
+def my_test_function(d: Dict[str, int]) -> None:
+  pass
+"""
+
+
+@pytest.mark.parametrize('config, expected_return, expected_source', [
+    (TypedDictNotAppliedConfig, 0, typed_dict_expected_source),
+    # This will fail because of retype being unable to apply the stub.
+    (TypedDictAppliedConfig, 1, typed_dict_source),
+])
+def test_apply_stub_with_typed_dict_disabled(
+        store, db_file, stdout, stderr,
+        config, expected_return, expected_source,
+):
+    """Regression test for applying a stub when the traces contain TypedDict.
+    When `apply` is disable for TypedDict, it should apply Dicts.
+    Otherwise, it should sadly fail since retype doesn't work for generated
+    class stubs."""
+    config_name = config.__name__
+    actual_source = ''
+    simple_typed_dict = TypedDict(DUMMY_TYPED_DICT_NAME, {'a': int, 'b': int})
+    with tempfile.TemporaryDirectory(prefix='monkey type') as tempdir:
+        # Note that the module name has to be unique or it will fail when
+        # running multiple tests, probably because of the shared store or
+        # tempdir.
+        module = f'my_test_module_typed_dict{config_name}'
+        src_path = Path(tempdir, module + '.py')
+        src_path.write_text(typed_dict_source)
+        with mock.patch('sys.path', sys.path + [tempdir]):
+            mtm = importlib.import_module(module)
+            traces = [CallTrace(mtm.my_test_function, {'d': simple_typed_dict}, NoneType)]
+            store.add(traces)
+            with mock.patch.dict(os.environ, {DefaultConfig.DB_PATH_VAR: db_file.name}):
+                ret = cli.main([
+                    '--config', f'{__name__}:{config_name}()',
+                    'apply',
+                    module,
+                ], stdout, stderr)
+        actual_source = src_path.read_text()
+    assert ret == expected_return
+    assert actual_source == expected_source
     assert 'warning:' not in stdout.getvalue()

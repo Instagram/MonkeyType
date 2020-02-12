@@ -89,6 +89,13 @@ class Config(metaclass=ABCMeta):
         """Size up to which a dictionary will be traced as a TypedDict."""
         return 0
 
+    def is_typed_dict_apply_enabled(self) -> bool:
+        """Return whether TypedDicts will be generated when calling `monkeytype apply`."""
+
+        # Disable TypedDict stub application until we implement copying over
+        # the class declaration from the stub.
+        return False
+
 
 lib_paths = {sysconfig.get_path(n) for n in ['stdlib', 'purelib', 'platlib']}
 # if in a virtualenv, also exclude the real stdlib location

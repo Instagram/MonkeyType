@@ -58,16 +58,6 @@ def __are_typed_dict_types_equal(type1: type, type2: type) -> bool:
 _TypedDictMeta.__eq__ = __are_typed_dict_types_equal
 
 
-def typed_dict_to_dict(type_dict: type) -> type:
-    """Convert a TypedDict to a Dict.
-    The keys of a TypedDict that we have constructed will always be strings.
-    However, if the TypedDict is empty, we return the key type as Any since we
-    can't justify a key type."""
-    if type_dict.__annotations__ == {}:
-        return Dict[Any, Any]
-    return Dict[str, shrink_types(type_dict.__annotations__.values())]
-
-
 def shrink_typed_dict_types(types: List[type]) -> type:
     """Shrink the TypedDicts to a single TypedDict *only* if they are all the same.
     Doing this manually because Union[TypedDict('Foo', {'a': int}),
@@ -79,7 +69,7 @@ def shrink_typed_dict_types(types: List[type]) -> type:
     if all(typ == first_type_dict for typ in types[1:]):
         return first_type_dict
     else:
-        return Union[tuple(typed_dict_to_dict(typ) for typ in types)]
+        return Union[tuple(RewriteTypedDictToDict().rewrite(typ) for typ in types)]
 
 
 def shrink_types(types):
@@ -92,11 +82,7 @@ def shrink_types(types):
         return Any
     if all(is_typed_dict(typ) for typ in types):
         return shrink_typed_dict_types(types)
-    all_dict_types = tuple(typed_dict_to_dict(typ)
-                           if is_typed_dict(typ)
-                           else typ
-                           for typ in types)
-    return Union[all_dict_types]
+    return Union[tuple(RewriteTypedDictToDict().rewrite(typ) for typ in types)]
 
 
 def make_iterator(typ):
@@ -298,6 +284,16 @@ class RewriteLargeUnion(TypeRewriter):
         except (TypeError, AttributeError):
             pass
         return Any
+
+
+class RewriteTypedDictToDict(TypeRewriter):
+    """TypedDict('Foo', {"k": v1, ...}) -> Dict[str, Union[v1, ...]]."""
+
+    def rewrite_TypedDict(self, typed_dict):
+        if typed_dict.__annotations__ == {}:
+            # Special-case this because we can't justify any type.
+            return Dict[Any, Any]
+        return Dict[str, Union[tuple(self.rewrite(typ) for typ in typed_dict.__annotations__.values())]]
 
 
 class ChainedRewriter(TypeRewriter):
