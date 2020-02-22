@@ -41,6 +41,7 @@ from monkeytype.stubs import (
     StubIndexBuilder,
     build_module_stubs,
     get_imports_for_annotation,
+    get_imports_for_signature,
     render_signature,
     shrink_traced_types,
     update_signature_args,
@@ -1118,3 +1119,10 @@ class TestGetImportsForAnnotation:
 
     def test_nested_class(self):
         assert get_imports_for_annotation(Parent.Child) == {Parent.__module__: {'Parent'}}
+
+
+class TestGetImportsForSignature:
+    def test_default_none_parameter_imports(self):
+        stub = FunctionStub('test', inspect.signature(default_none_parameter), FunctionKind.MODULE)
+        expected = {'typing': {'Optional'}}
+        assert get_imports_for_signature(stub.signature) == expected

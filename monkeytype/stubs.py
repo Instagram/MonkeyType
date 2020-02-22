@@ -154,6 +154,8 @@ def get_imports_for_signature(sig: inspect.Signature) -> ImportMap:
     imports = ImportMap()
     for param in sig.parameters.values():
         param_imports = get_imports_for_annotation(param.annotation)
+        if not _is_optional(param.annotation) and param.default is None:
+            imports['typing'].add('Optional')
         imports.merge(param_imports)
     return_imports = get_imports_for_annotation(sig.return_annotation)
     imports.merge(return_imports)
