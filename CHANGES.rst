@@ -10,6 +10,9 @@ master
 
 * Remove ``stringcase`` dependency, just hand-roll ``pascal_case`` function.
 
+* Shrink dictionary traces with required and optional keys to get non-total
+  TypedDict class declarations. Thanks Pradeep Kumar Srinivasan.
+
 
 19.11.2
 -------
