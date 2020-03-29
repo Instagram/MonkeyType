@@ -333,7 +333,7 @@ def test_toplevel_filename_parameter(store, db_file, stdout, stderr):
 @pytest.mark.usefixtures("collector")
 def test_apply_stub_init(store, db_file, stdout, stderr, collector):
     """Regression test for applying stubs to testmodule/__init__.py style module layout"""
-    with trace_calls(collector):
+    with trace_calls(collector, max_typed_dict_size=0):
         func_foo()
 
     store.add(collector.traces)

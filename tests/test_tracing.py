@@ -200,18 +200,18 @@ class LazyValue:
 
 class TestTraceCalls:
     def test_simple_call(self, collector):
-        with trace_calls(collector):
+        with trace_calls(collector, max_typed_dict_size=0):
             simple_add(1, 2)
         assert collector.traces == [CallTrace(simple_add, {'a': int, 'b': int}, int)]
 
     def test_flushes(self, collector):
-        with trace_calls(collector):
+        with trace_calls(collector, max_typed_dict_size=0):
             pass
 
         assert collector.flushed
 
     def test_callee_throws(self, collector):
-        with trace_calls(collector):
+        with trace_calls(collector, max_typed_dict_size=0):
             try:
                 throw(should_recover=False)
             except Exception:
@@ -219,7 +219,7 @@ class TestTraceCalls:
         assert collector.traces == [CallTrace(throw, {'should_recover': bool})]
 
     def test_nested_callee_throws_caller_doesnt_recover(self, collector):
-        with trace_calls(collector):
+        with trace_calls(collector, max_typed_dict_size=0):
             try:
                 nested_throw(should_recover=False)
             except Exception:
@@ -231,12 +231,12 @@ class TestTraceCalls:
         assert collector.traces == expected
 
     def test_callee_throws_recovers(self, collector):
-        with trace_calls(collector):
+        with trace_calls(collector, max_typed_dict_size=0):
             throw(should_recover=True)
         assert collector.traces == [CallTrace(throw, {'should_recover': bool}, NoneType)]
 
     def test_nested_callee_throws_recovers(self, collector):
-        with trace_calls(collector):
+        with trace_calls(collector, max_typed_dict_size=0):
             nested_throw(should_recover=True)
         expected = [
             CallTrace(throw, {'should_recover': bool}, NoneType),
@@ -245,7 +245,7 @@ class TestTraceCalls:
         assert collector.traces == expected
 
     def test_caller_handles_callee_exception(self, collector):
-        with trace_calls(collector):
+        with trace_calls(collector, max_typed_dict_size=0):
             recover_from_nested_throw()
         expected = [
             CallTrace(throw, {'should_recover': bool}),
@@ -254,14 +254,14 @@ class TestTraceCalls:
         assert collector.traces == expected
 
     def test_generator_trace(self, collector):
-        with trace_calls(collector):
+        with trace_calls(collector, max_typed_dict_size=0):
             for _ in squares(3):
                 pass
         assert collector.traces == [CallTrace(squares, {'n': int}, NoneType, int)]
 
     def test_return_none(self, collector):
         """Ensure traces have a return_type of NoneType for functions that return a value of None"""
-        with trace_calls(collector):
+        with trace_calls(collector, max_typed_dict_size=0):
             implicit_return_none()
             explicit_return_none()
         expected = [
@@ -273,13 +273,13 @@ class TestTraceCalls:
     def test_access_property(self, collector):
         """Check that we correctly trace functions decorated with @property"""
         o = Oracle()
-        with trace_calls(collector):
+        with trace_calls(collector, max_typed_dict_size=0):
             o.meaning_of_life
         assert collector.traces == [CallTrace(Oracle.meaning_of_life.fget, {'self': Oracle}, int)]
 
     def test_filtering(self, collector):
         """If supplied, the code filter should decide which code objects are traced"""
-        with trace_calls(collector, lambda code: code.co_name == 'simple_add'):
+        with trace_calls(collector, max_typed_dict_size=0, code_filter=lambda code: code.co_name == 'simple_add'):
             simple_add(1, 2)
             explicit_return_none()
         assert collector.traces == [CallTrace(simple_add, {'a': int, 'b': int}, int)]
@@ -304,7 +304,7 @@ class TestTraceCalls:
         and the attempt to invoke the stored function will fail.
         """
         lazy_val = LazyValue(explicit_return_none)
-        with trace_calls(collector):
+        with trace_calls(collector, max_typed_dict_size=0):
             lazy_val.value
 
     @pytest.mark.skipif(CythonTest is None, reason="cython required for this test")
@@ -314,7 +314,7 @@ class TestTraceCalls:
         As long as the Cython decorator sets __wrapped__ correctly, anyway.
         """
         cython_test_obj = CythonTest()
-        with trace_calls(collector):
+        with trace_calls(collector, max_typed_dict_size=0):
             cython_test_obj.cython_testfunc()
 
         trace = CallTrace(cython_test_obj.cython_testfunc.__wrapped__, {'self': CythonTest}, int)

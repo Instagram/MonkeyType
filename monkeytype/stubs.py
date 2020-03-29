@@ -34,7 +34,7 @@ from monkeytype.compat import (
     is_forward_ref,
     make_forward_ref,
 )
-from monkeytype.typing import is_anonymous_typed_dict
+from monkeytype.typing import field_annotations
 from monkeytype.util import pascal_case
 
 
@@ -217,7 +217,10 @@ def update_signature_return(
     return sig.replace(return_annotation=anno)
 
 
-def shrink_traced_types(traces: Iterable[CallTrace]) -> Tuple[Dict[str, type], Optional[type], Optional[type]]:
+def shrink_traced_types(
+    traces: Iterable[CallTrace],
+    max_typed_dict_size: int,
+) -> Tuple[Dict[str, type], Optional[type], Optional[type]]:
     """Merges the traced types and returns the minimally equivalent types"""
     arg_types: DefaultDict[str, Set[type]] = collections.defaultdict(set)
     return_types: Set[type] = set()
@@ -229,9 +232,9 @@ def shrink_traced_types(traces: Iterable[CallTrace]) -> Tuple[Dict[str, type], O
             return_types.add(t.return_type)
         if t.yield_type is not None:
             yield_types.add(t.yield_type)
-    shrunken_arg_types = {name: shrink_types(ts) for name, ts in arg_types.items()}
-    return_type = shrink_types(return_types) if return_types else None
-    yield_type = shrink_types(yield_types) if yield_types else None
+    shrunken_arg_types = {name: shrink_types(ts, max_typed_dict_size) for name, ts in arg_types.items()}
+    return_type = shrink_types(return_types, max_typed_dict_size) if return_types else None
+    yield_type = shrink_types(yield_types, max_typed_dict_size) if yield_types else None
     return (shrunken_arg_types, return_type, yield_type)
 
 
@@ -539,18 +542,35 @@ class ReplaceTypedDictsWithStubs(TypeRewriter):
         # Value of type "type" is not indexable.
         return cls[elems]  # type: ignore
 
-    def rewrite_TypedDict(self, typed_dict: type) -> type:
-        if not is_anonymous_typed_dict(typed_dict):
-            return super().rewrite_TypedDict(typed_dict)
-        class_name = get_typed_dict_class_name(self._class_name_hint)
+    def _add_typed_dict_class_stub(self, fields: Dict[str, type], class_name: str,
+                                   base_class_name: str = 'TypedDict', total: bool = True) -> None:
         attribute_stubs = []
-        for name, typ in typed_dict.__annotations__.items():
+        for name, typ in fields.items():
             rewritten_type, stubs = self.rewrite_and_get_stubs(typ, class_name_hint=name)
             attribute_stubs.append(AttributeStub(name, rewritten_type))
             self.stubs.extend(stubs)
-        self.stubs.append(ClassStub(name=f'{class_name}(TypedDict)',
+        total_flag = '' if total else ', total=False'
+        self.stubs.append(ClassStub(name=f'{class_name}({base_class_name}{total_flag})',
                                     function_stubs=[],
                                     attribute_stubs=attribute_stubs))
+
+    def rewrite_anonymous_TypedDict(self, typed_dict: type) -> type:
+        class_name = get_typed_dict_class_name(self._class_name_hint)
+        required_fields, optional_fields = field_annotations(typed_dict)
+        has_required_fields = len(required_fields) != 0
+        has_optional_fields = len(optional_fields) != 0
+        if not has_required_fields and not has_optional_fields:
+            raise Exception("Expected empty TypedDicts to be shrunk as Dict[Any, Any]"
+                            " but got an empty TypedDict anyway")
+        elif has_required_fields and not has_optional_fields:
+            self._add_typed_dict_class_stub(required_fields, class_name)
+        elif not has_required_fields and has_optional_fields:
+            self._add_typed_dict_class_stub(optional_fields, class_name, total=False)
+        else:
+            self._add_typed_dict_class_stub(required_fields, class_name)
+            base_class_name = class_name
+            class_name = get_typed_dict_class_name(self._class_name_hint) + 'NonTotal'
+            self._add_typed_dict_class_stub(optional_fields, class_name, base_class_name, total=False)
         return make_forward_ref(class_name)
 
     @staticmethod
@@ -688,13 +708,14 @@ class FunctionDefinition:
 def get_updated_definition(
     func: Callable,
     traces: Iterable[CallTrace],
+    max_typed_dict_size: int,
     rewriter: Optional[TypeRewriter] = None,
     existing_annotation_strategy: ExistingAnnotationStrategy = ExistingAnnotationStrategy.REPLICATE,
 ) -> FunctionDefinition:
     """Update the definition for func using the types collected in traces."""
     if rewriter is None:
         rewriter = NoOpRewriter()
-    arg_types, return_type, yield_type = shrink_traced_types(traces)
+    arg_types, return_type, yield_type = shrink_traced_types(traces, max_typed_dict_size)
     arg_types = {name: rewriter.rewrite(typ) for name, typ in arg_types.items()}
     if return_type is not None:
         return_type = rewriter.rewrite(return_type)
@@ -741,8 +762,9 @@ def build_module_stubs(entries: Iterable[FunctionDefinition]) -> Dict[str, Modul
 
 def build_module_stubs_from_traces(
     traces: Iterable[CallTrace],
+    max_typed_dict_size: int,
     existing_annotation_strategy: ExistingAnnotationStrategy = ExistingAnnotationStrategy.REPLICATE,
-    rewriter: Optional[TypeRewriter] = None
+    rewriter: Optional[TypeRewriter] = None,
 ) -> Dict[str, ModuleStub]:
     """Given an iterable of call traces, build the corresponding stubs."""
     index: DefaultDict[Callable, Set[CallTrace]] = collections.defaultdict(set)
@@ -750,7 +772,7 @@ def build_module_stubs_from_traces(
         index[trace.func].add(trace)
     defns = []
     for func, traces in index.items():
-        defn = get_updated_definition(func, traces, rewriter, existing_annotation_strategy)
+        defn = get_updated_definition(func, traces, max_typed_dict_size, rewriter, existing_annotation_strategy)
         defns.append(defn)
     return build_module_stubs(defns)
 
@@ -758,9 +780,10 @@ def build_module_stubs_from_traces(
 class StubIndexBuilder(CallTraceLogger):
     """Builds type stub index directly from collected call traces."""
 
-    def __init__(self, module_re: str) -> None:
+    def __init__(self, module_re: str, max_typed_dict_size: int) -> None:
         self.re = re.compile(module_re)
         self.index: DefaultDict[Callable, Set[CallTrace]] = collections.defaultdict(set)
+        self.max_typed_dict_size = max_typed_dict_size
 
     def log(self, trace: CallTrace) -> None:
         if not self.re.match(trace.funcname):
@@ -768,5 +791,6 @@ class StubIndexBuilder(CallTraceLogger):
         self.index[trace.func].add(trace)
 
     def get_stubs(self) -> Dict[str, ModuleStub]:
-        defs = (get_updated_definition(func, traces) for func, traces in self.index.items())
+        defs = (get_updated_definition(func, traces, self.max_typed_dict_size)
+                for func, traces in self.index.items())
         return build_module_stubs(defs)

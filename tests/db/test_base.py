@@ -32,7 +32,7 @@ def logger() -> CallTraceStoreLogger:
 
 def test_round_trip(logger):
     with patch.object(main_func, '__module__', '__main__'):
-        with trace_calls(logger):
+        with trace_calls(logger, max_typed_dict_size=0):
             main_func(int, str)
             assert not logger.traces
             normal_func(int, str)

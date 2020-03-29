@@ -48,7 +48,7 @@ from monkeytype.stubs import (
     update_signature_return,
 )
 from monkeytype.tracing import CallTrace
-from monkeytype.typing import NoneType, DUMMY_TYPED_DICT_NAME
+from monkeytype.typing import NoneType, make_typed_dict
 from mypy_extensions import TypedDict
 from .util import Dummy
 
@@ -346,6 +346,28 @@ class TestReplaceTypedDictsWithStubs:
             AttributeStub(name='a', typ=int),
             AttributeStub(name='b', typ=str),
         ])
+    SIMPLE_NON_TOTAL_TYPED_DICT_STUB: ClassStub = ClassStub(
+        name='FooBarTypedDict(TypedDict, total=False)',
+        function_stubs=[],
+        attribute_stubs=[
+            AttributeStub(name='a', typ=int),
+            AttributeStub(name='b', typ=str),
+        ])
+    SIMPLE_BASE_AND_SUBCLASS: List[ClassStub] = [
+        ClassStub(
+            name='FooBarTypedDict(TypedDict)',
+            function_stubs=[],
+            attribute_stubs=[
+                AttributeStub(name='a', typ=int),
+                AttributeStub(name='b', typ=str),
+            ]),
+        ClassStub(
+            name=f'FooBarTypedDictNonTotal(FooBarTypedDict, total=False)',
+            function_stubs=[],
+            attribute_stubs=[
+                AttributeStub(name='c', typ=int),
+            ]),
+    ]
 
     @pytest.mark.parametrize(
         'typ, expected',
@@ -358,38 +380,45 @@ class TestReplaceTypedDictsWithStubs:
             (List[List[Dict[str, int]]], (List[List[Dict[str, int]]], []),),
             (List[List[Dict[str, int]]], (List[List[Dict[str, int]]], []),),
             (
-                List[List[TypedDict(DUMMY_TYPED_DICT_NAME, {'a': int, 'b': str})]],
+                List[List[make_typed_dict(required_fields={'a': int, 'b': str})]],
                 (List[List[make_forward_ref('FooBarTypedDict')]], [SIMPLE_TYPED_DICT_STUB]),
             ),
             (
-                Dict[str, TypedDict(DUMMY_TYPED_DICT_NAME, {'a': int, 'b': str})],
+                Dict[str, make_typed_dict(required_fields={'a': int, 'b': str})],
                 (Dict[str, make_forward_ref('FooBar2TypedDict')], [SIMPLE_TYPED_DICT_STUB2]),
             ),
             (
-                Set[TypedDict(DUMMY_TYPED_DICT_NAME, {'a': int, 'b': str})],
+                Set[make_typed_dict(required_fields={'a': int, 'b': str})],
                 (Set[make_forward_ref('FooBarTypedDict')], [SIMPLE_TYPED_DICT_STUB]),
             ),
             (
-                Tuple[int, TypedDict(DUMMY_TYPED_DICT_NAME, {'a': int, 'b': str})],
+                Tuple[int, make_typed_dict(required_fields={'a': int, 'b': str})],
                 (Tuple[int, make_forward_ref('FooBar2TypedDict')], [SIMPLE_TYPED_DICT_STUB2]),
             ),
             (
-                TypedDict(DUMMY_TYPED_DICT_NAME, {'a': int, 'b': str}),
+                make_typed_dict(required_fields={'a': int, 'b': str}),
                 (make_forward_ref('FooBarTypedDict'), [SIMPLE_TYPED_DICT_STUB]),
+            ),
+            (
+                make_typed_dict(optional_fields={'a': int, 'b': str}),
+                (make_forward_ref('FooBarTypedDict'), [SIMPLE_NON_TOTAL_TYPED_DICT_STUB]),
+            ),
+            (
+                make_typed_dict(required_fields={'a': int, 'b': str}, optional_fields={'c': int}),
+                (make_forward_ref('FooBarTypedDictNonTotal'), SIMPLE_BASE_AND_SUBCLASS),
             ),
             (
                 TypedDict('GenuineTypedDict', {'a': int, 'b': str}),
                 (TypedDict('GenuineTypedDict', {'a': int, 'b': str}), []),
             ),
             (
-                TypedDict(
-                    DUMMY_TYPED_DICT_NAME, {
+                make_typed_dict(required_fields={
+                    'a': int,
+                    'b': make_typed_dict(required_fields={
                         'a': int,
-                        'b': TypedDict(DUMMY_TYPED_DICT_NAME, {
-                            'a': int,
-                            'b': str
-                        })
-                    }),
+                        'b': str
+                    })
+                }),
                 (make_forward_ref('FooBarTypedDict'), [
                     ClassStub(
                         name='BTypedDict(TypedDict)',
@@ -408,8 +437,8 @@ class TestReplaceTypedDictsWithStubs:
                 ]),
             ),
             (
-                Tuple[TypedDict(DUMMY_TYPED_DICT_NAME, {'a': int}),
-                      TypedDict(DUMMY_TYPED_DICT_NAME, {'b': str})],
+                Tuple[make_typed_dict(required_fields={'a': int}),
+                      make_typed_dict(required_fields={'b': str})],
                 (Tuple[make_forward_ref('FooBarTypedDict'), make_forward_ref('FooBar2TypedDict')],
                  [ClassStub(
                      name='FooBarTypedDict(TypedDict)',
@@ -540,13 +569,12 @@ class TestModuleStub:
         function = FunctionDefinition.from_callable_and_traced_types(
             Dummy.an_instance_method,
             {
-                'foo': TypedDict(DUMMY_TYPED_DICT_NAME,
-                                 {
-                                     # Naming the key 'z' to test a class name
-                                     # that comes last in alphabetical order.
-                                     'z': TypedDict(DUMMY_TYPED_DICT_NAME, {'a': int, 'b': str}),
-                                     'b': str,
-                                 }),
+                'foo': make_typed_dict(required_fields={
+                    # Naming the key 'z' to test a class name
+                    # that comes last in alphabetical order.
+                    'z': make_typed_dict(required_fields={'a': int, 'b': str}),
+                    'b': str,
+                }),
                 'bar': int,
             },
             int,
@@ -581,7 +609,7 @@ class TestModuleStub:
                 'foo': int,
                 'bar': int,
             },
-            TypedDict(DUMMY_TYPED_DICT_NAME, {'a': int, 'b': str}),
+            make_typed_dict(required_fields={'a': int, 'b': str}),
             yield_type=None,
             existing_annotation_strategy=ExistingAnnotationStrategy.IGNORE
         )
@@ -609,7 +637,7 @@ class TestModuleStub:
                 'bar': int,
             },
             int,
-            yield_type=TypedDict(DUMMY_TYPED_DICT_NAME, {'a': int, 'b': str}),
+            yield_type=make_typed_dict(required_fields={'a': int, 'b': str}),
             existing_annotation_strategy=ExistingAnnotationStrategy.IGNORE
         )
         entries = [function]
@@ -638,7 +666,7 @@ class TestModuleStub:
         function = FunctionDefinition.from_callable_and_traced_types(
             Dummy.an_instance_method,
             {
-                'foo': List[TypedDict(DUMMY_TYPED_DICT_NAME, {'a': int})],
+                'foo': List[make_typed_dict(required_fields={'a': int})],
                 'bar': int,
             },
             int,
@@ -658,6 +686,34 @@ class TestModuleStub:
             'class Dummy:',
             f'    def an_instance_method(self, foo: List[{make_forward_ref("FooTypedDict")}], bar: int) -> int: ...'])
         self.maxDiff = None
+        assert build_module_stubs(entries)['tests.util'].render() == expected
+
+    def test_render_typed_dict_base_and_subclass(self):
+        function = FunctionDefinition.from_callable_and_traced_types(
+            Dummy.an_instance_method,
+            {
+                'foo': make_typed_dict(required_fields={'a': int}, optional_fields={'b': str}),
+                'bar': int,
+            },
+            int,
+            None,
+            existing_annotation_strategy=ExistingAnnotationStrategy.IGNORE,
+        )
+        entries = [function]
+        expected = '\n'.join([
+            'from mypy_extensions import TypedDict',
+            '',
+            '',
+            'class FooTypedDict(TypedDict):',
+            '    a: int',
+            '',
+            '',
+            f'class FooTypedDictNonTotal(FooTypedDict, total=False):',
+            '    b: str',
+            '',
+            '',
+            'class Dummy:',
+            f'    def an_instance_method(self, foo: \'FooTypedDictNonTotal\', bar: int) -> int: ...'])
         assert build_module_stubs(entries)['tests.util'].render() == expected
 
 
@@ -688,10 +744,10 @@ class TestBuildModuleStubs:
         function = FunctionDefinition.from_callable_and_traced_types(
             Dummy.an_instance_method,
             {
-                'foo': TypedDict(DUMMY_TYPED_DICT_NAME, {'a': int, 'b': str}),
+                'foo': make_typed_dict(required_fields={'a': int, 'b': str}),
                 'bar': int,
             },
-            TypedDict(DUMMY_TYPED_DICT_NAME, {'c': int}),
+            make_typed_dict(required_fields={'c': int}),
             None,
             existing_annotation_strategy=ExistingAnnotationStrategy.IGNORE
         )
@@ -707,12 +763,12 @@ def untyped_helper(x, y):
 
 class TestStubIndexBuilder:
     def test_ignore_non_matching_functions(self):
-        b = StubIndexBuilder('foo.bar')
+        b = StubIndexBuilder('foo.bar', max_typed_dict_size=0)
         b.log(CallTrace(untyped_helper, {'x': int, 'y': str}))
         assert len(b.index) == 0
 
     def test_build_index(self):
-        idxb = StubIndexBuilder('tests')
+        idxb = StubIndexBuilder('tests', max_typed_dict_size=0)
         idxb.log(CallTrace(untyped_helper, {'x': int, 'y': str}, str))
         sig = Signature.from_callable(untyped_helper)
         sig = sig.replace(
@@ -991,8 +1047,8 @@ class TestFunctionDefinition:
             (
                 Dummy.an_instance_method,
                 {
-                    'foo': TypedDict(DUMMY_TYPED_DICT_NAME, {'a': int, 'b': str}),
-                    'bar': TypedDict(DUMMY_TYPED_DICT_NAME, {'c': int}),
+                    'foo': make_typed_dict(required_fields={'a': int, 'b': str}),
+                    'bar': make_typed_dict(required_fields={'c': int}),
                 },
                 int,
                 None,
@@ -1052,21 +1108,21 @@ class TestShrinkTracedTypes:
             CallTrace(tie_helper, {'a': str, 'b': int}),
             CallTrace(tie_helper, {'a': str, 'b': NoneType}),
         ]
-        assert shrink_traced_types(traces) == ({'a': str, 'b': Optional[int]}, None, None)
+        assert shrink_traced_types(traces, max_typed_dict_size=0) == ({'a': str, 'b': Optional[int]}, None, None)
 
     def test_shrink_return(self):
         traces = [
             CallTrace(tie_helper, {}, NoneType),
             CallTrace(tie_helper, {}, str),
         ]
-        assert shrink_traced_types(traces) == ({}, Optional[str], None)
+        assert shrink_traced_types(traces, max_typed_dict_size=0) == ({}, Optional[str], None)
 
     def test_shrink_yield(self):
         traces = [
             CallTrace(tie_helper, {}, yield_type=int),
             CallTrace(tie_helper, {}, yield_type=str),
         ]
-        assert shrink_traced_types(traces) == ({}, None, Union[int, str])
+        assert shrink_traced_types(traces, max_typed_dict_size=0) == ({}, None, Union[int, str])
 
 
 class Parent:
