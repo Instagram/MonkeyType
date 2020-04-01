@@ -364,21 +364,21 @@ class TestClassStub:
 
 class TestReplaceTypedDictsWithStubs:
     SIMPLE_TYPED_DICT_STUB: ClassStub = ClassStub(
-        name='FooBarTypedDict(TypedDict)',
+        name='FooBarTypedDict__RENAME_ME__(TypedDict)',
         function_stubs=[],
         attribute_stubs=[
             AttributeStub(name='a', typ=int),
             AttributeStub(name='b', typ=str),
         ])
     SIMPLE_TYPED_DICT_STUB2: ClassStub = ClassStub(
-        name='FooBar2TypedDict(TypedDict)',
+        name='FooBar2TypedDict__RENAME_ME__(TypedDict)',
         function_stubs=[],
         attribute_stubs=[
             AttributeStub(name='a', typ=int),
             AttributeStub(name='b', typ=str),
         ])
     SIMPLE_NON_TOTAL_TYPED_DICT_STUB: ClassStub = ClassStub(
-        name='FooBarTypedDict(TypedDict, total=False)',
+        name='FooBarTypedDict__RENAME_ME__(TypedDict, total=False)',
         function_stubs=[],
         attribute_stubs=[
             AttributeStub(name='a', typ=int),
@@ -386,14 +386,14 @@ class TestReplaceTypedDictsWithStubs:
         ])
     SIMPLE_BASE_AND_SUBCLASS: List[ClassStub] = [
         ClassStub(
-            name='FooBarTypedDict(TypedDict)',
+            name='FooBarTypedDict__RENAME_ME__(TypedDict)',
             function_stubs=[],
             attribute_stubs=[
                 AttributeStub(name='a', typ=int),
                 AttributeStub(name='b', typ=str),
             ]),
         ClassStub(
-            name=f'FooBarTypedDictNonTotal(FooBarTypedDict, total=False)',
+            name=f'FooBarTypedDict__RENAME_ME__NonTotal(FooBarTypedDict__RENAME_ME__, total=False)',
             function_stubs=[],
             attribute_stubs=[
                 AttributeStub(name='c', typ=int),
@@ -412,31 +412,31 @@ class TestReplaceTypedDictsWithStubs:
             (List[List[Dict[str, int]]], (List[List[Dict[str, int]]], []),),
             (
                 List[List[make_typed_dict(required_fields={'a': int, 'b': str})]],
-                (List[List[make_forward_ref('FooBarTypedDict')]], [SIMPLE_TYPED_DICT_STUB]),
+                (List[List[make_forward_ref('FooBarTypedDict__RENAME_ME__')]], [SIMPLE_TYPED_DICT_STUB]),
             ),
             (
                 Dict[str, make_typed_dict(required_fields={'a': int, 'b': str})],
-                (Dict[str, make_forward_ref('FooBar2TypedDict')], [SIMPLE_TYPED_DICT_STUB2]),
+                (Dict[str, make_forward_ref('FooBar2TypedDict__RENAME_ME__')], [SIMPLE_TYPED_DICT_STUB2]),
             ),
             (
                 Set[make_typed_dict(required_fields={'a': int, 'b': str})],
-                (Set[make_forward_ref('FooBarTypedDict')], [SIMPLE_TYPED_DICT_STUB]),
+                (Set[make_forward_ref('FooBarTypedDict__RENAME_ME__')], [SIMPLE_TYPED_DICT_STUB]),
             ),
             (
                 Tuple[int, make_typed_dict(required_fields={'a': int, 'b': str})],
-                (Tuple[int, make_forward_ref('FooBar2TypedDict')], [SIMPLE_TYPED_DICT_STUB2]),
+                (Tuple[int, make_forward_ref('FooBar2TypedDict__RENAME_ME__')], [SIMPLE_TYPED_DICT_STUB2]),
             ),
             (
                 make_typed_dict(required_fields={'a': int, 'b': str}),
-                (make_forward_ref('FooBarTypedDict'), [SIMPLE_TYPED_DICT_STUB]),
+                (make_forward_ref('FooBarTypedDict__RENAME_ME__'), [SIMPLE_TYPED_DICT_STUB]),
             ),
             (
                 make_typed_dict(optional_fields={'a': int, 'b': str}),
-                (make_forward_ref('FooBarTypedDict'), [SIMPLE_NON_TOTAL_TYPED_DICT_STUB]),
+                (make_forward_ref('FooBarTypedDict__RENAME_ME__'), [SIMPLE_NON_TOTAL_TYPED_DICT_STUB]),
             ),
             (
                 make_typed_dict(required_fields={'a': int, 'b': str}, optional_fields={'c': int}),
-                (make_forward_ref('FooBarTypedDictNonTotal'), SIMPLE_BASE_AND_SUBCLASS),
+                (make_forward_ref('FooBarTypedDict__RENAME_ME__NonTotal'), SIMPLE_BASE_AND_SUBCLASS),
             ),
             (
                 TypedDict('GenuineTypedDict', {'a': int, 'b': str}),
@@ -450,35 +450,36 @@ class TestReplaceTypedDictsWithStubs:
                         'b': str
                     })
                 }),
-                (make_forward_ref('FooBarTypedDict'), [
+                (make_forward_ref('FooBarTypedDict__RENAME_ME__'), [
                     ClassStub(
-                        name='BTypedDict(TypedDict)',
+                        name='BTypedDict__RENAME_ME__(TypedDict)',
                         function_stubs=[],
                         attribute_stubs=[
                             AttributeStub(name='a', typ=int),
                             AttributeStub(name='b', typ=str),
                         ]),
                     ClassStub(
-                        name='FooBarTypedDict(TypedDict)',
+                        name='FooBarTypedDict__RENAME_ME__(TypedDict)',
                         function_stubs=[],
                         attribute_stubs=[
                             AttributeStub(name='a', typ=int),
-                            AttributeStub(name='b', typ=make_forward_ref('BTypedDict')),
+                            AttributeStub(name='b', typ=make_forward_ref('BTypedDict__RENAME_ME__')),
                         ])
                 ]),
             ),
             (
                 Tuple[make_typed_dict(required_fields={'a': int}),
                       make_typed_dict(required_fields={'b': str})],
-                (Tuple[make_forward_ref('FooBarTypedDict'), make_forward_ref('FooBar2TypedDict')],
+                (Tuple[make_forward_ref('FooBarTypedDict__RENAME_ME__'),
+                       make_forward_ref('FooBar2TypedDict__RENAME_ME__')],
                  [ClassStub(
-                     name='FooBarTypedDict(TypedDict)',
+                     name='FooBarTypedDict__RENAME_ME__(TypedDict)',
                      function_stubs=[],
                      attribute_stubs=[
                          AttributeStub(name='a', typ=int),
                      ]),
                   ClassStub(
-                      name='FooBar2TypedDict(TypedDict)',
+                      name='FooBar2TypedDict__RENAME_ME__(TypedDict)',
                       function_stubs=[],
                       attribute_stubs=[
                           AttributeStub(name='b', typ=str),
@@ -510,12 +511,12 @@ module_stub_for_method_with_typed_dict = {
                                           annotation=Parameter.empty),
                                 Parameter(name='foo',
                                           kind=Parameter.POSITIONAL_OR_KEYWORD,
-                                          annotation=make_forward_ref('FooTypedDict')),
+                                          annotation=make_forward_ref('FooTypedDict__RENAME_ME__')),
                                 Parameter(name='bar',
                                           kind=Parameter.POSITIONAL_OR_KEYWORD,
                                           annotation=int),
                             ],
-                            return_annotation=make_forward_ref('DummyAnInstanceMethodTypedDict'),
+                            return_annotation=make_forward_ref('DummyAnInstanceMethodTypedDict__RENAME_ME__'),
                         ),
                         kind=FunctionKind.INSTANCE,
                         strip_modules=['mypy_extensions'],
@@ -527,7 +528,7 @@ module_stub_for_method_with_typed_dict = {
         imports_stub=ImportBlockStub(typed_dict_import_map),
         typed_dict_class_stubs=[
             ClassStub(
-                name='FooTypedDict(TypedDict)',
+                name='FooTypedDict__RENAME_ME__(TypedDict)',
                 function_stubs=[],
                 attribute_stubs=[
                     AttributeStub('a', int),
@@ -536,8 +537,8 @@ module_stub_for_method_with_typed_dict = {
             ),
             ClassStub(
                 # We use the name of the method, `Dummy.an_instance_method`,
-                # to get `DummyAnInstanceMethodTypedDict`.
-                name='DummyAnInstanceMethodTypedDict(TypedDict)',
+                # to get `DummyAnInstanceMethodTypedDict__RENAME_ME__`.
+                name='DummyAnInstanceMethodTypedDict__RENAME_ME__(TypedDict)',
                 function_stubs=[],
                 attribute_stubs=[
                     AttributeStub('c', int),
@@ -562,11 +563,11 @@ class TestModuleStub:
                               class_stubs=class_stubs,
                               typed_dict_class_stubs=typed_dict_class_stubs)
         expected = '\n'.join([
-            'class DummyAnInstanceMethodTypedDict(TypedDict):',
+            'class DummyAnInstanceMethodTypedDict__RENAME_ME__(TypedDict):',
             '    c: int',
             '',
             '',
-            'class FooTypedDict(TypedDict):',
+            'class FooTypedDict__RENAME_ME__(TypedDict):',
             '    a: int',
             '    b: str',
             '',
@@ -579,8 +580,11 @@ class TestModuleStub:
             '',
             '',
             'class Dummy:',
-            '    def an_instance_method(self, foo: \'FooTypedDict\', bar: int) '
-            + '-> \'DummyAnInstanceMethodTypedDict\': ...',
+            '    def an_instance_method(',
+            '        self,',
+            '        foo: \'FooTypedDict__RENAME_ME__\',',
+            '        bar: int',
+            '    ) -> \'DummyAnInstanceMethodTypedDict__RENAME_ME__\': ...',
             '',
             '',
             'class Test:',
@@ -617,19 +621,19 @@ class TestModuleStub:
             'from mypy_extensions import TypedDict',
             '',
             '',
-            'class FooTypedDict(TypedDict):',
+            'class FooTypedDict__RENAME_ME__(TypedDict):',
             '    b: str',
             # We can forward-reference a class that is defined afterwards.
-            '    z: \'ZTypedDict\'',
+            '    z: \'ZTypedDict__RENAME_ME__\'',
             '',
             '',
-            'class ZTypedDict(TypedDict):',
+            'class ZTypedDict__RENAME_ME__(TypedDict):',
             '    a: int',
             '    b: str',
             '',
             '',
             'class Dummy:',
-            '    def an_instance_method(self, foo: \'FooTypedDict\', bar: int) -> int: ...'])
+            '    def an_instance_method(self, foo: \'FooTypedDict__RENAME_ME__\', bar: int) -> int: ...'])
         self.maxDiff = None
         assert build_module_stubs(entries)['tests.util'].render() == expected
 
@@ -649,13 +653,14 @@ class TestModuleStub:
             'from mypy_extensions import TypedDict',
             '',
             '',
-            'class DummyAnInstanceMethodTypedDict(TypedDict):',
+            'class DummyAnInstanceMethodTypedDict__RENAME_ME__(TypedDict):',
             '    a: int',
             '    b: str',
             '',
             '',
             'class Dummy:',
-            '    def an_instance_method(self, foo: int, bar: int) -> \'DummyAnInstanceMethodTypedDict\': ...',
+            '    def an_instance_method(self, foo: int, bar: int)'
+            ' -> \'DummyAnInstanceMethodTypedDict__RENAME_ME__\': ...',
         ])
         self.maxDiff = None
         assert build_module_stubs(entries)['tests.util'].render() == expected
@@ -677,14 +682,17 @@ class TestModuleStub:
             'from typing import Generator',
             '',
             '',
-            'class DummyAnInstanceMethodYieldTypedDict(TypedDict):',
+            'class DummyAnInstanceMethodYieldTypedDict__RENAME_ME__(TypedDict):',
             '    a: int',
             '    b: str',
             '',
             '',
             'class Dummy:',
-            '    def an_instance_method(self, foo: int, bar: int)'
-            ' -> Generator[\'DummyAnInstanceMethodYieldTypedDict\', None, int]: ...',
+            '    def an_instance_method(',
+            '        self,',
+            '        foo: int,',
+            '        bar: int',
+            '    ) -> Generator[\'DummyAnInstanceMethodYieldTypedDict__RENAME_ME__\', None, int]: ...',
         ])
         self.maxDiff = None
         assert build_module_stubs(entries)['tests.util'].render() == expected
@@ -706,12 +714,12 @@ class TestModuleStub:
             'from typing import List',
             '',
             '',
-            'class FooTypedDict(TypedDict):',
+            'class FooTypedDict__RENAME_ME__(TypedDict):',
             '    a: int',
             '',
             '',
             'class Dummy:',
-            f'    def an_instance_method(self, foo: List[\'FooTypedDict\'], bar: int) -> int: ...'])
+            f'    def an_instance_method(self, foo: List[\'FooTypedDict__RENAME_ME__\'], bar: int) -> int: ...'])
         self.maxDiff = None
         assert build_module_stubs(entries)['tests.util'].render() == expected
 
@@ -731,16 +739,16 @@ class TestModuleStub:
             'from mypy_extensions import TypedDict',
             '',
             '',
-            'class FooTypedDict(TypedDict):',
+            'class FooTypedDict__RENAME_ME__(TypedDict):',
             '    a: int',
             '',
             '',
-            f'class FooTypedDictNonTotal(FooTypedDict, total=False):',
+            f'class FooTypedDict__RENAME_ME__NonTotal(FooTypedDict__RENAME_ME__, total=False):',
             '    b: str',
             '',
             '',
             'class Dummy:',
-            f'    def an_instance_method(self, foo: \'FooTypedDictNonTotal\', bar: int) -> int: ...'])
+            f'    def an_instance_method(self, foo: \'FooTypedDict__RENAME_ME__NonTotal\', bar: int) -> int: ...'])
         assert build_module_stubs(entries)['tests.util'].render() == expected
 
 
@@ -1087,16 +1095,16 @@ class TestFunctionDefinition:
                         parameters=[
                             Parameter(name='self', kind=Parameter.POSITIONAL_OR_KEYWORD, annotation=Parameter.empty),
                             Parameter(name='foo', kind=Parameter.POSITIONAL_OR_KEYWORD,
-                                      annotation=make_forward_ref('FooTypedDict')),
+                                      annotation=make_forward_ref('FooTypedDict__RENAME_ME__')),
                             Parameter(name='bar', kind=Parameter.POSITIONAL_OR_KEYWORD,
-                                      annotation=make_forward_ref('BarTypedDict')),
+                                      annotation=make_forward_ref('BarTypedDict__RENAME_ME__')),
                         ],
                         return_annotation=int,
                     ),
                     False,
                     [
                         ClassStub(
-                            name='FooTypedDict(TypedDict)',
+                            name='FooTypedDict__RENAME_ME__(TypedDict)',
                             function_stubs=[],
                             attribute_stubs=[
                                 AttributeStub('a', int),
@@ -1104,7 +1112,7 @@ class TestFunctionDefinition:
                             ]
                         ),
                         ClassStub(
-                            name='BarTypedDict(TypedDict)',
+                            name='BarTypedDict__RENAME_ME__(TypedDict)',
                             function_stubs=[],
                             attribute_stubs=[
                                 AttributeStub('c', int),

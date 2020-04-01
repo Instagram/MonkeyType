@@ -241,7 +241,7 @@ def shrink_traced_types(
 
 def get_typed_dict_class_name(parameter_name: str) -> str:
     """Return the name for a TypedDict class generated for parameter `parameter_name`."""
-    return f'{pascal_case(parameter_name)}TypedDict'
+    return f'{pascal_case(parameter_name)}TypedDict__RENAME_ME__'
 
 
 class Stub(metaclass=ABCMeta):
