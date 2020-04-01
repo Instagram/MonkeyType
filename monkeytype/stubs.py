@@ -49,6 +49,7 @@ from monkeytype.tracing import (
     CallTraceLogger,
 )
 from monkeytype.typing import (
+    GenericTypeRewriter,
     NoneType,
     NoOpRewriter,
     TypeRewriter,
@@ -298,31 +299,67 @@ def _get_optional_elem(anno: Any) -> Any:
     return Union[elems]
 
 
+class RenderAnnotation(GenericTypeRewriter[str]):
+    """Render annotation recursively."""
+
+    def make_anonymous_typed_dict(self, required_fields: Dict[str, str], optional_fields: Dict[str, str]) -> str:
+        raise Exception("Should not receive an anonymous TypedDict in RenderAnnotation,"
+                        f" but was called with required_fields={required_fields}, optional_fields={optional_fields}.")
+
+    def make_builtin_typed_dict(self, name: str, annotations: Dict[str, str], total: bool) -> str:
+        raise Exception("Should not receive a TypedDict type in RenderAnnotation,"
+                        f" but was called with name={name}, annotations={annotations}, total={total}.")
+
+    def generic_rewrite(self, typ: Any) -> str:
+        if hasattr(typ, '__supertype__'):
+            rendered = typ.__name__
+        elif is_forward_ref(typ):
+            rendered = repr(typ.__forward_arg__)
+        elif isinstance(typ, NoneType) or typ is NoneType:
+            rendered = 'None'
+        elif is_generic(typ):
+            rendered = repr(typ)
+        elif isinstance(typ, type):
+            if typ.__module__ in ('builtins',):
+                rendered = typ.__qualname__
+            else:
+                rendered = typ.__module__ + '.' + typ.__qualname__
+        elif isinstance(typ, str):
+            rendered = typ
+        else:
+            rendered = repr(typ)
+        return rendered
+
+    def rewrite_container_type(self, container_type: Any) -> str:
+        return repr(container_type)
+
+    def rewrite_malformed_container(self, container: Any) -> str:
+        return repr(container)
+
+    def make_builtin_tuple(self, elements: Iterable[str]) -> str:
+        return ', '.join(elements)
+
+    def make_container_type(self, container_type: str, elements: str) -> str:
+        return f'{container_type}[{elements}]'
+
+    def rewrite_Union(self, union: type) -> str:
+        if _is_optional(union):
+            elem_type = _get_optional_elem(union)
+            return 'Optional[' + self.rewrite(elem_type) + ']'
+        return self._rewrite_container(Union, union)
+
+    def rewrite(self, typ: type) -> str:
+        rendered = super().rewrite(typ)
+        if getattr(typ, '__module__', None) == 'typing':
+            rendered = rendered.replace('typing.', '')
+        # Temporary hacky workaround for #76 to fix remaining NoneType hints by search-replace
+        rendered = rendered.replace('NoneType', 'None')
+        return rendered
+
+
 def render_annotation(anno: Any) -> str:
     """Convert an annotation into its stub representation."""
-    if _is_optional(anno):
-        elem_type = _get_optional_elem(anno)
-        rendered = 'Optional[' + render_annotation(elem_type) + ']'
-    elif hasattr(anno, '__supertype__'):
-        rendered = anno.__name__
-    elif is_forward_ref(anno):
-        rendered = repr(anno.__forward_arg__)
-    elif getattr(anno, '__module__', None) == 'typing':
-        rendered = repr(anno).replace('typing.', '')
-    elif isinstance(anno, NoneType):
-        rendered = 'None'
-    elif isinstance(anno, type):
-        if anno.__module__ in ('builtins',):
-            rendered = anno.__qualname__
-        else:
-            rendered = anno.__module__ + '.' + anno.__qualname__
-    elif isinstance(anno, str):
-        rendered = anno
-    else:
-        rendered = repr(anno)
-
-    # Temporary hacky workaround for #76 to fix remaining NoneType hints by search-replace
-    return rendered.replace('NoneType', 'None')
+    return RenderAnnotation().rewrite(anno)
 
 
 def render_parameter(param: inspect.Parameter) -> str:

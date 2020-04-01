@@ -14,6 +14,7 @@ from typing import (
     Callable,
     Dict,
     Generator,
+    Iterable,
     Iterator,
     List,
     NewType,
@@ -26,7 +27,7 @@ from typing import (
 
 import pytest
 
-from monkeytype.compat import make_forward_ref, repr_forward_ref
+from monkeytype.compat import make_forward_ref
 from monkeytype.stubs import (
     AttributeStub,
     ClassStub,
@@ -42,6 +43,7 @@ from monkeytype.stubs import (
     build_module_stubs,
     get_imports_for_annotation,
     get_imports_for_signature,
+    render_annotation,
     render_signature,
     shrink_traced_types,
     update_signature_args,
@@ -174,6 +176,35 @@ class TestAttributeStub:
     )
     def test_simple_attribute(self, stub, expected):
         assert stub.render('    ') == expected
+
+
+class TestRenderAnnotation:
+    @pytest.mark.parametrize(
+        'annotation, expected',
+        [
+            (make_forward_ref('Foo'), '\'Foo\''),
+            (List[make_forward_ref('Foo')], 'List[\'Foo\']'),
+            (List[List[make_forward_ref('Foo')]], 'List[List[\'Foo\']]'),
+            (Optional[int], 'Optional[int]'),
+            (List[Optional[int]], 'List[Optional[int]]'),
+            (UserId, 'UserId'),
+            (List[UserId], 'List[UserId]'),
+            (List[int], 'List[int]'),
+            (List[List[int]], 'List[List[int]]'),
+            (None, 'None'),
+            (List[None], 'List[None]'),
+            (int, 'int'),
+            (Dummy, 'tests.util.Dummy'),
+            (List[Dummy], 'List[tests.util.Dummy]'),
+            ('some_string', 'some_string'),
+            (Iterable[None], 'Iterable[None]'),
+            (List[Iterable[None]], 'List[Iterable[None]]'),
+            (Generator[make_forward_ref('Foo'), None, None], 'Generator[\'Foo\', None, None]'),
+            (List[Generator[make_forward_ref('Foo'), None, None]], 'List[Generator[\'Foo\', None, None]]'),
+        ],
+    )
+    def test_render_annotation(self, annotation, expected):
+        assert render_annotation(annotation) == expected
 
 
 class TestFunctionStub:
@@ -652,12 +683,8 @@ class TestModuleStub:
             '',
             '',
             'class Dummy:',
-            '    def an_instance_method(',
-            '        self,',
-            '        foo: int,',
-            '        bar: int',
-            f'    ) -> Generator[{repr_forward_ref()}'
-            + '(\'DummyAnInstanceMethodYieldTypedDict\'), None, int]: ...',
+            '    def an_instance_method(self, foo: int, bar: int)'
+            ' -> Generator[\'DummyAnInstanceMethodYieldTypedDict\', None, int]: ...',
         ])
         self.maxDiff = None
         assert build_module_stubs(entries)['tests.util'].render() == expected
@@ -684,7 +711,7 @@ class TestModuleStub:
             '',
             '',
             'class Dummy:',
-            f'    def an_instance_method(self, foo: List[{make_forward_ref("FooTypedDict")}], bar: int) -> int: ...'])
+            f'    def an_instance_method(self, foo: List[\'FooTypedDict\'], bar: int) -> int: ...'])
         self.maxDiff = None
         assert build_module_stubs(entries)['tests.util'].render() == expected
 
