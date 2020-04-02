@@ -14,6 +14,8 @@ sphinx = "*"
 twine = "*"
 django = "*"
 tox = "*"
+libcst = "*"
+dataclasses = "*"
 
 [pipenv]
 keep_outdated = true

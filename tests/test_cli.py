@@ -9,9 +9,9 @@ import os
 import os.path
 import pytest
 import sqlite3
-import subprocess
 import sys
 import tempfile
+import textwrap
 from typing import Iterator
 
 from unittest import mock
@@ -280,23 +280,6 @@ def test_verbose_failed_traces(store, db_file, stdout, stderr):
     assert ret == 0
 
 
-def test_retype_failure(store, db_file, stdout, stderr):
-    traces = [
-        CallTrace(func, {'a': int, 'b': str}, NoneType),
-        CallTrace(func2, {'a': int, 'b': int}, NoneType),
-    ]
-    store.add(traces)
-    msg = "this is a test"
-    err = subprocess.CalledProcessError(returncode=100, cmd='retype')
-    err.stdout = msg.encode()
-    with mock.patch.dict(os.environ, {DefaultConfig.DB_PATH_VAR: db_file.name}):
-        with mock.patch('subprocess.run', side_effect=err):
-            ret = cli.main(['apply', func.__module__], stdout, stderr)
-    assert stdout.getvalue() == ""
-    assert stderr.getvalue() == f"ERROR: Failed applying stub with retype:\n{msg}\n"
-    assert ret == 1
-
-
 def test_cli_context_manager_activated(capsys, stdout, stderr):
     ret = cli.main(['-c', f'{__name__}:LoudContextConfig()', 'stub', 'some.module'], stdout, stderr)
     out, err = capsys.readouterr()
@@ -342,7 +325,7 @@ def test_apply_stub_init(store, db_file, stdout, stderr, collector):
         ret = cli.main(['apply', Foo.__module__], stdout, stderr)
 
     assert ret == 0
-    assert 'warning:' not in stdout.getvalue()
+    assert 'def __init__(self, arg1: str, arg2: int) -> None:' in stdout.getvalue()
 
 
 def test_apply_stub_file_with_spaces(store, db_file, stdout, stderr):
@@ -364,3 +347,76 @@ def my_test_function(a, b):
                 ret = cli.main(['apply', 'my_test_module'], stdout, stderr)
     assert ret == 0
     assert 'warning:' not in stdout.getvalue()
+
+
+def test_apply_stub_using_libcst():
+    source = """
+        def my_test_function(a, b):
+          return True
+
+        def has_return_type(a, b) -> bool:
+          return True
+
+        def uses_forward_ref(d):
+          return None
+
+        def no_stub(a):
+          return True
+
+        def uses_union(d):
+          return None
+    """
+    stub = """
+        from mypy_extensions import TypedDict
+        from typing import Union
+        def my_test_function(a: int, b: str) -> bool: ...
+
+        def has_return_type(a: int, b: int) -> bool: ...
+
+        def uses_forward_ref(d: 'Foo') -> None: ...
+
+        def uses_union(d: Union[int, bool]) -> None: ...
+
+        class Foo: ...
+
+        class Movie(TypedDict):
+          name: str
+          year: int
+    """
+    expected = """
+        from mypy_extensions import TypedDict
+        from typing import Union
+
+        class Foo: ...
+
+        class Movie(TypedDict):
+          name: str
+          year: int
+
+        def my_test_function(a: int, b: str) -> bool:
+          return True
+
+        def has_return_type(a: int, b: int) -> bool:
+          return True
+
+        def uses_forward_ref(d: 'Foo') -> None:
+          return None
+
+        def no_stub(a):
+          return True
+
+        def uses_union(d: Union[int, bool]) -> None:
+          return None
+    """
+    assert cli.apply_stub_using_libcst(textwrap.dedent(stub), textwrap.dedent(source)) == textwrap.dedent(expected)
+
+
+def test_apply_stub_using_libcst__exception(stdout, stderr):
+    erroneous_source = """
+        def my_test_function(
+    """
+    stub = """
+        def my_test_function(a: int, b: str) -> bool: ...
+    """
+    with pytest.raises(cli.HandlerError):
+        cli.apply_stub_using_libcst(textwrap.dedent(stub), textwrap.dedent(erroneous_source))

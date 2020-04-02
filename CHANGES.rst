@@ -13,6 +13,13 @@ master
 * Shrink dictionary traces with required and optional keys to get non-total
   TypedDict class declarations. Thanks Pradeep Kumar Srinivasan.
 
+* Implement ``monkeytype apply`` using libcst's ``ApplyTypeAnnotationsVisitor``.
+  This correctly applies generated TypedDict classes. Thanks Pradeep Kumar
+  Srinivasan.
+
+* Render generic types recursively to handle nested special cases like
+  ``List['Movie']``. Thanks Pradeep Kumar Srinivasan. Fixes #76.
+
 
 19.11.2
 -------

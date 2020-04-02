@@ -11,10 +11,12 @@ import inspect
 import os
 import os.path
 import runpy
-import subprocess
 import sys
-import tempfile
 
+from libcst import parse_module
+from libcst.codemod import CodemodContext
+from libcst.codemod.visitors import ApplyTypeAnnotationsVisitor
+from pathlib import Path
 from typing import (
     IO,
     List,
@@ -136,37 +138,31 @@ class HandlerError(Exception):
     pass
 
 
+def apply_stub_using_libcst(stub: str, source: str) -> str:
+    try:
+        stub_module = parse_module(stub)
+        source_module = parse_module(source)
+        context = CodemodContext()
+        ApplyTypeAnnotationsVisitor.add_stub_to_context(context, stub_module)
+        transformer = ApplyTypeAnnotationsVisitor(context)
+        transformed_source_module = transformer.transform_module(source_module)
+    except Exception as exception:
+        raise HandlerError(f"Failed applying stub with libcst:\n{exception}")
+    return transformed_source_module.code
+
+
 def apply_stub_handler(args: argparse.Namespace, stdout: IO, stderr: IO) -> None:
-    args.existing_annotation_strategy = ExistingAnnotationStrategy.OMIT
+    args.existing_annotation_strategy = ExistingAnnotationStrategy.REPLICATE
     stub = get_stub(args, stdout, stderr)
     if stub is None:
         complain_about_no_traces(args, stderr)
         return
     module = args.module_path[0]
     mod = importlib.import_module(module)
-    src_path = inspect.getfile(mod)
-    src_dir = os.path.dirname(src_path)
-
-    with tempfile.TemporaryDirectory(prefix='monkeytype') as pyi_dir:
-        if src_path.endswith('__init__.py'):
-            pyi_name = '__init__.pyi'
-        else:
-            pyi_name = module.split('.')[-1] + '.pyi'
-        pyi_path = os.path.join(pyi_dir, pyi_name)
-        with open(pyi_path, 'w+') as f:
-            f.write(stub.render())
-        retype_args = [
-            'retype',
-            '--incremental',
-            '--pyi-dir', pyi_dir,
-            '--target-dir', src_dir,
-            src_path
-        ]
-        try:
-            proc = subprocess.run(retype_args, check=True, stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
-            print(proc.stdout.decode('utf-8'), file=stdout)
-        except subprocess.CalledProcessError as cpe:
-            raise HandlerError(f"Failed applying stub with retype:\n{cpe.stdout.decode('utf-8')}")
+    source_path = Path(inspect.getfile(mod))
+    source_with_types = apply_stub_using_libcst(stub=stub.render(), source=source_path.read_text())
+    source_path.write_text(source_with_types)
+    print(source_with_types, file=stdout)
 
 
 def get_diff(args: argparse.Namespace, stdout: IO, stderr: IO) -> Optional[str]:
