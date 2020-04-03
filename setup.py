@@ -45,7 +45,7 @@ setup(
         ]
     },
     python_requires='>=3.6',
-    install_requires=['mypy_extensions', 'retype'],
+    install_requires=['mypy_extensions'],
     classifiers=[
         'Development Status :: 5 - Production/Stable',
         'Intended Audience :: Developers',

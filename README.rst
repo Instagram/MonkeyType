@@ -64,7 +64,7 @@ For more on the motivation and design of Python type annotations, see
 Requirements
 ------------
 
-MonkeyType requires Python 3.6+ and the `retype`_ library (for applying type
+MonkeyType requires Python 3.6+ and the `libcst`_ library (for applying type
 stubs to code files). It generates only Python 3 type annotations (no type
 comments).
 
@@ -82,11 +82,11 @@ MonkeyType uses the `sys.setprofile`_ hook provided by Python to interpose on
 function calls, function returns, and generator yields, and record the types of
 arguments / return values / yield values.
 
-It generates `stub files`_ based on that data, and can use `retype`_ to apply those
+It generates `stub files`_ based on that data, and can use `libcst`_ to apply those
 stub files directly to your code.
 
 .. _pip: https://pip.pypa.io/en/stable/
-.. _retype: https://pypi.python.org/pypi/retype
+.. _libcst: https://pypi.python.org/pypi/libcst
 .. _sys.setprofile: https://docs.python.org/3/library/sys.html#sys.setprofile
 .. _stub files: http://mypy.readthedocs.io/en/latest/basics.html#library-stubs-and-the-typeshed-repo
 

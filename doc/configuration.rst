@@ -114,9 +114,6 @@ Subclassing ``Config`` or ``DefaultConfig``
    `TypedDict` will be emitted instead of `Dict`. Return `0` to disable per-key
    type tracking and TypedDict generation.
 
-   Currently TypedDict generation in stubs breaks `--apply` because retype
-   doesn't support copying new TypedDict subclasses from stub to code.
-
    Defaults to 0.
 
 .. class:: DefaultConfig()
