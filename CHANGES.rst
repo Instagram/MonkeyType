@@ -1,7 +1,7 @@
 Changelog
 =========
 
-master
+20.4.1
 ------
 
 * Generate stubs for TypedDicts nested within generic types. Disable
