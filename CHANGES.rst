@@ -1,7 +1,7 @@
 Changelog
 =========
 
-master
+20.4.2
 ------
 
 * Add missing ``libcst`` dependency in ``setup.py``.
