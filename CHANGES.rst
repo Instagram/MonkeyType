@@ -4,6 +4,8 @@ Changelog
 master
 ------
 
+* Add missing ``libcst`` dependency in ``setup.py``.
+
 
 20.4.1
 ------
