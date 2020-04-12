@@ -8,19 +8,25 @@ directly to your Python code based on the types collected at runtime.
 Example
 -------
 
-Say ``some/module.py`` originally contains::
+Say ``some/module.py`` originally contains:
+
+.. code:: python
 
   def add(a, b):
       return a + b
 
-And ``myscript.py`` contains::
+And ``myscript.py`` contains:
+
+.. code:: python
 
   from some.module import add
 
   add(1, 2)
 
 Now we want to infer the type annotation of ``add`` in ``some/module.py`` by
-running ``myscript.py`` with ``MonkeyType``. One way is to run::
+running ``myscript.py`` with ``MonkeyType``. One way is to run:
+
+.. code:: bash
 
   $ monkeytype run myscript.py
 
@@ -29,11 +35,15 @@ By default, this will dump call traces into a SQLite database in the file
 ``monkeytype`` command to generate a stub file for a module, or apply the type
 annotations directly to your code.
 
-Running ``monkeytype stub some.module`` will output a stub::
+Running ``monkeytype stub some.module`` will output a stub:
+
+.. code:: python
 
   def add(a: int, b: int) -> int: ...
 
-Running  ``monkeytype apply some.module`` will modify ``some/module.py`` to::
+Running  ``monkeytype apply some.module`` will modify ``some/module.py`` to:
+
+.. code:: python
 
   def add(a: int, b: int) -> int:
       return a + b
@@ -71,7 +81,9 @@ comments).
 Installing
 ----------
 
-Install MonkeyType with `pip`_::
+Install MonkeyType with `pip`_:
+
+.. code:: bash
 
   pip install MonkeyType
 
