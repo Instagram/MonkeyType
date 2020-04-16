@@ -15,6 +15,7 @@ from typing import (
     Set,
     Tuple as typing_Tuple,
     Type,
+    TypeVar,
     Union,
     Generator,
 )
@@ -591,10 +592,16 @@ class Tuple:
     pass
 
 
+T = TypeVar("T")
+
+
 class RewriteListToInt(TypeRewriter):
     """Dummy rewriter for testing."""
     def rewrite_List(self, lst):
         return int
+
+    def rewrite_type_variable(self, type_variable):
+        return Dict[str, type_variable]
 
 
 class TestTypeRewriter:
@@ -611,6 +618,8 @@ class TestTypeRewriter:
                              optional_fields={'c': List[str]}),
              make_typed_dict(required_fields={'a': make_typed_dict(required_fields={'b': int})},
                              optional_fields={'c': int})),
+            (T, Dict[str, T]),
+            (Dict[str, T], Dict[str, Dict[str, T]]),
         ],
     )
     def test_rewrite_TypedDict(self, typ, expected):

@@ -22,6 +22,7 @@ from typing import (
     Set,
     Tuple,
     Type,
+    TypeVar,
     Union,
 )
 
@@ -55,6 +56,7 @@ from mypy_extensions import TypedDict
 from .util import Dummy
 
 UserId = NewType('UserId', int)
+T = TypeVar("T")
 
 
 class TestImportMap:
@@ -201,6 +203,8 @@ class TestRenderAnnotation:
             (List[Iterable[None]], 'List[Iterable[None]]'),
             (Generator[make_forward_ref('Foo'), None, None], 'Generator[\'Foo\', None, None]'),
             (List[Generator[make_forward_ref('Foo'), None, None]], 'List[Generator[\'Foo\', None, None]]'),
+            (T, 'T'),
+            (Dict[str, T], 'Dict[str, T]'),
         ],
     )
     def test_render_annotation(self, annotation, expected):

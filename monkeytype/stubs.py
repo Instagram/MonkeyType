@@ -336,6 +336,11 @@ class RenderAnnotation(GenericTypeRewriter[str]):
     def rewrite_malformed_container(self, container: Any) -> str:
         return repr(container)
 
+    def rewrite_type_variable(self, type_variable: Any) -> str:
+        rendered = str(type_variable)
+        tilde_prefix = "~"
+        return rendered[len(tilde_prefix):] if rendered.startswith(tilde_prefix) else rendered
+
     def make_builtin_tuple(self, elements: Iterable[str]) -> str:
         return ', '.join(elements)
 
