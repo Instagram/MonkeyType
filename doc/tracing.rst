@@ -89,6 +89,7 @@ If you have a config, you can easily pull those from it::
   logger = my_config.trace_logger()
   tracer = CallTracer(
       logger=logger,
+      max_typed_dict_size=my_config.max_typed_dict_size(),
       code_filter=my_config.code_filter(),
       sample_rate=my_config.sample_rate(),
   )
