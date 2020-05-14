@@ -397,7 +397,7 @@ class TestReplaceTypedDictsWithStubs:
                 AttributeStub(name='b', typ=str),
             ]),
         ClassStub(
-            name=f'FooBarTypedDict__RENAME_ME__NonTotal(FooBarTypedDict__RENAME_ME__, total=False)',
+            name='FooBarTypedDict__RENAME_ME__NonTotal(FooBarTypedDict__RENAME_ME__, total=False)',
             function_stubs=[],
             attribute_stubs=[
                 AttributeStub(name='c', typ=int),
@@ -723,7 +723,7 @@ class TestModuleStub:
             '',
             '',
             'class Dummy:',
-            f'    def an_instance_method(self, foo: List[\'FooTypedDict__RENAME_ME__\'], bar: int) -> int: ...'])
+            '    def an_instance_method(self, foo: List[\'FooTypedDict__RENAME_ME__\'], bar: int) -> int: ...'])
         self.maxDiff = None
         assert build_module_stubs(entries)['tests.util'].render() == expected
 
@@ -747,12 +747,12 @@ class TestModuleStub:
             '    a: int',
             '',
             '',
-            f'class FooTypedDict__RENAME_ME__NonTotal(FooTypedDict__RENAME_ME__, total=False):',
+            'class FooTypedDict__RENAME_ME__NonTotal(FooTypedDict__RENAME_ME__, total=False):',
             '    b: str',
             '',
             '',
             'class Dummy:',
-            f'    def an_instance_method(self, foo: \'FooTypedDict__RENAME_ME__NonTotal\', bar: int) -> int: ...'])
+            '    def an_instance_method(self, foo: \'FooTypedDict__RENAME_ME__NonTotal\', bar: int) -> int: ...'])
         assert build_module_stubs(entries)['tests.util'].render() == expected
 
 
