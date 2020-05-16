@@ -408,7 +408,11 @@ def test_apply_stub_using_libcst():
         def uses_union(d: Union[int, bool]) -> None:
           return None
     """
-    assert cli.apply_stub_using_libcst(textwrap.dedent(stub), textwrap.dedent(source)) == textwrap.dedent(expected)
+    assert cli.apply_stub_using_libcst(
+        textwrap.dedent(stub),
+        textwrap.dedent(source),
+        overwrite_existing_annotations=False,
+    ) == textwrap.dedent(expected)
 
 
 def test_apply_stub_using_libcst__exception(stdout, stderr):
@@ -419,4 +423,30 @@ def test_apply_stub_using_libcst__exception(stdout, stderr):
         def my_test_function(a: int, b: str) -> bool: ...
     """
     with pytest.raises(cli.HandlerError):
-        cli.apply_stub_using_libcst(textwrap.dedent(stub), textwrap.dedent(erroneous_source))
+        cli.apply_stub_using_libcst(
+            textwrap.dedent(stub),
+            textwrap.dedent(erroneous_source),
+            overwrite_existing_annotations=False,
+        )
+
+
+def test_apply_stub_using_libcst__overwrite_existing_annotations():
+    source = """
+        def has_annotations(x: int) -> str:
+          return 1 in x
+    """
+    stub = """
+        from typing import List
+        def has_annotations(x: List[int]) -> bool: ...
+    """
+    expected = """
+        from typing import List
+
+        def has_annotations(x: List[int]) -> bool:
+          return 1 in x
+    """
+    assert cli.apply_stub_using_libcst(
+        textwrap.dedent(stub),
+        textwrap.dedent(source),
+        overwrite_existing_annotations=True,
+    ) == textwrap.dedent(expected)

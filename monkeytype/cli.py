@@ -138,12 +138,18 @@ class HandlerError(Exception):
     pass
 
 
-def apply_stub_using_libcst(stub: str, source: str) -> str:
+def apply_stub_using_libcst(
+    stub: str, source: str, overwrite_existing_annotations: bool
+) -> str:
     try:
         stub_module = parse_module(stub)
         source_module = parse_module(source)
         context = CodemodContext()
-        ApplyTypeAnnotationsVisitor.add_stub_to_context(context, stub_module)
+        ApplyTypeAnnotationsVisitor.store_stub_in_context(
+            context,
+            stub_module,
+            overwrite_existing_annotations,
+        )
         transformer = ApplyTypeAnnotationsVisitor(context)
         transformed_source_module = transformer.transform_module(source_module)
     except Exception as exception:
@@ -152,7 +158,6 @@ def apply_stub_using_libcst(stub: str, source: str) -> str:
 
 
 def apply_stub_handler(args: argparse.Namespace, stdout: IO, stderr: IO) -> None:
-    args.existing_annotation_strategy = ExistingAnnotationStrategy.REPLICATE
     stub = get_stub(args, stdout, stderr)
     if stub is None:
         complain_about_no_traces(args, stderr)
@@ -160,7 +165,11 @@ def apply_stub_handler(args: argparse.Namespace, stdout: IO, stderr: IO) -> None
     module = args.module_path[0]
     mod = importlib.import_module(module)
     source_path = Path(inspect.getfile(mod))
-    source_with_types = apply_stub_using_libcst(stub=stub.render(), source=source_path.read_text())
+    source_with_types = apply_stub_using_libcst(
+        stub=stub.render(),
+        source=source_path.read_text(),
+        overwrite_existing_annotations=args.existing_annotation_strategy == ExistingAnnotationStrategy.IGNORE,
+    )
     source_path.write_text(source_with_types)
     print(source_with_types, file=stdout)
 
@@ -297,6 +306,14 @@ qualname format.""")
         default=False,
         help='Print to stderr the numbers of traces stubs are based on'
         )
+    apply_parser.add_argument(
+        "--ignore-existing-annotations",
+        action="store_const",
+        dest="existing_annotation_strategy",
+        default=ExistingAnnotationStrategy.REPLICATE,
+        const=ExistingAnnotationStrategy.IGNORE,
+        help="Ignore existing annotations when applying stubs from traces.",
+    )
     apply_parser.set_defaults(handler=apply_stub_handler)
 
     stub_parser = subparsers.add_parser(
