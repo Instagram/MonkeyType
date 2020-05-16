@@ -4,6 +4,11 @@ Changelog
 master
 ------
 
+* Require ``libcst>=0.3.5``.
+
+* Add ``--ignore-existing-annotations`` flag to ``apply`` command.
+
+
 20.4.2
 ------
 

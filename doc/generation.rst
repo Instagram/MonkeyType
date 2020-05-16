@@ -91,17 +91,13 @@ Both ``monkeytype stub`` and ``monkeytype apply`` accept the following options:
 
   Don't apply your configured :ref:`rewriters` to the output types.
 
-Additionally, ``monkeytype stub`` accepts:
-
 .. option:: --ignore-existing-annotations
 
-  Generate a stub based only on traced calls, ignoring any existing type
-  annotations in the code. (By default, existing annotations in the code take
-  precedence over traced types.) This can be useful for validating the
-  correctness of existing annotations.
+  Generate a stub based only on traced calls, ignoring (and overwriting, if
+  applying stubs) any existing type annotations in the code. (By default,
+  existing annotations in the code take precedence over traced types.)
 
-  This option is not usable with ``monkeytype apply``, since it would
-  frequently result in a conflict when attempting to apply annotations.
+Additionally, ``monkeytype stub`` accepts:
 
 .. option:: --omit-existing-annotations
 
