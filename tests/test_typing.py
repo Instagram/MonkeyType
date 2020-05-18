@@ -495,7 +495,7 @@ class TestGetType:
             ([], List[Any]),
             ([1, 2, 3], List[int]),
             ([1, True], List[Union[int, bool]]),
-            (tuple(), typing_Tuple[()]),
+            ((), typing_Tuple[()]),
             (helper, Callable),
             (lambda x: x, Callable),
             (Dummy().an_instance_method, Callable),

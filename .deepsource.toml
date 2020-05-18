@@ -1,0 +1,17 @@
+version = 1
+
+test_patterns = [
+    "tests/db/test_*.py",
+    "tests/**"
+]
+
+exclude_patterns = ["demo/**"]
+
+[[analyzers]]
+name = "python"
+enabled = true
+
+  [analyzers.meta]
+  runtime_version = "3.x.x"
+  max_line_length = 80
+  
