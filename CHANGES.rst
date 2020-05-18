@@ -1,7 +1,7 @@
 Changelog
 =========
 
-master
+20.5.0
 ------
 
 * Require ``libcst>=0.3.5``.
