@@ -118,7 +118,10 @@ Check if your issue is mentioned in `the frequently asked questions`_ list.
 Development
 -----------
 
-See CONTRIBUTING.rst for information on developing and contributing to MonkeyType.
+See `CONTRIBUTING.rst`_ for information on developing and contributing to MonkeyType.
+
+.. _CONTRIBUTING.rst: https://github.com/Instagram/MonkeyType/blob/master/CONTRIBUTING.rst
+
 
 LICENSE
 -------
