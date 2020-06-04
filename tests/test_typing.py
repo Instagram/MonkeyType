@@ -30,6 +30,7 @@ from monkeytype.typing import (
     RewriteAnonymousTypedDictToDict,
     field_annotations,
     get_type,
+    is_list,
     is_typed_dict,
     make_typed_dict,
     shrink_types,
@@ -100,6 +101,17 @@ class TestTypesEqual:
     )
     def test_types_equal(self, typ, other_type, expected_output):
         assert (types_equal(typ, other_type) == expected_output)
+
+    @pytest.mark.parametrize(
+        'typ, expected',
+        [
+            (List[int], True),
+            (typing_Tuple[int], False),
+            (int, False),
+        ],
+    )
+    def test_is_list(self, typ, expected):
+        assert is_list(typ) == expected
 
 
 class TestMakeTypedDict:
@@ -315,13 +327,41 @@ class TestShrinkType:
                 ),
                 List[Dict[str, int]],
             ),
-            # Same. We don't currently shrink the inner types even if the outer types are the same.
             (
                 (
                     List[make_typed_dict(required_fields={'a': int})],
                     List[make_typed_dict(required_fields={'b': int})],
                 ),
-                List[Dict[str, int]],
+                List[make_typed_dict(optional_fields={'a': int, 'b': int})],
+            ),
+            (
+                (
+                    make_typed_dict(required_fields={"foo": List[make_typed_dict(required_fields={'a': int})]}),
+                    make_typed_dict(required_fields={"foo": List[make_typed_dict(required_fields={'a': int})]}),
+                ),
+                make_typed_dict(required_fields={"foo": List[make_typed_dict(required_fields={'a': int})]}),
+            ),
+            (
+                (
+                    make_typed_dict(required_fields={"foo": List[make_typed_dict(required_fields={'a': int})]}),
+                    make_typed_dict(required_fields={"foo": List[make_typed_dict(required_fields={'b': int})]}),
+                ),
+                make_typed_dict(required_fields={"foo": List[make_typed_dict(optional_fields={'a': int, 'b': int})]}),
+            ),
+            (
+                (
+                    typing_Tuple[make_typed_dict(required_fields={'a': int})],
+                    typing_Tuple[make_typed_dict(required_fields={'a': int})],
+                ),
+                typing_Tuple[make_typed_dict(required_fields={'a': int})],
+            ),
+            # We don't currently shrink the inner types for Tuples.
+            (
+                (
+                    typing_Tuple[make_typed_dict(required_fields={'a': int})],
+                    typing_Tuple[make_typed_dict(required_fields={'b': int})],
+                ),
+                typing_Tuple[Dict[str, int]],
             ),
             # Fall back to Dict when the resulting TypedDict would be too large.
             # Keep any nested anonymous TypedDicts, though.

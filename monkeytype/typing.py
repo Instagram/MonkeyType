@@ -50,6 +50,10 @@ DUMMY_OPTIONAL_TYPED_DICT_NAME = 'OPTIONAL_TYPED_DICT_NAME'
 # file live in typing.pyi.
 
 
+def is_list(typ: type) -> bool:
+    return is_generic(typ) and name_of_generic(typ) == 'List'
+
+
 def make_typed_dict(*, required_fields=None, optional_fields=None) -> type:
     required_fields = required_fields or {}
     optional_fields = optional_fields or {}
@@ -119,9 +123,16 @@ def shrink_types(types, max_typed_dict_size):
     if all(is_anonymous_typed_dict(typ) for typ in types):
         return shrink_typed_dict_types(types, max_typed_dict_size)
     # Don't rewrite anonymous TypedDict to Dict if the types are all the same,
-    # such as List[TypedDict(...)].
+    # such as [Tuple[TypedDict(...)], Tuple[TypedDict(...)]].
     if all(types_equal(typ, types[0]) for typ in types[1:]):
         return types[0]
+
+    # If they are all lists, shrink their argument types. This way, we avoid
+    # rewriting heterogenous anonymous TypedDicts to Dict.
+    if all(is_list(typ) for typ in types):
+        annotation = shrink_types((getattr(typ, '__args__')[0] for typ in types), max_typed_dict_size)
+        return List[annotation]
+
     all_dict_types = tuple(RewriteAnonymousTypedDictToDict().rewrite(typ) for typ in types)
     return Union[all_dict_types]
 
