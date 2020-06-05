@@ -205,6 +205,7 @@ class TestRenderAnnotation:
             (List[Generator[make_forward_ref('Foo'), None, None]], 'List[Generator[\'Foo\', None, None]]'),
             (T, 'T'),
             (Dict[str, T], 'Dict[str, T]'),
+            (Tuple[()], 'Tuple[()]'),
         ],
     )
     def test_render_annotation(self, annotation, expected):
@@ -753,6 +754,30 @@ class TestModuleStub:
             '',
             'class Dummy:',
             '    def an_instance_method(self, foo: \'FooTypedDict__RENAME_ME__NonTotal\', bar: int) -> int: ...'])
+        assert build_module_stubs(entries)['tests.util'].render() == expected
+
+    def test_render_return_empty_tuple(self):
+        """Regression test for #190."""
+        function = FunctionDefinition.from_callable_and_traced_types(
+            Dummy.an_instance_method,
+            {
+                'foo': int,
+                'bar': int,
+            },
+            Tuple[()],
+            yield_type=None,
+            existing_annotation_strategy=ExistingAnnotationStrategy.IGNORE
+        )
+        entries = [function]
+        expected = '\n'.join([
+            'from typing import Tuple',
+            '',
+            '',
+            'class Dummy:',
+            '    def an_instance_method(self, foo: int, bar: int)'
+            ' -> Tuple[()]: ...',
+        ])
+        self.maxDiff = None
         assert build_module_stubs(entries)['tests.util'].render() == expected
 
 

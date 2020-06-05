@@ -528,6 +528,7 @@ class TestGetType:
             ('foo', str),
             (Dummy, Type[Dummy]),
             (1.1, float),
+            ((), typing_Tuple[()]),
             (('a', 1, True), typing_Tuple[str, int, bool]),
             (set(), Set[Any]),
             ({'a', 'b', 'c'}, Set[str]),

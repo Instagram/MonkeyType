@@ -342,7 +342,7 @@ class RenderAnnotation(GenericTypeRewriter[str]):
         return rendered[len(tilde_prefix):] if rendered.startswith(tilde_prefix) else rendered
 
     def make_builtin_tuple(self, elements: Iterable[str]) -> str:
-        return ', '.join(elements)
+        return ', '.join(elements) if elements else '()'
 
     def make_container_type(self, container_type: str, elements: str) -> str:
         return f'{container_type}[{elements}]'
