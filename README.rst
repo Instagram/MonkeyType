@@ -1,6 +1,34 @@
 MonkeyType
 ==========
 
+
+|python-versions| |circleci-badge| |codecov-badge| |pypi-badge| |pypi-download| |readthedocs-badge|
+
+.. |python-versions| image:: https://img.shields.io/pypi/pyversions/monkeytype
+   :target: https://img.shields.io/pypi/pyversions/monkeytype
+   :alt: Supported Python Versions
+
+.. |circleci-badge| image:: https://circleci.com/gh/Instagram/monkeytype/tree/master.svg?style=shield&circle-token=xxx
+   :target: https://circleci.com/gh/Instagram/monkeytype/tree/master
+   :alt: CircleCI
+
+.. |codecov-badge| image:: http://codecov.io/gh/Instagram/monkeytype/coverage.svg?branch=master
+   :target: https://codecov.io/gh/Instagram/monkeytype/branch/master
+   :alt: CodeCov
+
+.. |pypi-badge| image:: https://img.shields.io/pypi/v/monkeytype.svg
+   :target: https://pypi.org/project/monkeytype
+   :alt: PYPI Version
+
+.. |pypi-download| image:: https://pepy.tech/badge/monkeytype/month
+   :target: https://pepy.tech/project/monkeytype/month
+   :alt: PYPI Downloads
+
+.. |readthedocs-badge| image:: https://readthedocs.org/projects/pip/badge/?version=latest&style=flat
+   :target: https://monkeytype.readthedocs.io/en/latest/
+   :alt: Documentation
+
+
 MonkeyType collects runtime types of function arguments and return values, and
 can automatically generate stub files or even add draft type annotations
 directly to your Python code based on the types collected at runtime.
