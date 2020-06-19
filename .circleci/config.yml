@@ -75,7 +75,7 @@ jobs:
 
   test-3.6:
     docker:
-      - image: circleci/python:3.6
+      - image: circleci/python:3.6-stretch
     environment:
       - WORKON_HOME: "~/.venvs"
     working_directory: ~/repo
