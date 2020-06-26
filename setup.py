@@ -45,7 +45,7 @@ setup(
         ]
     },
     python_requires='>=3.6',
-    install_requires=['mypy_extensions', 'libcst>=0.3.5'],
+    install_requires=['mypy_extensions', 'libcst>=0.3.7'],
     classifiers=[
         'Development Status :: 5 - Production/Stable',
         'Intended Audience :: Developers',
