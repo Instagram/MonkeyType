@@ -5,7 +5,7 @@ coverage==4.5.1
 dataclasses==0.5
 flake8==3.5.0
 mccabe==0.6.1
-MonkeyType==18.2.0
+MonkeyType==18.8.0
 more-itertools==4.1.0
 mypy==0.590
 pluggy==0.6.0
