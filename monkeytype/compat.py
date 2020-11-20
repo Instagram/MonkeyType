@@ -22,8 +22,16 @@ try:
     def is_union(typ: Any) -> bool:
         return typ is Union or is_generic(typ) and typ.__origin__ is Union
 
-    def is_generic(typ: Any) -> bool:
-        return typ is Union or isinstance(typ, _GenericAlias)
+    try:
+        # Python 3.9
+        from typing import _SpecialGenericAlias
+
+        def is_generic(typ: Any) -> bool:
+            return typ is Union or isinstance(typ, _GenericAlias) or isinstance(typ, _SpecialGenericAlias)
+
+    except ImportError:
+        def is_generic(typ: Any) -> bool:
+            return typ is Union or isinstance(typ, _GenericAlias)
 
     def is_generic_of(typ: Any, gen: Any) -> bool:
         return is_generic(typ) and typ.__origin__ is gen.__origin__
