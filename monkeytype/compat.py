@@ -24,7 +24,7 @@ try:
 
     try:
         # Python 3.9
-        from typing import _SpecialGenericAlias
+        from typing import _SpecialGenericAlias  # type: ignore
 
         def is_generic(typ: Any) -> bool:
             return typ is Union or isinstance(typ, _GenericAlias) or isinstance(typ, _SpecialGenericAlias)
