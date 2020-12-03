@@ -1,0 +1,11 @@
+{
+    "exclude": [
+        ".*/tests/.*",
+        ".*/demo/.*",
+        ".*/\\.tox/.*",
+	".*/build/.*"
+    ],
+    "source_directories": [
+        "."
+    ]
+}

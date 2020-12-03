@@ -53,6 +53,7 @@ jobs:
       - run:
           name: typecheck
           command: |
+            pipenv run pyre check
             pipenv run mypy monkeytype
 
       - run:
@@ -116,6 +117,7 @@ jobs:
       - run:
           name: typecheck
           command: |
+            pipenv run pyre check
             pipenv run mypy monkeytype
 
       - run:
@@ -179,6 +181,7 @@ jobs:
       - run:
           name: typecheck
           command: |
+            pipenv run pyre check
             pipenv run mypy monkeytype
 
       - run:

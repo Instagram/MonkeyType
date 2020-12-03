@@ -17,6 +17,7 @@ tox = "*"
 libcst = "*"
 dataclasses = "*"
 importlib_metadata = "*"
+pyre-check = "*"
 
 [pipenv]
 keep_outdated = true
