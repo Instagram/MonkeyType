@@ -100,7 +100,7 @@ stub files directly to your code.
 .. _pip: https://pip.pypa.io/en/stable/
 .. _libcst: https://pypi.python.org/pypi/libcst
 .. _sys.setprofile: https://docs.python.org/3/library/sys.html#sys.setprofile
-.. _stub files: http://mypy.readthedocs.io/en/latest/basics.html#library-stubs-and-the-typeshed-repo
+.. _stub files: https://mypy.readthedocs.io/en/latest/getting_started.html#library-stubs-and-typeshed
 
 .. end-here
 
