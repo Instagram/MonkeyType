@@ -16,6 +16,7 @@ django = "*"
 tox = "*"
 libcst = "*"
 dataclasses = "*"
+importlib_metadata = "*"
 
 [pipenv]
 keep_outdated = true
