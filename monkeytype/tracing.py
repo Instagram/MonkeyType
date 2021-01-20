@@ -78,7 +78,7 @@ class CallTrace:
         if self.yield_type is None:
             self.yield_type = typ
         else:
-            self.yield_type = Union[self.yield_type, typ]
+            self.yield_type = cast(type, Union[self.yield_type, typ])
 
     @property
     def funcname(self) -> str:
