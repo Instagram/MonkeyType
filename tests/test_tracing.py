@@ -148,7 +148,7 @@ class Oracle:
 
 
 if pyximport is not None:
-    pyximport.install()
+    pyximport.install(language_level=3)
     from tests import cythontest
 
     class CythonTest:
