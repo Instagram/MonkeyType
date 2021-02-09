@@ -74,6 +74,7 @@ class FunctionKind(enum.Enum):
 
     @classmethod
     def from_callable(cls, func: Callable) -> 'FunctionKind':
+        # pyre-fixme[16]: Anonymous callable has no attribute `__qualname__`.
         if '.' not in func.__qualname__:
             return FunctionKind.MODULE
         func_or_desc = get_name_in_module(func.__module__, func.__qualname__, inspect.getattr_static)
@@ -191,8 +192,8 @@ def update_signature_args(
 
 def update_signature_return(
     sig: inspect.Signature,
-    return_type: type = None,
-    yield_type: type = None,
+    return_type: Optional[type] = None,
+    yield_type: Optional[type] = None,
     existing_annotation_strategy: ExistingAnnotationStrategy = ExistingAnnotationStrategy.REPLICATE,
 ) -> inspect.Signature:
     """Update return annotation with the supplied types"""
@@ -230,8 +231,12 @@ def shrink_traced_types(
         for arg, typ in t.arg_types.items():
             arg_types[arg].add(typ)
         if t.return_type is not None:
+            # pyre-fixme[6]: Expected `Type[typing.Any]` for 1st param but got
+            #  `Optional[typing.Type[typing.Any]]`.
             return_types.add(t.return_type)
         if t.yield_type is not None:
+            # pyre-fixme[6]: Expected `Type[typing.Any]` for 1st param but got
+            #  `Optional[typing.Type[typing.Any]]`.
             yield_types.add(t.yield_type)
     shrunken_arg_types = {name: shrink_types(ts, max_typed_dict_size) for name, ts in arg_types.items()}
     return_type = shrink_types(return_types, max_typed_dict_size) if return_types else None
@@ -256,7 +261,7 @@ class Stub(metaclass=ABCMeta):
 
 
 class ImportBlockStub(Stub):
-    def __init__(self, imports: ImportMap = None) -> None:
+    def __init__(self, imports: Optional[ImportMap] = None) -> None:
         self.imports = imports if imports else ImportMap()
 
     def render(self) -> str:
@@ -344,6 +349,8 @@ class RenderAnnotation(GenericTypeRewriter[str]):
     def make_builtin_tuple(self, elements: Iterable[str]) -> str:
         return ', '.join(elements) if elements else '()'
 
+    # pyre-fixme[14]: `make_container_type` overrides method defined in
+    #  `GenericTypeRewriter` inconsistently.
     def make_container_type(self, container_type: str, elements: str) -> str:
         return f'{container_type}[{elements}]'
 
@@ -488,7 +495,7 @@ class FunctionStub(Stub):
             name: str,
             signature: inspect.Signature,
             kind: FunctionKind,
-            strip_modules: Iterable[str] = None,
+            strip_modules: Optional[Iterable[str]] = None,
             is_async: bool = False
     ) -> None:
         self.name = name
@@ -526,8 +533,8 @@ class ClassStub(Stub):
     def __init__(
         self,
         name: str,
-        function_stubs: Iterable[FunctionStub] = None,
-        attribute_stubs: Iterable[AttributeStub] = None,
+        function_stubs: Optional[Iterable[FunctionStub]] = None,
+        attribute_stubs: Optional[Iterable[AttributeStub]] = None,
     ) -> None:
         self.name = name
         self.function_stubs: Dict[str, FunctionStub] = {}
@@ -558,6 +565,8 @@ class ReplaceTypedDictsWithStubs(TypeRewriter):
         self._class_name_hint = class_name_hint
         self.stubs: List[ClassStub] = []
 
+    # pyre-fixme[15]: `_rewrite_container` overrides method defined in
+    #  `GenericTypeRewriter` inconsistently.
     def _rewrite_container(self, cls: type, container: type) -> type:
         """Rewrite while using the index of the inner type as a class name hint.
 
@@ -580,6 +589,8 @@ class ReplaceTypedDictsWithStubs(TypeRewriter):
                         '' if index == 0 else str(index + 1)))
                 for index, elem in enumerate(args)])
             for stubs in stub_lists:
+                # pyre-fixme[6]: Expected `Iterable[ClassStub]` for 1st param but
+                #  got `Union[List[ClassStub], typing.Type[typing.Any]]`.
                 self.stubs.extend(stubs)
         # Value of type "type" is not indexable.
         return cls[elems]  # type: ignore
@@ -596,6 +607,8 @@ class ReplaceTypedDictsWithStubs(TypeRewriter):
                                     function_stubs=[],
                                     attribute_stubs=attribute_stubs))
 
+    # pyre-fixme[15]: `rewrite_anonymous_TypedDict` overrides method defined in
+    #  `GenericTypeRewriter` inconsistently.
     def rewrite_anonymous_TypedDict(self, typed_dict: type) -> type:
         class_name = get_typed_dict_class_name(self._class_name_hint)
         required_fields, optional_fields = field_annotations(typed_dict)
@@ -625,10 +638,10 @@ class ReplaceTypedDictsWithStubs(TypeRewriter):
 class ModuleStub(Stub):
     def __init__(
             self,
-            function_stubs: Iterable[FunctionStub] = None,
-            class_stubs: Iterable[ClassStub] = None,
-            imports_stub: ImportBlockStub = None,
-            typed_dict_class_stubs: Iterable[ClassStub] = None,
+            function_stubs: Optional[Iterable[FunctionStub]] = None,
+            class_stubs: Optional[Iterable[ClassStub]] = None,
+            imports_stub: Optional[ImportBlockStub] = None,
+            typed_dict_class_stubs: Optional[Iterable[ClassStub]] = None,
     ) -> None:
         self.function_stubs: Dict[str, FunctionStub] = {}
         if function_stubs is not None:
@@ -677,7 +690,7 @@ class FunctionDefinition:
         kind: FunctionKind,
         sig: inspect.Signature,
         is_async: bool = False,
-        typed_dict_class_stubs: Iterable[ClassStub] = None,
+        typed_dict_class_stubs: Optional[Iterable[ClassStub]] = None,
     ) -> None:
         self.module = module
         self.qualname = qualname
@@ -687,10 +700,11 @@ class FunctionDefinition:
         self.typed_dict_class_stubs = typed_dict_class_stubs or []
 
     @classmethod
-    def from_callable(cls, func: Callable, kind: FunctionKind = None) -> 'FunctionDefinition':
+    def from_callable(cls, func: Callable, kind: Optional[FunctionKind] = None) -> 'FunctionDefinition':
         kind = FunctionKind.from_callable(func)
         sig = inspect.Signature.from_callable(func)
         is_async = asyncio.iscoroutinefunction(func)
+        # pyre-fixme[16]: Anonymous callable has no attribute `__qualname__`.
         return FunctionDefinition(func.__module__, func.__qualname__, kind, sig, is_async)
 
     @classmethod
@@ -711,6 +725,7 @@ class FunctionDefinition:
 
         if return_type:
             # Replace the dot in a qualified name.
+            # pyre-fixme[16]: Anonymous callable has no attribute `__qualname__`.
             class_name_hint = func.__qualname__.replace('.', '_')
             return_type, stubs = ReplaceTypedDictsWithStubs.rewrite_and_get_stubs(return_type, class_name_hint)
             typed_dict_class_stubs.extend(stubs)
@@ -763,6 +778,8 @@ def get_updated_definition(
         return_type = rewriter.rewrite(return_type)
     if yield_type is not None:
         yield_type = rewriter.rewrite(yield_type)
+    # pyre-fixme[6]: Expected `Dict[str, typing.Type[typing.Any]]` for 2nd param but
+    #  got `Dict[str, type]`.
     return FunctionDefinition.from_callable_and_traced_types(func, arg_types, return_type,
                                                              yield_type, existing_annotation_strategy)
 

@@ -78,7 +78,7 @@ class CallTrace:
         if self.yield_type is None:
             self.yield_type = typ
         else:
-            self.yield_type = cast(type, Union[self.yield_type, typ])
+            self.yield_type = Union[self.yield_type, typ]
 
     @property
     def funcname(self) -> str:
@@ -208,6 +208,7 @@ class CallTracer:
         return self.cache[code]
 
     def handle_call(self, frame: FrameType) -> None:
+        # pyre-fixme[6]: Expected `int` for 1st param but got `Optional[int]`.
         if self.sample_rate and random.randrange(self.sample_rate) != 0:
             return
         func = self._get_func(frame)
@@ -251,6 +252,8 @@ class CallTracer:
         if (
             event not in SUPPORTED_EVENTS or
             code.co_name == 'trace_types' or
+            # pyre-fixme[29]: `Optional[typing.Callable[[CodeType], bool]]` is not a
+            #  function.
             self.should_trace and not self.should_trace(code)
         ):
             return self

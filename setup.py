@@ -5,6 +5,7 @@
 # LICENSE file in the root directory of this source tree.
 
 import os
+# pyre-fixme[21]: Could not find module `setuptools`.
 from setuptools import setup, find_packages
 
 

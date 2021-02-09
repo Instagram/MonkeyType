@@ -206,6 +206,7 @@ class CallTraceRow(CallTraceThunk):
     @classmethod
     def from_trace(cls: Type[CallTraceRowT], trace: CallTrace) -> CallTraceRowT:
         module = trace.func.__module__
+        # pyre-fixme[16]: Anonymous callable has no attribute `__qualname__`.
         qualname = trace.func.__qualname__
         arg_types = arg_types_to_json(trace.arg_types)
         return_type = maybe_encode_type(type_to_json, trace.return_type)

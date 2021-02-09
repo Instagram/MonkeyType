@@ -3,7 +3,7 @@
         ".*/tests/.*",
         ".*/demo/.*",
         ".*/\\.tox/.*",
-	".*/build/.*"
+        ".*/build/.*"
     ],
     "source_directories": [
         "."

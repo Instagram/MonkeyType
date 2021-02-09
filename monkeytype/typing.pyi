@@ -100,6 +100,7 @@ class GenericTypeRewriter(Generic[T], ABC):
 
     def rewrite_Set(self, st: Set) -> T: ...
 
+    # pyre-fixme[11]: Annotation `_Union` is not defined as a type.
     def rewrite_Union(self, union: _Union) -> T:  ...
 
     def rewrite_anonymous_TypedDict(self, typed_dict: type) -> T: ...
@@ -114,20 +115,42 @@ class GenericTypeRewriter(Generic[T], ABC):
 
 
 class TypeRewriter(GenericTypeRewriter[type]):
+    # pyre-fixme[15]: `make_builtin_tuple` overrides method defined in
+    #  `GenericTypeRewriter` inconsistently.
     def make_builtin_tuple(self, elements: Iterable[type]) -> type: ...
 
+    # pyre-fixme[15]: `make_container_type` overrides method defined in
+    #  `GenericTypeRewriter` inconsistently.
     def make_container_type(self, container_type: type, element: type) -> type: ...
 
+    # pyre-fixme[15]: `rewrite_malformed_container` overrides method defined in
+    #  `GenericTypeRewriter` inconsistently.
+    # pyre-fixme[34]: `Variable[T]` isn't present in the function's parameters.
     def rewrite_malformed_container(self, container: Any) -> T: ...
 
+    # pyre-fixme[15]: `rewrite_type_variable` overrides method defined in
+    #  `GenericTypeRewriter` inconsistently.
+    # pyre-fixme[34]: `Variable[T]` isn't present in the function's parameters.
     def rewrite_type_variable(self, type_variable: Any) -> T: ...
 
+    # pyre-fixme[14]: `make_anonymous_typed_dict` overrides method defined in
+    #  `GenericTypeRewriter` inconsistently.
+    # pyre-fixme[15]: `make_anonymous_typed_dict` overrides method defined in
+    #  `GenericTypeRewriter` inconsistently.
     def make_anonymous_typed_dict(self, required_fields: Dict[str, type], optional_fields: Dict[str, type]) -> type: ...
 
+    # pyre-fixme[14]: `make_builtin_typed_dict` overrides method defined in
+    #  `GenericTypeRewriter` inconsistently.
+    # pyre-fixme[15]: `make_builtin_typed_dict` overrides method defined in
+    #  `GenericTypeRewriter` inconsistently.
     def make_builtin_typed_dict(self, name: str, annotations: Dict[str, type], total: bool) -> type: ...
 
+    # pyre-fixme[15]: `generic_rewrite` overrides method defined in
+    #  `GenericTypeRewriter` inconsistently.
     def generic_rewrite(self, typ: type) -> type: ...
 
+    # pyre-fixme[15]: `rewrite_container_type` overrides method defined in
+    #  `GenericTypeRewriter` inconsistently.
     def rewrite_container_type(self, container_type: Any) -> type: ...
 
 

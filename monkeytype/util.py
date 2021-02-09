@@ -16,6 +16,7 @@ except ImportError:
 from typing import (
     Any,
     Callable,
+    Optional,
 )
 
 from monkeytype.exceptions import (
@@ -26,6 +27,7 @@ from monkeytype.exceptions import (
 
 def get_func_fqname(func: Callable) -> str:
     """Return the fully qualified function name."""
+    # pyre-fixme[16]: Anonymous callable has no attribute `__qualname__`.
     return func.__module__ + '.' + func.__qualname__
 
 
@@ -61,7 +63,7 @@ def get_func_in_module(module: str, qualname: str) -> Callable:
 def get_name_in_module(
     module: str,
     qualname: str,
-    attr_getter: Callable[[Any, str], Any] = None,
+    attr_getter: Optional[Callable[[Any, str], Any]] = None,
 ) -> Any:
     """Return the python object specified by qualname in module.
 

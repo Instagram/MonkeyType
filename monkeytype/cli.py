@@ -13,8 +13,11 @@ import os.path
 import runpy
 import sys
 
+# pyre-fixme[21]: Could not find module `libcst`.
 from libcst import parse_module
+# pyre-fixme[21]: Could not find module `libcst.codemod`.
 from libcst.codemod import CodemodContext
+# pyre-fixme[21]: Could not find module `libcst.codemod.visitors`.
 from libcst.codemod.visitors import ApplyTypeAnnotationsVisitor
 from pathlib import Path
 from typing import (
