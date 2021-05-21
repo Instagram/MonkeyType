@@ -1,8 +1,14 @@
 Changelog
 =========
 
-master
+21.5.0
 ------
+
+* Fix compatibility with Python 3.9. Thanks Felix Yan. Merge of #217, fixes
+  #205.
+
+* Render empty tuple type correctly. Thanks Pradeep Kumar Srinivasan. Merge of
+  #191, fixes #190.
 
 
 20.5.0
