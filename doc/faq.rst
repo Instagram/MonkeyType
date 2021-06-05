@@ -1,6 +1,15 @@
 Frequently asked questions
 ==========================
 
+Why don't my decorated functions get traces?
+--------------------------------------------
+
+If you have decorators that don't use `functools.wraps` on the wrapper function
+returned by the decorator, MonkeyType won't be able to trace functions
+decorated with them. MonkeyType needs the `__wrapped__` attribute added by
+`functools.wraps` to be able to trace the frame back to an importable function.
+
+
 I'm using Django 1.11+ and ``monkeytype run manage.py test`` generates no traces.
 ---------------------------------------------------------------------------------
 
