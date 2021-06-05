@@ -7,10 +7,74 @@ workflows:
   version: 2
   test:
     jobs:
+      - test-3.9
       - test-3.8
       - test-3.7
       - test-3.6
 jobs:
+  test-3.9:
+    docker:
+      - image: circleci/python:3.9
+    environment:
+      - WORKON_HOME: "~/.venvs"
+    working_directory: ~/repo
+
+    steps:
+      - checkout
+
+      # Download and cache dependencies
+      - restore_cache:
+          keys:
+          - py39-dependencies-{{ checksum "Pipfile.lock" }}
+          # fallback to using the latest cache if no exact match is found
+          - py39-dependencies-
+
+      - run:
+          name: add user installs to PATH
+          command: |
+            echo 'export PATH=$HOME/.local/bin:$PATH' >> $BASH_ENV
+
+      - run:
+          name: install dependencies
+          command: |
+            pip install --user pipenv
+            pipenv install -d
+
+      - save_cache:
+          paths:
+            - ~/.local
+            - ~/.venvs
+          key: v3-dependencies-{{ checksum "Pipfile.lock" }}
+
+      - run:
+          name: lint
+          command: |
+            pipenv run flake8
+
+      - run:
+          name: typecheck
+          command: |
+            pipenv run mypy monkeytype
+
+      - run:
+          name: run tests
+          command: |
+            pipenv run pytest
+
+      - store_artifacts:
+          path: htmlcov
+          destination: htmlcov
+
+      - run:
+          name: build docs
+          command: |
+            cd doc
+            pipenv run make html
+
+      - store_artifacts:
+          path: doc/_build/html
+          destination: doc
+
   test-3.8:
     docker:
       - image: circleci/python:3.8
@@ -24,9 +88,9 @@ jobs:
       # Download and cache dependencies
       - restore_cache:
           keys:
-          - py37-dependencies-{{ checksum "Pipfile.lock" }}
+          - py38-dependencies-{{ checksum "Pipfile.lock" }}
           # fallback to using the latest cache if no exact match is found
-          - py37-dependencies-
+          - py38-dependencies-
 
       - run:
           name: add user installs to PATH
