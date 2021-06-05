@@ -4,6 +4,9 @@ Changelog
 main
 ----
 
+* Fix `AttributeError: __args__` when generating stubs on Python 3.9. Thanks
+  GameDungeon and ntjess for the report. Fixes #231.
+
 
 21.5.0
 ------

@@ -1219,6 +1219,9 @@ class TestGetImportsForAnnotation:
         """Any and Union do not have module/qualname and need to be treated specially"""
         assert get_imports_for_annotation(anno) == expected
 
+    def test_callable(self):
+        assert get_imports_for_annotation(Callable) == {'typing': {'Callable'}}
+
     def test_user_defined_class(self):
         assert get_imports_for_annotation(Dummy) == {'tests.util': {'Dummy'}}
 
