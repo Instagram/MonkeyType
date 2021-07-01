@@ -31,24 +31,31 @@ except ImportError:
     def is_generic(typ: Any) -> bool:
         return typ is Union or isinstance(typ, _GenericAlias)
 
+
 def is_generic_of(typ: Any, gen: Any) -> bool:
     return is_generic(typ) and typ.__origin__ is gen.__origin__
+
 
 def qualname_of_generic(typ: Any) -> str:
     return typ._name or typ.__origin__.__qualname__
 
+
 def name_of_generic(typ: Any) -> str:
-        return typ._name or typ.__origin__.__name__
+    return typ._name or typ.__origin__.__name__
+
 
 def is_forward_ref(typ: Any) -> bool:
     return isinstance(typ, ForwardRef)
 
+
 def make_forward_ref(s: str) -> type:
     return ForwardRef(s)
+
 
 def repr_forward_ref() -> str:
     """For checking the test output when ForwardRef is printed."""
     return 'ForwardRef'
+
 
 def __are_typed_dict_types_equal(type1: type, type2: type) -> bool:
     """Return true if the two TypedDicts are equal.
@@ -64,6 +71,7 @@ def __are_typed_dict_types_equal(type1: type, type2: type) -> bool:
         and total1 == total2
         and type1.__annotations__ == type2.__annotations__
     )
+
 
 def types_equal(typ: type, other_type: type) -> bool:
     return typ == other_type
