@@ -4,6 +4,8 @@ Changelog
 main
 ----
 
+* Drop Python 3.6 support.
+
 * Fix `AttributeError: __args__` when generating stubs on Python 3.9. Thanks
   GameDungeon and ntjess for the report. Fixes #231.
 
