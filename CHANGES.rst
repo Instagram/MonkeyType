@@ -9,6 +9,10 @@ main
 * Fix `AttributeError: __args__` when generating stubs on Python 3.9. Thanks
   GameDungeon and ntjess for the report. Fixes #231.
 
+* Fix `AttributeError: '_SpecialForm' object has no attribute '__name__'` in
+  collecting traces with Union types. Thanks Federico Caselli for the report.
+  Fixes #243.
+
 
 21.5.0
 ------
