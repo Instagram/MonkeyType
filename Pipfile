@@ -4,18 +4,16 @@ verify_ssl = true
 name = "pypi"
 
 [dev-packages]
-"flake8" = "*"
+flake8 = "*"
 pytest = "*"
 mypy = "*"
 pytest-smartcov = "*"
 e1839a8 = {path = ".",editable = true}
-cython = "*"
 sphinx = "*"
 twine = "*"
 django = "*"
 tox = "*"
 libcst = "*"
-dataclasses = "*"
 importlib_metadata = "*"
 
 [pipenv]

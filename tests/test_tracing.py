@@ -21,12 +21,6 @@ from monkeytype.tracing import (
 )
 from monkeytype.typing import NoneType
 
-# avoid a hard dependency on Cython
-try:
-    import pyximport
-except ImportError:
-    pyximport = None
-
 
 class TraceCollector(CallTraceLogger):
     def __init__(self):
@@ -145,18 +139,6 @@ class Oracle:
     @property
     def meaning_of_life(self) -> int:
         return 42
-
-
-if pyximport is not None:
-    pyximport.install(language_level=3)
-    from tests import cythontest
-
-    class CythonTest:
-        @cythontest.cython_deco
-        def cython_testfunc(self):
-            return 1
-else:
-    CythonTest = None
 
 
 @pytest.fixture
@@ -306,16 +288,3 @@ class TestTraceCalls:
         lazy_val = LazyValue(explicit_return_none)
         with trace_calls(collector, max_typed_dict_size=0):
             lazy_val.value
-
-    @pytest.mark.skipif(CythonTest is None, reason="cython required for this test")
-    def test_cython_wrapper(self, collector):
-        """Check that we can dig through Cython wrappers in looking for methods.
-
-        As long as the Cython decorator sets __wrapped__ correctly, anyway.
-        """
-        cython_test_obj = CythonTest()
-        with trace_calls(collector, max_typed_dict_size=0):
-            cython_test_obj.cython_testfunc()
-
-        trace = CallTrace(cython_test_obj.cython_testfunc.__wrapped__, {'self': CythonTest}, int)
-        assert trace in collector.traces
