@@ -9,6 +9,7 @@ from typing import (
     Iterator,
     Optional,
 )
+import re
 
 import pytest
 from django.utils.functional import cached_property
@@ -17,6 +18,7 @@ from monkeytype.tracing import (
     CallTrace,
     CallTraceLogger,
     get_func,
+    get_caller_func_info,
     trace_calls,
 )
 from monkeytype.typing import NoneType
@@ -46,6 +48,14 @@ def has_optional_kwarg(a: int, b: str = None) -> Optional[FrameType]:
 def has_locals(foo: str) -> Optional[FrameType]:
         bar = 'baz'  # noqa - Needed to ensure non-argument locals are present in the returned frame
         return inspect.currentframe()
+
+
+def get_cur_filename() -> str:
+    return inspect.currentframe().f_back.f_code.co_filename
+
+
+def get_cur_funcname() -> str:
+    return inspect.currentframe().f_back.f_code.co_name
 
 
 class GetFuncHelper:
@@ -87,6 +97,39 @@ class TestGetFunc:
     )
     def test_get_func(self, frame, expected_func):
         assert get_func(frame) == expected_func
+
+
+class TestGetCallerFuncInfo:
+    @pytest.mark.parametrize(
+        "frame",
+        [
+            (GetFuncHelper.a_static_method()),
+            (GetFuncHelper.a_class_method()),
+            (GetFuncHelper().an_instance_method()),
+            (a_module_function()),
+            (GetFuncHelper().a_property),
+            (GetFuncHelper().a_cached_property),
+        ],
+    )
+    def test_get_caller_func_info(self, frame):
+        caller_frame = frame.f_back
+        if caller_frame is None:
+            return None
+        caller_code = caller_frame.f_code
+        filename = caller_code.co_filename
+        funcname = caller_code.co_name if caller_code.co_name != "<module>" else None
+        lineno = str(caller_frame.f_lineno)
+        assert get_caller_func_info(frame) == ":".join(
+            filter(None, [filename, funcname, lineno])
+        )
+
+
+class pytestRegex:
+    def __init__(self, pattern, flags=0):
+        self._regex = re.compile(pattern, flags)
+
+    def __eq__(self, actual):
+        return bool(self._regex.match(actual))
 
 
 def throw(should_recover: bool) -> None:
@@ -184,7 +227,16 @@ class TestTraceCalls:
     def test_simple_call(self, collector):
         with trace_calls(collector, max_typed_dict_size=0):
             simple_add(1, 2)
-        assert collector.traces == [CallTrace(simple_add, {'a': int, 'b': int}, int)]
+        assert collector.traces == [
+            CallTrace(
+                simple_add,
+                {"a": int, "b": int},
+                int,
+                caller=pytestRegex(
+                    f"^{get_cur_filename()}:{get_cur_funcname()}:[0-9]*$"
+                ),
+            )
+        ]
 
     def test_flushes(self, collector):
         with trace_calls(collector, max_typed_dict_size=0):
@@ -198,7 +250,15 @@ class TestTraceCalls:
                 throw(should_recover=False)
             except Exception:
                 pass
-        assert collector.traces == [CallTrace(throw, {'should_recover': bool})]
+        assert collector.traces == [
+            CallTrace(
+                throw,
+                {"should_recover": bool},
+                caller=pytestRegex(
+                    f"^{get_cur_filename()}:{get_cur_funcname()}:[0-9]*$"
+                ),
+            )
+        ]
 
     def test_nested_callee_throws_caller_doesnt_recover(self, collector):
         with trace_calls(collector, max_typed_dict_size=0):
@@ -207,22 +267,53 @@ class TestTraceCalls:
             except Exception:
                 pass
         expected = [
-            CallTrace(throw, {'should_recover': bool}),
-            CallTrace(nested_throw, {'should_recover': bool}),
+            CallTrace(
+                throw,
+                {"should_recover": bool},
+                caller=pytestRegex(f"^{get_cur_filename()}:nested_throw:[0-9]*$"),
+            ),
+            CallTrace(
+                nested_throw,
+                {"should_recover": bool},
+                caller=pytestRegex(
+                    f"^{get_cur_filename()}:{get_cur_funcname()}:[0-9]*$"
+                ),
+            ),
         ]
         assert collector.traces == expected
 
     def test_callee_throws_recovers(self, collector):
         with trace_calls(collector, max_typed_dict_size=0):
             throw(should_recover=True)
-        assert collector.traces == [CallTrace(throw, {'should_recover': bool}, NoneType)]
+        assert collector.traces == [
+            CallTrace(
+                throw,
+                {"should_recover": bool},
+                NoneType,
+                caller=pytestRegex(
+                    f"^{get_cur_filename()}:{get_cur_funcname()}:[0-9]*$"
+                ),
+            )
+        ]
 
     def test_nested_callee_throws_recovers(self, collector):
         with trace_calls(collector, max_typed_dict_size=0):
             nested_throw(should_recover=True)
         expected = [
-            CallTrace(throw, {'should_recover': bool}, NoneType),
-            CallTrace(nested_throw, {'should_recover': bool}, str),
+            CallTrace(
+                throw,
+                {"should_recover": bool},
+                NoneType,
+                caller=pytestRegex(f"^{get_cur_filename()}:nested_throw:[0-9]*$"),
+            ),
+            CallTrace(
+                nested_throw,
+                {"should_recover": bool},
+                str,
+                caller=pytestRegex(
+                    f"^{get_cur_filename()}:{get_cur_funcname()}:[0-9]*$"
+                ),
+            ),
         ]
         assert collector.traces == expected
 
@@ -230,8 +321,21 @@ class TestTraceCalls:
         with trace_calls(collector, max_typed_dict_size=0):
             recover_from_nested_throw()
         expected = [
-            CallTrace(throw, {'should_recover': bool}),
-            CallTrace(recover_from_nested_throw, {}, str),
+            CallTrace(
+                throw,
+                {"should_recover": bool},
+                caller=pytestRegex(
+                    f"^{get_cur_filename()}:recover_from_nested_throw:[0-9]*$"
+                ),
+            ),
+            CallTrace(
+                recover_from_nested_throw,
+                {},
+                str,
+                caller=pytestRegex(
+                    f"^{get_cur_filename()}:{get_cur_funcname()}:[0-9]*$"
+                ),
+            ),
         ]
         assert collector.traces == expected
 
@@ -239,7 +343,17 @@ class TestTraceCalls:
         with trace_calls(collector, max_typed_dict_size=0):
             for _ in squares(3):
                 pass
-        assert collector.traces == [CallTrace(squares, {'n': int}, NoneType, int)]
+        assert collector.traces == [
+            CallTrace(
+                squares,
+                {"n": int},
+                NoneType,
+                int,
+                caller=pytestRegex(
+                    f"^{get_cur_filename()}:{get_cur_funcname()}:[0-9]*$"
+                ),
+            )
+        ]
 
     def test_return_none(self, collector):
         """Ensure traces have a return_type of NoneType for functions that return a value of None"""
@@ -247,8 +361,22 @@ class TestTraceCalls:
             implicit_return_none()
             explicit_return_none()
         expected = [
-            CallTrace(implicit_return_none, {}, NoneType),
-            CallTrace(explicit_return_none, {}, NoneType),
+            CallTrace(
+                implicit_return_none,
+                {},
+                NoneType,
+                caller=pytestRegex(
+                    f"^{get_cur_filename()}:{get_cur_funcname()}:[0-9]*$"
+                ),
+            ),
+            CallTrace(
+                explicit_return_none,
+                {},
+                NoneType,
+                caller=pytestRegex(
+                    f"^{get_cur_filename()}:{get_cur_funcname()}:[0-9]*$"
+                ),
+            ),
         ]
         assert collector.traces == expected
 
@@ -257,14 +385,32 @@ class TestTraceCalls:
         o = Oracle()
         with trace_calls(collector, max_typed_dict_size=0):
             o.meaning_of_life
-        assert collector.traces == [CallTrace(Oracle.meaning_of_life.fget, {'self': Oracle}, int)]
+        assert collector.traces == [
+            CallTrace(
+                Oracle.meaning_of_life.fget,
+                {"self": Oracle},
+                int,
+                caller=pytestRegex(
+                    f"^{get_cur_filename()}:{get_cur_funcname()}:[0-9]*$"
+                ),
+            )
+        ]
 
     def test_filtering(self, collector):
         """If supplied, the code filter should decide which code objects are traced"""
         with trace_calls(collector, max_typed_dict_size=0, code_filter=lambda code: code.co_name == 'simple_add'):
             simple_add(1, 2)
             explicit_return_none()
-        assert collector.traces == [CallTrace(simple_add, {'a': int, 'b': int}, int)]
+        assert collector.traces == [
+            CallTrace(
+                simple_add,
+                {"a": int, "b": int},
+                int,
+                caller=pytestRegex(
+                    f"^{get_cur_filename()}:{get_cur_funcname()}:[0-9]*$"
+                ),
+            )
+        ]
 
     def test_lazy_value(self, collector):
         """Check that function lookup does not invoke custom descriptors.
