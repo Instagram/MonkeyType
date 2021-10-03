@@ -154,6 +154,11 @@ choose to implement its own alternative (de)serialization.
     A JSON-serialized representation of the actual yield type for this traced
     call, or ``None`` if this call did not yield (i.e. returned instead).
 
+  .. attribute:: caller: Optional[type]
+
+    The ``caller`` of the traced function or method contains filename, module, and line number information.
+
+
 .. currentmodule:: monkeytype.db.base
 
 CallTraceThunk

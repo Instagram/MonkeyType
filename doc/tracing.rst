@@ -178,7 +178,7 @@ method saves all collected traces to the given ``store``.
 CallTrace
 '''''''''
 
-.. class:: CallTrace(func: Callable, arg_types: Dict[str, type], return_type: Optional[type] = None, yield_type: Optional[type] = None)
+.. class:: CallTrace(func: Callable, arg_types: Dict[str, type], return_type: Optional[type] = None, yield_type: Optional[type] = None, caller: Optional[str] = None)
 
   Type information for one traced call of one function.
 
@@ -202,3 +202,7 @@ CallTrace
   .. attribute:: yield_type: Optional[type]
 
     Type yielded by this call, or ``None`` if this call did not yield.
+
+  .. attribute:: caller: Optional[type]
+
+    The filename, module, and line number information that executes function where the trace occurred.
