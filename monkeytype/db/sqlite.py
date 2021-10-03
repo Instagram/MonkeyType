@@ -39,7 +39,8 @@ CREATE TABLE IF NOT EXISTS {table} (
   qualname    TEXT,
   arg_types   TEXT,
   return_type TEXT,
-  yield_type  TEXT);
+  yield_type  TEXT,
+  caller      TEXT);
 """.format(table=table)
     with conn:
         conn.execute(query)
@@ -52,7 +53,7 @@ ParameterizedQuery = Tuple[str, List[QueryValue]]
 def make_query(table: str, module: str, qualname: Optional[str], limit: int) -> ParameterizedQuery:
     raw_query = """
     SELECT
-        module, qualname, arg_types, return_type, yield_type
+        module, qualname, arg_types, return_type, yield_type, caller
     FROM {table}
     WHERE
         module == ?
@@ -63,7 +64,7 @@ def make_query(table: str, module: str, qualname: Optional[str], limit: int) -> 
         values.append(qualname)
     raw_query += """
     GROUP BY
-        module, qualname, arg_types, return_type, yield_type
+        module, qualname, arg_types, return_type, yield_type, caller
     ORDER BY date(created_at) DESC
     LIMIT ?
     """
@@ -86,10 +87,10 @@ class SQLiteStore(CallTraceStore):
         values = []
         for row in serialize_traces(traces):
             values.append((datetime.datetime.now(), row.module, row.qualname,
-                           row.arg_types, row.return_type, row.yield_type))
+                           row.arg_types, row.return_type, row.yield_type, row.caller))
         with self.conn:
             self.conn.executemany(
-                'INSERT INTO {table} VALUES (?, ?, ?, ?, ?, ?)'.format(table=self.table),
+                'INSERT INTO {table} VALUES (?, ?, ?, ?, ?, ?, ?)'.format(table=self.table),
                 values
             )
 

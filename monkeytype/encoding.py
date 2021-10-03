@@ -195,13 +195,15 @@ class CallTraceRow(CallTraceThunk):
         qualname: str,
         arg_types: str,
         return_type: Optional[str],
-        yield_type: Optional[str]
+        yield_type: Optional[str],
+        caller: Optional[str]
     ) -> None:
         self.module = module
         self.qualname = qualname
         self.arg_types = arg_types
         self.return_type = return_type
         self.yield_type = yield_type
+        self.caller = caller
 
     @classmethod
     def from_trace(cls: Type[CallTraceRowT], trace: CallTrace) -> CallTraceRowT:
@@ -210,14 +212,15 @@ class CallTraceRow(CallTraceThunk):
         arg_types = arg_types_to_json(trace.arg_types)
         return_type = maybe_encode_type(type_to_json, trace.return_type)
         yield_type = maybe_encode_type(type_to_json, trace.yield_type)
-        return cls(module, qualname, arg_types, return_type, yield_type)
+        caller = trace.caller
+        return cls(module, qualname, arg_types, return_type, yield_type, caller)
 
     def to_trace(self) -> CallTrace:
         function = get_func_in_module(self.module, self.qualname)
         arg_types = arg_types_from_json(self.arg_types)
         return_type = maybe_decode_type(type_from_json, self.return_type)
         yield_type = maybe_decode_type(type_from_json, self.yield_type)
-        return CallTrace(function, arg_types, return_type, yield_type)
+        return CallTrace(function, arg_types, return_type, yield_type, self.caller)
 
     def __eq__(self, other: object) -> bool:
         if isinstance(other, CallTraceRow):
@@ -227,12 +230,14 @@ class CallTraceRow(CallTraceThunk):
                 self.arg_types,
                 self.return_type,
                 self.yield_type,
+                self.caller,
             ) == (
                 other.module,
                 other.qualname,
                 other.arg_types,
                 other.return_type,
                 other.yield_type,
+                other.caller,
             )
         return NotImplemented
 

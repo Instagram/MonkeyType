@@ -47,7 +47,8 @@ class CallTrace:
         func: Callable,
         arg_types: Dict[str, type],
         return_type: Optional[type] = None,
-        yield_type: Optional[type] = None
+        yield_type: Optional[type] = None,
+        caller: Optional[str] = None
     ) -> None:
         """
         Args:
@@ -57,11 +58,13 @@ class CallTrace:
                 due to an unhandled exception. It will be NoneType if the function returns the value None.
             yield_type: The collected yield type. This will be None if the called function never
                 yields. It will be NoneType if the function yields the value None.
+            caller: The filename, module, and line number that executes function where the trace occurred
         """
         self.func = func
         self.arg_types = arg_types
         self.return_type = return_type
         self.yield_type = yield_type
+        self.caller = caller
 
     def __eq__(self, other: object) -> bool:
         if isinstance(other, self.__class__):
@@ -69,10 +72,11 @@ class CallTrace:
         return NotImplemented
 
     def __repr__(self) -> str:
-        return "CallTrace(%s, %s, %s, %s)" % (self.func, self.arg_types, self.return_type, self.yield_type)
+        return "CallTrace(%s, %s, %s, %s, %s)" % \
+          (self.func, self.arg_types, self.return_type, self.yield_type, self.caller)
 
     def __hash__(self) -> int:
-        return hash((self.func, frozenset(self.arg_types.items()), self.return_type, self.yield_type))
+        return hash((self.func, frozenset(self.arg_types.items()), self.return_type, self.yield_type, self.caller))
 
     def add_yield_type(self, typ: type) -> None:
         if self.yield_type is None:
@@ -161,6 +165,18 @@ def get_func(frame: FrameType) -> Optional[Callable]:
     return func
 
 
+def get_caller_func_info(frame: FrameType) -> Optional[str]:
+    """Return the information of function who calls func who has code object."""
+    caller_frame = frame.f_back
+    if caller_frame is None:
+        return None
+    caller_code = caller_frame.f_code
+    filename = caller_code.co_filename
+    funcname = caller_code.co_name if caller_code.co_name != "<module>" else None
+    lineno = str(caller_frame.f_lineno)
+    return ':'.join(filter(None, [filename, funcname, lineno]))
+
+
 RETURN_VALUE_OPCODE = opcode.opmap['RETURN_VALUE']
 YIELD_VALUE_OPCODE = opcode.opmap['YIELD_VALUE']
 
@@ -197,15 +213,24 @@ class CallTracer:
         self.logger = logger
         self.traces: Dict[FrameType, CallTrace] = {}
         self.sample_rate = sample_rate
-        self.cache: Dict[CodeType, Optional[Callable]] = {}
+        self.func_cache: Dict[CodeType, Optional[Callable]] = {}
+        self.caller_cache: Dict[FrameType, Optional[str]] = {}
         self.should_trace = code_filter
         self.max_typed_dict_size = max_typed_dict_size
 
     def _get_func(self, frame: FrameType) -> Optional[Callable]:
         code = frame.f_code
-        if code not in self.cache:
-            self.cache[code] = get_func(frame)
-        return self.cache[code]
+        if code not in self.func_cache:
+            self.func_cache[code] = get_func(frame)
+        return self.func_cache[code]
+
+    def _get_caller_func_info(self, frame: FrameType) -> Optional[str]:
+        caller_frame = frame.f_back
+        if caller_frame is None:
+            return None
+        if caller_frame not in self.caller_cache:
+            self.caller_cache[caller_frame] = get_caller_func_info(frame)
+        return self.caller_cache[caller_frame]
 
     def handle_call(self, frame: FrameType) -> None:
         if self.sample_rate and random.randrange(self.sample_rate) != 0:
@@ -213,6 +238,7 @@ class CallTracer:
         func = self._get_func(frame)
         if func is None:
             return
+        caller = self._get_caller_func_info(frame)
         code = frame.f_code
         # I can't figure out a way to access the value sent to a generator via
         # send() from a stack frame.
@@ -224,7 +250,7 @@ class CallTracer:
             if name in frame.f_locals:
                 arg_types[name] = get_type(frame.f_locals[name],
                                            max_typed_dict_size=self.max_typed_dict_size)
-        self.traces[frame] = CallTrace(func, arg_types)
+        self.traces[frame] = CallTrace(func, arg_types, caller=caller)
 
     def handle_return(self, frame: FrameType, arg: Any) -> None:
         # In the case of a 'return' event, arg contains the return value, or
