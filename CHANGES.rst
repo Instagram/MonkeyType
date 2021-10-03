@@ -4,6 +4,8 @@ Changelog
 main
 ----
 
+* Add caller column into stubs so that you can see where the function got called.
+
 * Drop Python 3.6 support.
 
 * Fix `AttributeError: __args__` when generating stubs on Python 3.9. Thanks
