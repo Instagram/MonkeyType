@@ -1,8 +1,8 @@
 Changelog
 =========
 
-main
-----
+22.2.0
+------
 
 * Drop Python 3.6 support.
 
