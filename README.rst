@@ -1,6 +1,10 @@
 MonkeyType
 ==========
 
+.. image:: https://img.shields.io/badge/Support-Ukraine-FFD500?style=flat&labelColor=005BBB
+   :alt: Support Ukraine - Help Provide Humanitarian Aid to Ukraine.
+   :target: https://opensource.fb.com/support-ukraine
+
 MonkeyType collects runtime types of function arguments and return values, and
 can automatically generate stub files or even add draft type annotations
 directly to your Python code based on the types collected at runtime.
