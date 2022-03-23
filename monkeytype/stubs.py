@@ -15,6 +15,7 @@ from typing import (
     Callable,
     DefaultDict,
     Dict,
+    ForwardRef,
     Iterable,
     List,
     Optional,
@@ -65,7 +66,7 @@ class FunctionKind(enum.Enum):
     DJANGO_CACHED_PROPERTY = 5
 
     @classmethod
-    def from_callable(cls, func: Callable) -> "FunctionKind":
+    def from_callable(cls, func: Callable[..., Any]) -> "FunctionKind":
         if "." not in func.__qualname__:
             return FunctionKind.MODULE
         func_or_desc = get_name_in_module(
@@ -96,7 +97,7 @@ class ExistingAnnotationStrategy(enum.Enum):
     OMIT = 2
 
 
-class ImportMap(collections.defaultdict):
+class ImportMap(DefaultDict[Any, Any]):
     """A mapping of module name to the set of names to be imported."""
 
     def __init__(self) -> None:
@@ -196,8 +197,8 @@ def update_signature_args(
 
 def update_signature_return(
     sig: inspect.Signature,
-    return_type: type = None,
-    yield_type: type = None,
+    return_type: Optional[type] = None,
+    yield_type: Optional[type] = None,
     existing_annotation_strategy: ExistingAnnotationStrategy = ExistingAnnotationStrategy.REPLICATE,
 ) -> inspect.Signature:
     """Update return annotation with the supplied types"""
@@ -267,7 +268,7 @@ class Stub(metaclass=ABCMeta):
 
 
 class ImportBlockStub(Stub):
-    def __init__(self, imports: ImportMap = None) -> None:
+    def __init__(self, imports: Optional[ImportMap] = None) -> None:
         self.imports = imports if imports else ImportMap()
 
     def render(self) -> str:
@@ -328,7 +329,7 @@ class RenderAnnotation(GenericTypeRewriter[str]):
 
     def generic_rewrite(self, typ: Any) -> str:
         if hasattr(typ, "__supertype__"):
-            rendered = typ.__name__
+            rendered = str(typ.__name__)
         elif is_forward_ref(typ):
             rendered = repr(typ.__forward_arg__)
         elif isinstance(typ, NoneType) or typ is NoneType:
@@ -506,7 +507,7 @@ class FunctionStub(Stub):
         name: str,
         signature: inspect.Signature,
         kind: FunctionKind,
-        strip_modules: Iterable[str] = None,
+        strip_modules: Optional[Iterable[str]] = None,
         is_async: bool = False,
     ) -> None:
         self.name = name
@@ -549,8 +550,8 @@ class ClassStub(Stub):
     def __init__(
         self,
         name: str,
-        function_stubs: Iterable[FunctionStub] = None,
-        attribute_stubs: Iterable[AttributeStub] = None,
+        function_stubs: Optional[Iterable[FunctionStub]] = None,
+        attribute_stubs: Optional[Iterable[AttributeStub]] = None,
     ) -> None:
         self.name = name
         self.function_stubs: Dict[str, FunctionStub] = {}
@@ -640,7 +641,7 @@ class ReplaceTypedDictsWithStubs(TypeRewriter):
             )
         )
 
-    def rewrite_anonymous_TypedDict(self, typed_dict: type) -> type:
+    def rewrite_anonymous_TypedDict(self, typed_dict: type) -> ForwardRef:  # type: ignore[override]
         class_name = get_typed_dict_class_name(self._class_name_hint)
         required_fields, optional_fields = field_annotations(typed_dict)
         has_required_fields = len(required_fields) != 0
@@ -675,10 +676,10 @@ class ReplaceTypedDictsWithStubs(TypeRewriter):
 class ModuleStub(Stub):
     def __init__(
         self,
-        function_stubs: Iterable[FunctionStub] = None,
-        class_stubs: Iterable[ClassStub] = None,
-        imports_stub: ImportBlockStub = None,
-        typed_dict_class_stubs: Iterable[ClassStub] = None,
+        function_stubs: Optional[Iterable[FunctionStub]] = None,
+        class_stubs: Optional[Iterable[ClassStub]] = None,
+        imports_stub: Optional[ImportBlockStub] = None,
+        typed_dict_class_stubs: Optional[Iterable[ClassStub]] = None,
     ) -> None:
         self.function_stubs: Dict[str, FunctionStub] = {}
         if function_stubs is not None:
@@ -729,7 +730,7 @@ class FunctionDefinition:
         kind: FunctionKind,
         sig: inspect.Signature,
         is_async: bool = False,
-        typed_dict_class_stubs: Iterable[ClassStub] = None,
+        typed_dict_class_stubs: Optional[Iterable[ClassStub]] = None,
     ) -> None:
         self.module = module
         self.qualname = qualname
@@ -740,7 +741,7 @@ class FunctionDefinition:
 
     @classmethod
     def from_callable(
-        cls, func: Callable, kind: FunctionKind = None
+        cls, func: Callable[..., Any], kind: Optional[FunctionKind] = None
     ) -> "FunctionDefinition":
         kind = FunctionKind.from_callable(func)
         sig = inspect.Signature.from_callable(func)
@@ -752,7 +753,7 @@ class FunctionDefinition:
     @classmethod
     def from_callable_and_traced_types(
         cls,
-        func: Callable,
+        func: Callable[..., Any],
         arg_types: Dict[str, type],
         return_type: Optional[type],
         yield_type: Optional[type],
@@ -821,7 +822,7 @@ class FunctionDefinition:
 
 
 def get_updated_definition(
-    func: Callable,
+    func: Callable[..., Any],
     traces: Iterable[CallTrace],
     max_typed_dict_size: int,
     rewriter: Optional[TypeRewriter] = None,
@@ -887,7 +888,9 @@ def build_module_stubs_from_traces(
     rewriter: Optional[TypeRewriter] = None,
 ) -> Dict[str, ModuleStub]:
     """Given an iterable of call traces, build the corresponding stubs."""
-    index: DefaultDict[Callable, Set[CallTrace]] = collections.defaultdict(set)
+    index: DefaultDict[Callable[..., Any], Set[CallTrace]] = collections.defaultdict(
+        set
+    )
     for trace in traces:
         index[trace.func].add(trace)
     defns = []
@@ -904,7 +907,9 @@ class StubIndexBuilder(CallTraceLogger):
 
     def __init__(self, module_re: str, max_typed_dict_size: int) -> None:
         self.re = re.compile(module_re)
-        self.index: DefaultDict[Callable, Set[CallTrace]] = collections.defaultdict(set)
+        self.index: DefaultDict[
+            Callable[..., Any], Set[CallTrace]
+        ] = collections.defaultdict(set)
         self.max_typed_dict_size = max_typed_dict_size
 
     def log(self, trace: CallTrace) -> None:
