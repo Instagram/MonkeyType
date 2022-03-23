@@ -53,12 +53,12 @@ jobs:
       - run:
           name: format with black
           command: |
-            pipenv run black --diff monkeytype
+            pipenv run black --check --diff monkeytype
 
       - run:
           name: format with isort
           command: |
-            pipenv run isort --check monkeytype
+            pipenv run isort --check --diff monkeytype
 
       - run:
           name: typecheck
