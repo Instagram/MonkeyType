@@ -3,19 +3,16 @@
 #
 # This source code is licensed under the BSD-style license found in the
 # LICENSE file in the root directory of this source tree.
-from collections import defaultdict
 import inspect
-from itertools import chain
 import types
-from abc import (
-    ABC,
-    abstractmethod,
-)
+from abc import ABC, abstractmethod
+from collections import defaultdict
+from itertools import chain
 from typing import (
     Any,
     Callable,
-    Dict,
     DefaultDict,
+    Dict,
     Generator,
     Generic,
     Iterable,
@@ -27,6 +24,9 @@ from typing import (
     TypeVar,
     Union,
 )
+
+from mypy_extensions import TypedDict
+
 from monkeytype.compat import (
     is_any,
     is_generic,
@@ -36,9 +36,6 @@ from monkeytype.compat import (
     name_of_generic,
     types_equal,
 )
-
-from mypy_extensions import TypedDict
-
 
 DUMMY_TYPED_DICT_NAME = 'DUMMY_NAME'
 DUMMY_REQUIRED_TYPED_DICT_NAME = 'REQUIRED_TYPED_DICT_NAME'

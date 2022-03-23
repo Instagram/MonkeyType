@@ -3,34 +3,20 @@
 #
 # This source code is licensed under the BSD-style license found in the
 # LICENSE file in the root directory of this source tree.
-from contextlib import contextmanager
 import functools
 import os
 import pathlib
 import sys
 import sysconfig
-
-from abc import (
-    ABCMeta,
-    abstractmethod,
-)
+from abc import ABCMeta, abstractmethod
+from contextlib import contextmanager
 from types import CodeType
-from typing import Optional, Iterator
+from typing import Iterator, Optional
 
-from monkeytype.db.base import (
-    CallTraceStore,
-    CallTraceStoreLogger,
-)
+from monkeytype.db.base import CallTraceStore, CallTraceStoreLogger
 from monkeytype.db.sqlite import SQLiteStore
-from monkeytype.tracing import (
-    CallTraceLogger,
-    CodeFilter,
-)
-from monkeytype.typing import (
-    DEFAULT_REWRITER,
-    NoOpRewriter,
-    TypeRewriter,
-)
+from monkeytype.tracing import CallTraceLogger, CodeFilter
+from monkeytype.typing import DEFAULT_REWRITER, NoOpRewriter, TypeRewriter
 
 
 class Config(metaclass=ABCMeta):
