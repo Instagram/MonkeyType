@@ -40,7 +40,7 @@ jobs:
     - name: Install dependencies
       run: |
         pip install pipenv
-        pipenv sync --dev
+        pipenv install -d
 
     - name: Lint with flake8
       run: |
