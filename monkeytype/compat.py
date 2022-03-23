@@ -26,9 +26,14 @@ try:
     from typing import _SpecialGenericAlias  # type: ignore
 
     def is_generic(typ: Any) -> bool:
-        return typ is Union or isinstance(typ, _GenericAlias) or isinstance(typ, _SpecialGenericAlias)
+        return (
+            typ is Union
+            or isinstance(typ, _GenericAlias)
+            or isinstance(typ, _SpecialGenericAlias)
+        )
 
 except ImportError:
+
     def is_generic(typ: Any) -> bool:
         return typ is Union or isinstance(typ, _GenericAlias)
 
@@ -55,7 +60,7 @@ def make_forward_ref(s: str) -> type:
 
 def repr_forward_ref() -> str:
     """For checking the test output when ForwardRef is printed."""
-    return 'ForwardRef'
+    return "ForwardRef"
 
 
 def __are_typed_dict_types_equal(type1: type, type2: type) -> bool:

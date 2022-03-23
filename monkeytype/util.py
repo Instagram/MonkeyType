@@ -20,7 +20,7 @@ from monkeytype.exceptions import InvalidTypeError, NameLookupError
 
 def get_func_fqname(func: Callable) -> str:
     """Return the fully qualified function name."""
-    return func.__module__ + '.' + func.__qualname__
+    return func.__module__ + "." + func.__qualname__
 
 
 def get_func_in_module(module: str, qualname: str) -> Callable:
@@ -40,15 +40,16 @@ def get_func_in_module(module: str, qualname: str) -> Callable:
                 func = func.fget
             else:
                 raise InvalidTypeError(
-                    f"Property {module}.{qualname} has setter or deleter.")
+                    f"Property {module}.{qualname} has setter or deleter."
+                )
         else:
-            raise InvalidTypeError(
-                f"Property {module}.{qualname} is missing getter")
+            raise InvalidTypeError(f"Property {module}.{qualname} is missing getter")
     elif cached_property and isinstance(func, cached_property):
         func = func.func
     elif not isinstance(func, (types.FunctionType, types.BuiltinFunctionType)):
         raise InvalidTypeError(
-            f"{module}.{qualname} is of type '{type(func)}', not function.")
+            f"{module}.{qualname} is of type '{type(func)}', not function."
+        )
     return func
 
 
@@ -69,17 +70,18 @@ def get_name_in_module(
     except ModuleNotFoundError:
         raise NameLookupError("No module named '%s'" % (module,))
     walked = []
-    for part in qualname.split('.'):
+    for part in qualname.split("."):
         walked.append(part)
         try:
             obj = attr_getter(obj, part)
         except AttributeError:
             raise NameLookupError(
-                "Module '%s' has no attribute '%s'"
-                % (module, '.'.join(walked))
+                "Module '%s' has no attribute '%s'" % (module, ".".join(walked))
             )
     return obj
 
 
 def pascal_case(s: str) -> str:
-    return ''.join(a[0].upper() + a[1:] for a in re.split('([^a-zA-Z0-9])', s) if a.isalnum())
+    return "".join(
+        a[0].upper() + a[1:] for a in re.split("([^a-zA-Z0-9])", s) if a.isalnum()
+    )

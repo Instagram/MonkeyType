@@ -28,10 +28,7 @@ class CallTraceStore(metaclass=ABCMeta):
 
     @abstractmethod
     def filter(
-        self,
-        module: str,
-        qualname_prefix: Optional[str] = None,
-        limit: int = 2000
+        self, module: str, qualname_prefix: Optional[str] = None, limit: int = 2000
     ) -> List[CallTraceThunk]:
         """Query the backing store for any traces that match the supplied query.
 
@@ -41,7 +38,7 @@ class CallTraceStore(metaclass=ABCMeta):
         pass
 
     @classmethod
-    def make_store(cls, connection_string: str) -> 'CallTraceStore':
+    def make_store(cls, connection_string: str) -> "CallTraceStore":
         """Create a new store instance.
 
         This is a factory function that is intended to be used by the CLI.
@@ -58,12 +55,13 @@ class CallTraceStore(metaclass=ABCMeta):
 
 class CallTraceStoreLogger(CallTraceLogger):
     """A CallTraceLogger that stores logged traces in a CallTraceStore."""
+
     def __init__(self, store: CallTraceStore) -> None:
         self.store = store
         self.traces: List[CallTrace] = []
 
     def log(self, trace: CallTrace) -> None:
-        if not trace.func.__module__ == '__main__':
+        if not trace.func.__module__ == "__main__":
             self.traces.append(trace)
 
     def flush(self) -> None:

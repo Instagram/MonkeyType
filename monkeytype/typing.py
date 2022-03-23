@@ -37,9 +37,9 @@ from monkeytype.compat import (
     types_equal,
 )
 
-DUMMY_TYPED_DICT_NAME = 'DUMMY_NAME'
-DUMMY_REQUIRED_TYPED_DICT_NAME = 'REQUIRED_TYPED_DICT_NAME'
-DUMMY_OPTIONAL_TYPED_DICT_NAME = 'OPTIONAL_TYPED_DICT_NAME'
+DUMMY_TYPED_DICT_NAME = "DUMMY_NAME"
+DUMMY_REQUIRED_TYPED_DICT_NAME = "REQUIRED_TYPED_DICT_NAME"
+DUMMY_OPTIONAL_TYPED_DICT_NAME = "OPTIONAL_TYPED_DICT_NAME"
 
 
 # Functions like shrink_types and get_type construct new types at runtime.
@@ -48,23 +48,32 @@ DUMMY_OPTIONAL_TYPED_DICT_NAME = 'OPTIONAL_TYPED_DICT_NAME'
 
 
 def is_list(typ: type) -> bool:
-    return is_generic(typ) and name_of_generic(typ) == 'List'
+    return is_generic(typ) and name_of_generic(typ) == "List"
 
 
 def make_typed_dict(*, required_fields=None, optional_fields=None) -> type:
     required_fields = required_fields or {}
     optional_fields = optional_fields or {}
     assert required_fields.keys().isdisjoint(optional_fields.keys())
-    return TypedDict(DUMMY_TYPED_DICT_NAME, {
-        "required_fields": TypedDict(DUMMY_REQUIRED_TYPED_DICT_NAME, required_fields),
-        "optional_fields": TypedDict(DUMMY_OPTIONAL_TYPED_DICT_NAME, optional_fields)
-    })
+    return TypedDict(
+        DUMMY_TYPED_DICT_NAME,
+        {
+            "required_fields": TypedDict(
+                DUMMY_REQUIRED_TYPED_DICT_NAME, required_fields
+            ),
+            "optional_fields": TypedDict(
+                DUMMY_OPTIONAL_TYPED_DICT_NAME, optional_fields
+            ),
+        },
+    )
 
 
 def field_annotations(typed_dict) -> Tuple[Dict[str, type], Dict[str, type]]:
     """Return the required and optional fields in the TypedDict."""
-    return (typed_dict.__annotations__["required_fields"].__annotations__,
-            typed_dict.__annotations__["optional_fields"].__annotations__)
+    return (
+        typed_dict.__annotations__["required_fields"].__annotations__,
+        typed_dict.__annotations__["optional_fields"].__annotations__,
+    )
 
 
 def is_anonymous_typed_dict(typ: type) -> bool:
@@ -87,9 +96,11 @@ def shrink_typed_dict_types(typed_dicts: List[type], max_typed_dict_size: int) -
             key_value_types_dict[key].append(value_type)
         existing_optional_fields.extend(optional_fields.items())
 
-    required_fields = {key: value_types
-                       for key, value_types in key_value_types_dict.items()
-                       if len(value_types) == num_typed_dicts}
+    required_fields = {
+        key: value_types
+        for key, value_types in key_value_types_dict.items()
+        if len(value_types) == num_typed_dicts
+    }
     optional_fields = defaultdict(list)
     for key, value_types in key_value_types_dict.items():
         if len(value_types) != num_typed_dicts:
@@ -98,15 +109,26 @@ def shrink_typed_dict_types(typed_dicts: List[type], max_typed_dict_size: int) -
         optional_fields[key].append(value_type)
 
     if len(required_fields) + len(optional_fields) > max_typed_dict_size:
-        value_type = shrink_types(list(chain.from_iterable(chain(required_fields.values(),
-                                                                 optional_fields.values()))),
-                                  max_typed_dict_size)
+        value_type = shrink_types(
+            list(
+                chain.from_iterable(
+                    chain(required_fields.values(), optional_fields.values())
+                )
+            ),
+            max_typed_dict_size,
+        )
         return Dict[str, value_type]
-    required_fields = {key: shrink_types(list(value_types), max_typed_dict_size)
-                       for key, value_types in required_fields.items()}
-    optional_fields = {key: shrink_types(list(value_types), max_typed_dict_size)
-                       for key, value_types in optional_fields.items()}
-    return make_typed_dict(required_fields=required_fields, optional_fields=optional_fields)
+    required_fields = {
+        key: shrink_types(list(value_types), max_typed_dict_size)
+        for key, value_types in required_fields.items()
+    }
+    optional_fields = {
+        key: shrink_types(list(value_types), max_typed_dict_size)
+        for key, value_types in optional_fields.items()
+    }
+    return make_typed_dict(
+        required_fields=required_fields, optional_fields=optional_fields
+    )
 
 
 def shrink_types(types, max_typed_dict_size):
@@ -127,10 +149,14 @@ def shrink_types(types, max_typed_dict_size):
     # If they are all lists, shrink their argument types. This way, we avoid
     # rewriting heterogenous anonymous TypedDicts to Dict.
     if all(is_list(typ) for typ in types):
-        annotation = shrink_types((getattr(typ, '__args__')[0] for typ in types), max_typed_dict_size)
+        annotation = shrink_types(
+            (getattr(typ, "__args__")[0] for typ in types), max_typed_dict_size
+        )
         return List[annotation]
 
-    all_dict_types = tuple(RewriteAnonymousTypedDictToDict().rewrite(typ) for typ in types)
+    all_dict_types = tuple(
+        RewriteAnonymousTypedDictToDict().rewrite(typ) for typ in types
+    )
     return Union[all_dict_types]
 
 
@@ -159,12 +185,22 @@ def get_dict_type(dct, max_typed_dict_size):
         # unintuitive, especially when you've "disabled" TypedDict generation
         # by setting `max_typed_dict_size` to 0.
         return Dict[Any, Any]
-    if (all(isinstance(k, str) for k in dct.keys())
-            and (max_typed_dict_size is None or len(dct) <= max_typed_dict_size)):
-        return make_typed_dict(required_fields={k: get_type(v, max_typed_dict_size) for k, v in dct.items()})
+    if all(isinstance(k, str) for k in dct.keys()) and (
+        max_typed_dict_size is None or len(dct) <= max_typed_dict_size
+    ):
+        return make_typed_dict(
+            required_fields={
+                k: get_type(v, max_typed_dict_size) for k, v in dct.items()
+            }
+        )
     else:
-        key_type = shrink_types((get_type(k, max_typed_dict_size) for k in dct.keys()), max_typed_dict_size)
-        val_type = shrink_types((get_type(v, max_typed_dict_size) for v in dct.values()), max_typed_dict_size)
+        key_type = shrink_types(
+            (get_type(k, max_typed_dict_size) for k in dct.keys()), max_typed_dict_size
+        )
+        val_type = shrink_types(
+            (get_type(v, max_typed_dict_size) for v in dct.values()),
+            max_typed_dict_size,
+        )
         return Dict[key_type, val_type]
 
 
@@ -178,16 +214,25 @@ def get_type(obj, max_typed_dict_size):
         return Iterator[Any]
     typ = type(obj)
     if typ is list:
-        elem_type = shrink_types((get_type(e, max_typed_dict_size) for e in obj), max_typed_dict_size)
+        elem_type = shrink_types(
+            (get_type(e, max_typed_dict_size) for e in obj), max_typed_dict_size
+        )
         return List[elem_type]
     elif typ is set:
-        elem_type = shrink_types((get_type(e, max_typed_dict_size) for e in obj), max_typed_dict_size)
+        elem_type = shrink_types(
+            (get_type(e, max_typed_dict_size) for e in obj), max_typed_dict_size
+        )
         return Set[elem_type]
     elif typ is dict:
         return get_dict_type(obj, max_typed_dict_size)
     elif typ is defaultdict:
-        key_type = shrink_types((get_type(k, max_typed_dict_size) for k in obj.keys()), max_typed_dict_size)
-        val_type = shrink_types((get_type(v, max_typed_dict_size) for v in obj.values()), max_typed_dict_size)
+        key_type = shrink_types(
+            (get_type(k, max_typed_dict_size) for k in obj.keys()), max_typed_dict_size
+        )
+        val_type = shrink_types(
+            (get_type(v, max_typed_dict_size) for v in obj.values()),
+            max_typed_dict_size,
+        )
         return DefaultDict[key_type, val_type]
     elif typ is tuple:
         return Tuple[tuple(get_type(e, max_typed_dict_size) for e in obj)]
@@ -204,39 +249,49 @@ T = TypeVar("T")
 
 class GenericTypeRewriter(Generic[T], ABC):
     @abstractmethod
-    def make_builtin_tuple(self, elements): ...
+    def make_builtin_tuple(self, elements):
+        ...
 
     @abstractmethod
-    def make_container_type(self, container_type, element): ...
+    def make_container_type(self, container_type, element):
+        ...
 
     @abstractmethod
-    def make_anonymous_typed_dict(self, required_fields, optional_fields): ...
+    def make_anonymous_typed_dict(self, required_fields, optional_fields):
+        ...
 
     @abstractmethod
-    def make_builtin_typed_dict(self, name, annotations, total): ...
+    def make_builtin_typed_dict(self, name, annotations, total):
+        ...
 
     @abstractmethod
-    def generic_rewrite(self, typ): ...
+    def generic_rewrite(self, typ):
+        ...
 
     @abstractmethod
-    def rewrite_container_type(self, container_type): ...
+    def rewrite_container_type(self, container_type):
+        ...
 
     @abstractmethod
-    def rewrite_malformed_container(self, container): ...
+    def rewrite_malformed_container(self, container):
+        ...
 
     @abstractmethod
-    def rewrite_type_variable(self, type_variable): ...
+    def rewrite_type_variable(self, type_variable):
+        ...
 
     def _rewrite_container(self, cls, container):
         if container.__module__ != "typing":
             return self.rewrite_malformed_container(container)
-        args = getattr(container, '__args__', None)
+        args = getattr(container, "__args__", None)
         if args is None:
             return self.rewrite_malformed_container(container)
         elif args == ((),):  # special case of empty tuple `Tuple[()]`
             elems = self.make_builtin_tuple(())
         else:
-            elems = self.make_builtin_tuple(self.rewrite(elem) for elem in container.__args__)
+            elems = self.make_builtin_tuple(
+                self.rewrite(elem) for elem in container.__args__
+            )
         return self.make_container_type(self.rewrite_container_type(cls), elems)
 
     def rewrite_Dict(self, dct):
@@ -257,35 +312,42 @@ class GenericTypeRewriter(Generic[T], ABC):
     def rewrite_anonymous_TypedDict(self, typed_dict):
         assert is_anonymous_typed_dict(typed_dict)
         required_fields, optional_fields = field_annotations(typed_dict)
-        return self.make_anonymous_typed_dict(required_fields={name: self.rewrite(typ)
-                                                               for name, typ in required_fields.items()},
-                                              optional_fields={name: self.rewrite(typ)
-                                                               for name, typ in optional_fields.items()})
+        return self.make_anonymous_typed_dict(
+            required_fields={
+                name: self.rewrite(typ) for name, typ in required_fields.items()
+            },
+            optional_fields={
+                name: self.rewrite(typ) for name, typ in optional_fields.items()
+            },
+        )
 
     def rewrite_TypedDict(self, typed_dict):
         if is_anonymous_typed_dict(typed_dict):
             return self.rewrite_anonymous_TypedDict(typed_dict)
-        return self.make_builtin_typed_dict(typed_dict.__name__,
-                                            {name: self.rewrite(typ)
-                                             for name, typ in typed_dict.__annotations__.items()},
-                                            total=typed_dict.__total__)
+        return self.make_builtin_typed_dict(
+            typed_dict.__name__,
+            {
+                name: self.rewrite(typ)
+                for name, typ in typed_dict.__annotations__.items()
+            },
+            total=typed_dict.__total__,
+        )
 
     def rewrite_Union(self, union):
         return self._rewrite_container(Union, union)
 
     def rewrite(self, typ):
         if is_any(typ):
-            typname = 'Any'
+            typname = "Any"
         elif is_union(typ):
-            typname = 'Union'
+            typname = "Union"
         elif is_typed_dict(typ):
-            typname = 'TypedDict'
+            typname = "TypedDict"
         elif is_generic(typ):
             typname = name_of_generic(typ)
         else:
-            typname = getattr(typ, '__name__', None)
-        rewriter = getattr(
-            self, 'rewrite_' + typname, None) if typname else None
+            typname = getattr(typ, "__name__", None)
+        rewriter = getattr(self, "rewrite_" + typname, None) if typname else None
         if rewriter:
             return rewriter(typ)
         if isinstance(typ, TypeVar):
@@ -297,7 +359,9 @@ class TypeRewriter(GenericTypeRewriter[type]):
     """TypeRewriter provides a visitor for rewriting parts of types"""
 
     def make_anonymous_typed_dict(self, required_fields, optional_fields):
-        return make_typed_dict(required_fields=required_fields, optional_fields=optional_fields)
+        return make_typed_dict(
+            required_fields=required_fields, optional_fields=optional_fields
+        )
 
     def make_builtin_typed_dict(self, name, annotations, total):
         return TypedDict(name, annotations, total=total)
@@ -334,12 +398,11 @@ class RemoveEmptyContainers(TypeRewriter):
     """
 
     def _is_empty(self, typ):
-        args = getattr(typ, '__args__', [])
+        args = getattr(typ, "__args__", [])
         return args and all(is_any(e) for e in args)
 
     def rewrite_Union(self, union):
-        elems = tuple(
-            self.rewrite(e) for e in union.__args__ if not self._is_empty(e))
+        elems = tuple(self.rewrite(e) for e in union.__args__ if not self._is_empty(e))
         if elems:
             return Union[elems]
         return union
@@ -389,9 +452,8 @@ class RewriteLargeUnion(TypeRewriter):
 
         try:
             for ancestor in inspect.getmro(union.__args__[0]):
-                if (
-                    ancestor is not object and
-                    all(issubclass(t, ancestor) for t in union.__args__)
+                if ancestor is not object and all(
+                    issubclass(t, ancestor) for t in union.__args__
                 ):
                     return ancestor
         except (TypeError, AttributeError):
@@ -437,9 +499,11 @@ class RewriteGenerator(TypeRewriter):
         return typ
 
 
-DEFAULT_REWRITER = ChainedRewriter((
-    RemoveEmptyContainers(),
-    RewriteConfigDict(),
-    RewriteLargeUnion(),
-    RewriteGenerator(),
-))
+DEFAULT_REWRITER = ChainedRewriter(
+    (
+        RemoveEmptyContainers(),
+        RewriteConfigDict(),
+        RewriteLargeUnion(),
+        RewriteGenerator(),
+    )
+)
