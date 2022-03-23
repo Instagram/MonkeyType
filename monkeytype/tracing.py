@@ -30,7 +30,7 @@ class CallTrace:
 
     def __init__(
         self,
-        func: Callable,
+        func: Callable[..., Any],
         arg_types: Dict[str, type],
         return_type: Optional[type] = None,
         yield_type: Optional[type] = None,
@@ -101,7 +101,7 @@ class CallTraceLogger(metaclass=ABCMeta):
         pass
 
 
-def get_func_in_mro(obj: Any, code: CodeType) -> Optional[Callable]:
+def get_func_in_mro(obj: Any, code: CodeType) -> Optional[Callable[..., Any]]:
     """Attempt to find a function in a side-effect free way.
 
     This looks in obj's mro manually and does not invoke any descriptors.
@@ -114,15 +114,17 @@ def get_func_in_mro(obj: Any, code: CodeType) -> Optional[Callable]:
     if isinstance(val, (classmethod, staticmethod)):
         cand = val.__func__
     elif isinstance(val, property) and (val.fset is None) and (val.fdel is None):
-        cand = cast(Callable, val.fget)
+        cand = cast(Callable[..., Any], val.fget)
     elif cached_property and isinstance(val, cached_property):
-        cand = cast(Callable, val.func)
+        cand = cast(Callable[..., Any], val.func)
     else:
-        cand = cast(Callable, val)
+        cand = cast(Callable[..., Any], val)
     return _has_code(cand, code)
 
 
-def _has_code(func: Optional[Callable], code: CodeType) -> Optional[Callable]:
+def _has_code(
+    func: Optional[Callable[..., Any]], code: CodeType
+) -> Optional[Callable[..., Any]]:
     while func is not None:
         func_code = getattr(func, "__code__", None)
         if func_code is code:
@@ -132,7 +134,7 @@ def _has_code(func: Optional[Callable], code: CodeType) -> Optional[Callable]:
     return None
 
 
-def get_func(frame: FrameType) -> Optional[Callable]:
+def get_func(frame: FrameType) -> Optional[Callable[..., Any]]:
     """Return the function whose code object corresponds to the supplied stack frame."""
     code = frame.f_code
     if code.co_name is None:
@@ -195,11 +197,11 @@ class CallTracer:
         self.logger = logger
         self.traces: Dict[FrameType, CallTrace] = {}
         self.sample_rate = sample_rate
-        self.cache: Dict[CodeType, Optional[Callable]] = {}
+        self.cache: Dict[CodeType, Optional[Callable[..., Any]]] = {}
         self.should_trace = code_filter
         self.max_typed_dict_size = max_typed_dict_size
 
-    def _get_func(self, frame: FrameType) -> Optional[Callable]:
+    def _get_func(self, frame: FrameType) -> Optional[Callable[..., Any]]:
         code = frame.f_code
         if code not in self.cache:
             self.cache[code] = get_func(frame)

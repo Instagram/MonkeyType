@@ -43,19 +43,19 @@ def is_generic_of(typ: Any, gen: Any) -> bool:
 
 
 def qualname_of_generic(typ: Any) -> str:
-    return typ._name or typ.__origin__._name or typ.__origin__.__qualname__
+    return str(typ._name or typ.__origin__._name or typ.__origin__.__qualname__)
 
 
 def name_of_generic(typ: Any) -> str:
-    return typ._name or typ.__origin__._name or typ.__origin__.__name__
+    return str(typ._name or typ.__origin__._name or typ.__origin__.__name__)
 
 
 def is_forward_ref(typ: Any) -> bool:
     return isinstance(typ, ForwardRef)
 
 
-def make_forward_ref(s: str) -> type:
-    return ForwardRef(s)  # type: ignore
+def make_forward_ref(s: str) -> ForwardRef:
+    return ForwardRef(s)
 
 
 def repr_forward_ref() -> str:

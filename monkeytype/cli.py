@@ -57,7 +57,7 @@ def module_path_with_qualname(path: str) -> Tuple[str, str]:
     return module, qualname
 
 
-def complain_about_no_traces(args: argparse.Namespace, stderr: IO) -> None:
+def complain_about_no_traces(args: argparse.Namespace, stderr: IO[str]) -> None:
     module, qualname = args.module_path
     if qualname:
         print(f"No traces found for specifier {module}:{qualname}", file=stderr)
@@ -90,17 +90,19 @@ def get_monkeytype_config(path: str) -> Config:
         raise argparse.ArgumentTypeError(f"cannot import {path}: {mte}")
     if should_call:
         config = config()
-    return config
+    return config  # type: ignore[no-any-return]
 
 
-def display_sample_count(traces: List[CallTrace], stderr: IO) -> None:
+def display_sample_count(traces: List[CallTrace], stderr: IO[str]) -> None:
     """Print to stderr the number of traces each stub is based on."""
     sample_counter = collections.Counter([t.funcname for t in traces])
     for name, count in sample_counter.items():
         print(f"Annotation for {name} based on {count} call trace(s).", file=stderr)
 
 
-def get_stub(args: argparse.Namespace, stdout: IO, stderr: IO) -> Optional[Stub]:
+def get_stub(
+    args: argparse.Namespace, stdout: IO[str], stderr: IO[str]
+) -> Optional[Stub]:
     module, qualname = args.module_path
     thunks = args.config.trace_store().filter(module, qualname, args.limit)
     traces = []
@@ -156,7 +158,9 @@ def apply_stub_using_libcst(
     return transformed_source_module.code
 
 
-def apply_stub_handler(args: argparse.Namespace, stdout: IO, stderr: IO) -> None:
+def apply_stub_handler(
+    args: argparse.Namespace, stdout: IO[str], stderr: IO[str]
+) -> None:
     stub = get_stub(args, stdout, stderr)
     if stub is None:
         complain_about_no_traces(args, stderr)
@@ -174,7 +178,9 @@ def apply_stub_handler(args: argparse.Namespace, stdout: IO, stderr: IO) -> None
     print(source_with_types, file=stdout)
 
 
-def get_diff(args: argparse.Namespace, stdout: IO, stderr: IO) -> Optional[str]:
+def get_diff(
+    args: argparse.Namespace, stdout: IO[str], stderr: IO[str]
+) -> Optional[str]:
     args.existing_annotation_strategy = ExistingAnnotationStrategy.REPLICATE
     stub = get_stub(args, stdout, stderr)
     args.existing_annotation_strategy = ExistingAnnotationStrategy.IGNORE
@@ -195,7 +201,9 @@ def get_diff(args: argparse.Namespace, stdout: IO, stderr: IO) -> Optional[str]:
     return "\n\n\n".join(diff)
 
 
-def print_stub_handler(args: argparse.Namespace, stdout: IO, stderr: IO) -> None:
+def print_stub_handler(
+    args: argparse.Namespace, stdout: IO[str], stderr: IO[str]
+) -> None:
     output, file = None, stdout
     if args.diff:
         output = get_diff(args, stdout, stderr)
@@ -209,14 +217,16 @@ def print_stub_handler(args: argparse.Namespace, stdout: IO, stderr: IO) -> None
     print(output, file=file)
 
 
-def list_modules_handler(args: argparse.Namespace, stdout: IO, stderr: IO) -> None:
+def list_modules_handler(
+    args: argparse.Namespace, stdout: IO[str], stderr: IO[str]
+) -> None:
     output, file = None, stdout
     modules = args.config.trace_store().list_modules()
     output = "\n".join(modules)
     print(output, file=file)
 
 
-def run_handler(args: argparse.Namespace, stdout: IO, stderr: IO) -> None:
+def run_handler(args: argparse.Namespace, stdout: IO[str], stderr: IO[str]) -> None:
     # remove initial `monkeytype run`
     old_argv = sys.argv.copy()
     try:
@@ -236,7 +246,7 @@ def update_args_from_config(args: argparse.Namespace) -> None:
         args.limit = args.config.query_limit()
 
 
-def main(argv: List[str], stdout: IO, stderr: IO) -> int:
+def main(argv: List[str], stdout: IO[str], stderr: IO[str]) -> int:
     parser = argparse.ArgumentParser(
         description="Generate and apply stub files from collected type information.",
     )
