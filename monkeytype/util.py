@@ -7,13 +7,9 @@ import importlib
 import inspect
 import re
 import types
-
-try:
-    from django.utils.functional import cached_property  # type: ignore
-except ImportError:
-    cached_property = None
-
 from typing import Any, Callable, Optional
+
+from django.utils.functional import cached_property
 
 from monkeytype.exceptions import InvalidTypeError, NameLookupError
 

@@ -24,6 +24,8 @@ from typing import (
     Union,
 )
 
+from django.utils.functional import cached_property
+
 from monkeytype.compat import (
     is_any,
     is_forward_ref,
@@ -32,26 +34,18 @@ from monkeytype.compat import (
     make_forward_ref,
     qualname_of_generic,
 )
-from monkeytype.typing import field_annotations
-from monkeytype.util import pascal_case
-
-try:
-    from django.utils.functional import cached_property  # type: ignore
-except ImportError:
-    cached_property = None
-
-
 from monkeytype.tracing import CallTrace, CallTraceLogger
 from monkeytype.typing import (
     GenericTypeRewriter,
     NoneType,
     NoOpRewriter,
     TypeRewriter,
+    field_annotations,
     make_generator,
     make_iterator,
     shrink_types,
 )
-from monkeytype.util import get_name_in_module
+from monkeytype.util import get_name_in_module, pascal_case
 
 logger = logging.getLogger(__name__)
 
@@ -616,7 +610,7 @@ class ReplaceTypedDictsWithStubs(TypeRewriter):
             for stubs in stub_lists:
                 self.stubs.extend(stubs)
         # Value of type "type" is not indexable.
-        return cls[elems]  # type: ignore
+        return cls[elems]  # type: ignore[no-any-return,index]
 
     def _add_typed_dict_class_stub(
         self,
