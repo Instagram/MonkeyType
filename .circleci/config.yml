@@ -24,17 +24,17 @@ jobs:
       # Download and cache dependencies
       - restore_cache:
           keys:
-          - py39-dependencies-{{ checksum "Pipfile.lock" }}
-          # fallback to using the latest cache if no exact match is found
-          - py39-dependencies-
+            - py39-dependencies-{{ checksum "Pipfile.lock" }}
+            # fallback to using the latest cache if no exact match is found
+            - py39-dependencies-
 
       - run:
-          name: add user installs to PATH
+          name: Add user installs to PATH
           command: |
             echo 'export PATH=$HOME/.local/bin:$PATH' >> $BASH_ENV
 
       - run:
-          name: install dependencies
+          name: Install dependencies
           command: |
             pip install --user pipenv
             pipenv install -d
@@ -46,27 +46,27 @@ jobs:
           key: v3-dependencies-{{ checksum "Pipfile.lock" }}
 
       - run:
-          name: lint with flake8
+          name: Lint with flake8
           command: |
             pipenv run flake8
 
       - run:
-          name: format with black
+          name: Format with black
           command: |
             pipenv run black --check --diff monkeytype
 
       - run:
-          name: format with isort
+          name: Format with isort
           command: |
             pipenv run isort --check --diff monkeytype
 
       - run:
-          name: typecheck
+          name: Typecheck
           command: |
             pipenv run mypy monkeytype
 
       - run:
-          name: run tests
+          name: Run tests
           command: |
             pipenv run pytest
 
@@ -75,7 +75,7 @@ jobs:
           destination: htmlcov
 
       - run:
-          name: build docs
+          name: Build docs
           command: |
             cd doc
             pipenv run make html
@@ -97,17 +97,17 @@ jobs:
       # Download and cache dependencies
       - restore_cache:
           keys:
-          - py38-dependencies-{{ checksum "Pipfile.lock" }}
-          # fallback to using the latest cache if no exact match is found
-          - py38-dependencies-
+            - py38-dependencies-{{ checksum "Pipfile.lock" }}
+            # fallback to using the latest cache if no exact match is found
+            - py38-dependencies-
 
       - run:
-          name: add user installs to PATH
+          name: Add user installs to PATH
           command: |
             echo 'export PATH=$HOME/.local/bin:$PATH' >> $BASH_ENV
 
       - run:
-          name: install dependencies
+          name: Install dependencies
           command: |
             pip install --user pipenv
             pipenv install -d
@@ -119,17 +119,17 @@ jobs:
           key: v3-dependencies-{{ checksum "Pipfile.lock" }}
 
       - run:
-          name: lint
+          name: Lint with flake8
           command: |
             pipenv run flake8
 
       - run:
-          name: typecheck
+          name: Typecheck
           command: |
             pipenv run mypy monkeytype
 
       - run:
-          name: run tests
+          name: Run tests
           command: |
             pipenv run pytest
 
@@ -138,7 +138,7 @@ jobs:
           destination: htmlcov
 
       - run:
-          name: build docs
+          name: Build docs
           command: |
             cd doc
             pipenv run make html
@@ -160,17 +160,17 @@ jobs:
       # Download and cache dependencies
       - restore_cache:
           keys:
-          - py37-dependencies-{{ checksum "Pipfile.lock" }}
-          # fallback to using the latest cache if no exact match is found
-          - py37-dependencies-
+            - py37-dependencies-{{ checksum "Pipfile.lock" }}
+            # fallback to using the latest cache if no exact match is found
+            - py37-dependencies-
 
       - run:
-          name: add user installs to PATH
+          name: Add user installs to PATH
           command: |
             echo 'export PATH=$HOME/.local/bin:$PATH' >> $BASH_ENV
 
       - run:
-          name: install dependencies
+          name: Install dependencies
           command: |
             pip install --user pipenv
             pipenv install -d
@@ -182,17 +182,17 @@ jobs:
           key: v3-dependencies-{{ checksum "Pipfile.lock" }}
 
       - run:
-          name: lint
+          name: Lint
           command: |
             pipenv run flake8
 
       - run:
-          name: typecheck
+          name: Typecheck
           command: |
             pipenv run mypy monkeytype
 
       - run:
-          name: run tests
+          name: Run tests
           command: |
             pipenv run pytest
 
@@ -201,7 +201,7 @@ jobs:
           destination: htmlcov
 
       - run:
-          name: build docs
+          name: Build docs
           command: |
             cd doc
             pipenv run make html
@@ -209,4 +209,3 @@ jobs:
       - store_artifacts:
           path: doc/_build/html
           destination: doc
-
