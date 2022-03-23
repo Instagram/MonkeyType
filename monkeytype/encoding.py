@@ -121,7 +121,7 @@ def type_from_dict(d: TypeDict) -> type:
         # mypy complains that a value of type `type` isn't indexable. That's
         # true, but we know typ is a subtype that is indexable. Even checking
         # with hasattr(typ, '__getitem__') doesn't help
-        typ = typ[elem_types]  # type: ignore
+        typ = typ[elem_types]  # type: ignore[index]
     return typ
 
 

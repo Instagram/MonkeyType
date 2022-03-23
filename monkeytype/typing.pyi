@@ -8,7 +8,7 @@ from abc import ABC, abstractmethod
 
 # The shrink_types and get_type functions construct new types at runtime. Mypy
 # cannot currently type these functions, so the type signatures live here.
-from typing import _Union  # type: ignore
+from typing import _Union  # type: ignore[attr-defined]
 from typing import Any, Dict, Generic, Iterable, List, Optional, Set, Tuple, TypeVar
 
 NoneType: type = ...
