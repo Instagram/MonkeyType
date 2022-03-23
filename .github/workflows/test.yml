@@ -23,14 +23,24 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
 
-    # - name: Add user installs to PATH
-    #   run: |
-    #     echo 'export PATH=$HOME/.local/bin:$PATH' >> $BASH_ENV
+    - name: Restore pip cache
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-${{ matrix.python-version }}-pip-${{ hashFiles('**/Pipfile.lock') }}
+        restore-keys: ${{ runner.os }}-${{ matrix.python-version }}-pip-
+
+    - name: Restore pipenv cache
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pipenv
+        key: ${{ runner.os }}-${{ matrix.python-version }}-pipenv-${{ hashFiles('**/Pipfile.lock') }}
+        restore-keys: ${{ runner.os }}-${{ matrix.python-version }}-pipenv-
 
     - name: Install dependencies
       run: |
         pip install pipenv
-        pipenv install -d
+        pipenv sync --dev
 
     - name: Lint with flake8
       run: |
