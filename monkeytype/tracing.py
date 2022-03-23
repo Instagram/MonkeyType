@@ -33,7 +33,7 @@ class CallTrace:
         func: Callable,
         arg_types: Dict[str, type],
         return_type: Optional[type] = None,
-        yield_type: Optional[type] = None
+        yield_type: Optional[type] = None,
     ) -> None:
         """
         Args:
@@ -55,10 +55,22 @@ class CallTrace:
         return NotImplemented
 
     def __repr__(self) -> str:
-        return "CallTrace(%s, %s, %s, %s)" % (self.func, self.arg_types, self.return_type, self.yield_type)
+        return "CallTrace(%s, %s, %s, %s)" % (
+            self.func,
+            self.arg_types,
+            self.return_type,
+            self.yield_type,
+        )
 
     def __hash__(self) -> int:
-        return hash((self.func, frozenset(self.arg_types.items()), self.return_type, self.yield_type))
+        return hash(
+            (
+                self.func,
+                frozenset(self.arg_types.items()),
+                self.return_type,
+                self.yield_type,
+            )
+        )
 
     def add_yield_type(self, typ: type) -> None:
         if self.yield_type is None:
@@ -112,11 +124,11 @@ def get_func_in_mro(obj: Any, code: CodeType) -> Optional[Callable]:
 
 def _has_code(func: Optional[Callable], code: CodeType) -> Optional[Callable]:
     while func is not None:
-        func_code = getattr(func, '__code__', None)
+        func_code = getattr(func, "__code__", None)
         if func_code is code:
             return func
         # Attempt to find the decorated function
-        func = getattr(func, '__wrapped__', None)
+        func = getattr(func, "__wrapped__", None)
     return None
 
 
@@ -147,15 +159,15 @@ def get_func(frame: FrameType) -> Optional[Callable]:
     return func
 
 
-RETURN_VALUE_OPCODE = opcode.opmap['RETURN_VALUE']
-YIELD_VALUE_OPCODE = opcode.opmap['YIELD_VALUE']
+RETURN_VALUE_OPCODE = opcode.opmap["RETURN_VALUE"]
+YIELD_VALUE_OPCODE = opcode.opmap["YIELD_VALUE"]
 
 # A CodeFilter is a predicate that decides whether or not a the call for the
 # supplied code object should be traced.
 CodeFilter = Callable[[CodeType], bool]
 
-EVENT_CALL = 'call'
-EVENT_RETURN = 'return'
+EVENT_CALL = "call"
+EVENT_RETURN = "return"
 SUPPORTED_EVENTS = {EVENT_CALL, EVENT_RETURN}
 
 
@@ -204,12 +216,13 @@ class CallTracer:
         # send() from a stack frame.
         if code.co_code[frame.f_lasti] == YIELD_VALUE_OPCODE:
             return
-        arg_names = code.co_varnames[0:code.co_argcount]
+        arg_names = code.co_varnames[0 : code.co_argcount]
         arg_types = {}
         for name in arg_names:
             if name in frame.f_locals:
-                arg_types[name] = get_type(frame.f_locals[name],
-                                           max_typed_dict_size=self.max_typed_dict_size)
+                arg_types[name] = get_type(
+                    frame.f_locals[name], max_typed_dict_size=self.max_typed_dict_size
+                )
         self.traces[frame] = CallTrace(func, arg_types)
 
     def handle_return(self, frame: FrameType, arg: Any) -> None:
@@ -232,12 +245,13 @@ class CallTracer:
             del self.traces[frame]
             self.logger.log(trace)
 
-    def __call__(self, frame: FrameType, event: str, arg: Any) -> 'CallTracer':
+    def __call__(self, frame: FrameType, event: str, arg: Any) -> "CallTracer":
         code = frame.f_code
         if (
-            event not in SUPPORTED_EVENTS or
-            code.co_name == 'trace_types' or
-            self.should_trace and not self.should_trace(code)
+            event not in SUPPORTED_EVENTS
+            or code.co_name == "trace_types"
+            or self.should_trace
+            and not self.should_trace(code)
         ):
             return self
         try:

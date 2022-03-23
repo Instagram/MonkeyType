@@ -15,10 +15,12 @@ from monkeytype.tracing import CallTrace
 logger = logging.getLogger(__name__)
 
 
-DEFAULT_TABLE = 'monkeytype_call_traces'
+DEFAULT_TABLE = "monkeytype_call_traces"
 
 
-def create_call_trace_table(conn: sqlite3.Connection, table: str = DEFAULT_TABLE) -> None:
+def create_call_trace_table(
+    conn: sqlite3.Connection, table: str = DEFAULT_TABLE
+) -> None:
     query = """
 CREATE TABLE IF NOT EXISTS {table} (
   created_at  TEXT,
@@ -27,7 +29,9 @@ CREATE TABLE IF NOT EXISTS {table} (
   arg_types   TEXT,
   return_type TEXT,
   yield_type  TEXT);
-""".format(table=table)
+""".format(
+        table=table
+    )
     with conn:
         conn.execute(query)
 
@@ -36,14 +40,18 @@ QueryValue = Union[str, int]
 ParameterizedQuery = Tuple[str, List[QueryValue]]
 
 
-def make_query(table: str, module: str, qualname: Optional[str], limit: int) -> ParameterizedQuery:
+def make_query(
+    table: str, module: str, qualname: Optional[str], limit: int
+) -> ParameterizedQuery:
     raw_query = """
     SELECT
         module, qualname, arg_types, return_type, yield_type
     FROM {table}
     WHERE
         module == ?
-    """.format(table=table)
+    """.format(
+        table=table
+    )
     values: List[QueryValue] = [module]
     if qualname is not None:
         raw_query += " AND qualname LIKE ? || '%'"
@@ -64,7 +72,7 @@ class SQLiteStore(CallTraceStore):
         self.table = table
 
     @classmethod
-    def make_store(cls, connection_string: str) -> 'CallTraceStore':
+    def make_store(cls, connection_string: str) -> "CallTraceStore":
         conn = sqlite3.connect(connection_string)
         create_call_trace_table(conn)
         return cls(conn)
@@ -72,19 +80,26 @@ class SQLiteStore(CallTraceStore):
     def add(self, traces: Iterable[CallTrace]) -> None:
         values = []
         for row in serialize_traces(traces):
-            values.append((datetime.datetime.now(), row.module, row.qualname,
-                           row.arg_types, row.return_type, row.yield_type))
+            values.append(
+                (
+                    datetime.datetime.now(),
+                    row.module,
+                    row.qualname,
+                    row.arg_types,
+                    row.return_type,
+                    row.yield_type,
+                )
+            )
         with self.conn:
             self.conn.executemany(
-                'INSERT INTO {table} VALUES (?, ?, ?, ?, ?, ?)'.format(table=self.table),
-                values
+                "INSERT INTO {table} VALUES (?, ?, ?, ?, ?, ?)".format(
+                    table=self.table
+                ),
+                values,
             )
 
     def filter(
-        self,
-        module: str,
-        qualname_prefix: Optional[str] = None,
-        limit: int = 2000
+        self, module: str, qualname_prefix: Optional[str] = None, limit: int = 2000
     ) -> List[CallTraceThunk]:
         sql_query, values = make_query(self.table, module, qualname_prefix, limit)
         with self.conn:
@@ -95,9 +110,13 @@ class SQLiteStore(CallTraceStore):
     def list_modules(self) -> List[str]:
         with self.conn:
             cur = self.conn.cursor()
-            cur.execute("""
+            cur.execute(
+                """
                         SELECT module FROM {table}
                         GROUP BY module
                         ORDER BY date(created_at) DESC
-                        """.format(table=self.table))
+                        """.format(
+                    table=self.table
+                )
+            )
             return [row[0] for row in cur.fetchall() if row[0]]

@@ -42,10 +42,10 @@ def typed_dict_to_dict(typ: type) -> TypeDict:
     for k, v in typ.__annotations__.items():
         elem_types[k] = type_to_dict(v)
     return {
-        'module': typ.__module__,
-        'qualname': typ.__qualname__,
-        'elem_types': elem_types,
-        'is_typed_dict': True,
+        "module": typ.__module__,
+        "qualname": typ.__qualname__,
+        "elem_types": elem_types,
+        "is_typed_dict": True,
     }
 
 
@@ -61,39 +61,39 @@ def type_to_dict(typ: type) -> TypeDict:
 
     # Union and Any are special cases that aren't actually types.
     if is_union(typ):
-        qualname = 'Union'
+        qualname = "Union"
     elif is_any(typ):
-        qualname = 'Any'
+        qualname = "Any"
     elif is_generic(typ):
         qualname = qualname_of_generic(typ)
     else:
         qualname = typ.__qualname__
     d: TypeDict = {
-        'module': typ.__module__,
-        'qualname': qualname,
+        "module": typ.__module__,
+        "qualname": qualname,
     }
-    elem_types = getattr(typ, '__args__', None)
+    elem_types = getattr(typ, "__args__", None)
     if elem_types and is_generic(typ):
         # empty typing.Tuple is weird; the spec says it should be Tuple[()],
         # which results in __args__ of `((),)`
         if elem_types == ((),):
             elem_types = ()
-        d['elem_types'] = [type_to_dict(t) for t in elem_types]
+        d["elem_types"] = [type_to_dict(t) for t in elem_types]
     return d
 
 
 _HIDDEN_BUILTIN_TYPES: Dict[str, type] = {
     # Types that are inaccessible by their names in the builtins module.
-    'NoneType': NoneType,
-    'NotImplementedType': NotImplementedType,
-    'mappingproxy': mappingproxy,
+    "NoneType": NoneType,
+    "NotImplementedType": NotImplementedType,
+    "mappingproxy": mappingproxy,
 }
 
 
 def typed_dict_from_dict(d: TypeDict) -> type:
-    return TypedDict(d['qualname'],
-                     {k: type_from_dict(v)
-                      for k, v in d['elem_types'].items()})
+    return TypedDict(
+        d["qualname"], {k: type_from_dict(v) for k, v in d["elem_types"].items()}
+    )
 
 
 def type_from_dict(d: TypeDict) -> type:
@@ -103,23 +103,19 @@ def type_from_dict(d: TypeDict) -> type:
         NameLookupError if we can't reify the specified type
         InvalidTypeError if the named type isn't actually a type
     """
-    module, qualname = d['module'], d['qualname']
-    if d.get('is_typed_dict', False):
+    module, qualname = d["module"], d["qualname"]
+    if d.get("is_typed_dict", False):
         return typed_dict_from_dict(d)
-    if module == 'builtins' and qualname in _HIDDEN_BUILTIN_TYPES:
+    if module == "builtins" and qualname in _HIDDEN_BUILTIN_TYPES:
         typ = _HIDDEN_BUILTIN_TYPES[qualname]
     else:
         typ = get_name_in_module(module, qualname)
-    if not (
-        isinstance(typ, type) or
-        is_any(typ) or
-        is_generic(typ)
-    ):
+    if not (isinstance(typ, type) or is_any(typ) or is_generic(typ)):
         raise InvalidTypeError(
             f"Attribute specified by '{qualname}' in module '{module}' "
             f"is of type {type(typ)}, not type."
         )
-    elem_type_dicts = d.get('elem_types')
+    elem_type_dicts = d.get("elem_types")
     if elem_type_dicts is not None and is_generic(typ):
         elem_types = tuple(type_from_dict(e) for e in elem_type_dicts)
         # mypy complains that a value of type `type` isn't indexable. That's
@@ -166,12 +162,12 @@ TypeDecoder = Callable[[str], type]
 
 
 def maybe_decode_type(decode: TypeDecoder, encoded: Optional[str]) -> Optional[type]:
-    if (encoded is None) or (encoded == 'null'):
+    if (encoded is None) or (encoded == "null"):
         return None
     return decode(encoded)
 
 
-CallTraceRowT = TypeVar('CallTraceRowT', bound='CallTraceRow')
+CallTraceRowT = TypeVar("CallTraceRowT", bound="CallTraceRow")
 
 
 class CallTraceRow(CallTraceThunk):
@@ -183,7 +179,7 @@ class CallTraceRow(CallTraceThunk):
         qualname: str,
         arg_types: str,
         return_type: Optional[str],
-        yield_type: Optional[str]
+        yield_type: Optional[str],
     ) -> None:
         self.module = module
         self.qualname = qualname

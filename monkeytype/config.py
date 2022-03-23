@@ -23,6 +23,7 @@ class Config(metaclass=ABCMeta):
     """A Config ties together concrete implementations of the different abstractions
     that make up a typical deployment of MonkeyType.
     """
+
     @abstractmethod
     def trace_store(self) -> CallTraceStore:
         """Return the CallTraceStore for storage/retrieval of call traces."""
@@ -76,12 +77,12 @@ class Config(metaclass=ABCMeta):
         return 0
 
 
-lib_paths = {sysconfig.get_path(n) for n in ['stdlib', 'purelib', 'platlib']}
+lib_paths = {sysconfig.get_path(n) for n in ["stdlib", "purelib", "platlib"]}
 # if in a virtualenv, also exclude the real stdlib location
-venv_real_prefix = getattr(sys, 'real_prefix', None)
+venv_real_prefix = getattr(sys, "real_prefix", None)
 if venv_real_prefix:
     lib_paths.add(
-        sysconfig.get_path('stdlib', vars={'installed_base': venv_real_prefix})
+        sysconfig.get_path("stdlib", vars={"installed_base": venv_real_prefix})
     )
 LIB_PATHS = tuple(pathlib.Path(p).resolve() for p in lib_paths if p is not None)
 
@@ -97,14 +98,14 @@ def _startswith(a: pathlib.Path, b: pathlib.Path) -> bool:
 def default_code_filter(code: CodeType) -> bool:
     """A CodeFilter to exclude stdlib and site-packages."""
     # Filter code without a source file
-    if not code.co_filename or code.co_filename[0] == '<':
+    if not code.co_filename or code.co_filename[0] == "<":
         return False
 
     filename = pathlib.Path(code.co_filename).resolve()
     # if MONKEYTYPE_TRACE_MODULES is defined, trace only specified packages or modules
-    trace_modules_str = os.environ.get('MONKEYTYPE_TRACE_MODULES')
+    trace_modules_str = os.environ.get("MONKEYTYPE_TRACE_MODULES")
     if trace_modules_str is not None:
-        trace_modules = trace_modules_str.split(',')
+        trace_modules = trace_modules_str.split(",")
         # try to remove lib_path to only check package and module names
         for lib_path in LIB_PATHS:
             try:
@@ -118,7 +119,7 @@ def default_code_filter(code: CodeType) -> bool:
 
 
 class DefaultConfig(Config):
-    DB_PATH_VAR = 'MT_DB_PATH'
+    DB_PATH_VAR = "MT_DB_PATH"
 
     def type_rewriter(self) -> TypeRewriter:
         return DEFAULT_REWRITER
