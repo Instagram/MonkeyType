@@ -55,7 +55,7 @@ def is_forward_ref(typ: Any) -> bool:
 
 
 def make_forward_ref(s: str) -> type:
-    return ForwardRef(s)
+    return ForwardRef(s)  # type: ignore
 
 
 def repr_forward_ref() -> str:
