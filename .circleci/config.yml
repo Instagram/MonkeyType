@@ -124,6 +124,16 @@ jobs:
             pipenv run flake8
 
       - run:
+          name: Format with black
+          command: |
+            pipenv run black --check --diff monkeytype
+
+      - run:
+          name: Format with isort
+          command: |
+            pipenv run isort --check --diff monkeytype
+
+      - run:
           name: Typecheck
           command: |
             pipenv run mypy monkeytype
@@ -182,9 +192,19 @@ jobs:
           key: v3-dependencies-{{ checksum "Pipfile.lock" }}
 
       - run:
-          name: Lint
+          name: Lint with flake8
           command: |
             pipenv run flake8
+
+      - run:
+          name: Format with black
+          command: |
+            pipenv run black --check --diff monkeytype
+
+      - run:
+          name: Format with isort
+          command: |
+            pipenv run isort --check --diff monkeytype
 
       - run:
           name: Typecheck
