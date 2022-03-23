@@ -9,10 +9,7 @@ import enum
 import inspect
 import logging
 import re
-from abc import (
-    ABCMeta,
-    abstractmethod,
-)
+from abc import ABCMeta, abstractmethod
 from typing import (
     Any,
     Callable,
@@ -28,15 +25,14 @@ from typing import (
 
 from monkeytype.compat import (
     is_any,
-    is_union,
-    is_generic,
-    qualname_of_generic,
     is_forward_ref,
+    is_generic,
+    is_union,
     make_forward_ref,
+    qualname_of_generic,
 )
 from monkeytype.typing import field_annotations
 from monkeytype.util import pascal_case
-
 
 try:
     from django.utils.functional import cached_property  # type: ignore
@@ -44,10 +40,7 @@ except ImportError:
     cached_property = None
 
 
-from monkeytype.tracing import (
-    CallTrace,
-    CallTraceLogger,
-)
+from monkeytype.tracing import CallTrace, CallTraceLogger
 from monkeytype.typing import (
     GenericTypeRewriter,
     NoneType,
@@ -58,7 +51,6 @@ from monkeytype.typing import (
     shrink_types,
 )
 from monkeytype.util import get_name_in_module
-
 
 logger = logging.getLogger(__name__)
 

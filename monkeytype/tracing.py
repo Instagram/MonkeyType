@@ -5,27 +5,14 @@
 # LICENSE file in the root directory of this source tree.
 import inspect
 import logging
-import opcode
 import random
 import sys
-from abc import (
-    ABCMeta,
-    abstractmethod,
-)
+from abc import ABCMeta, abstractmethod
 from contextlib import contextmanager
-from types import (
-    CodeType,
-    FrameType,
-)
-from typing import (
-    Any,
-    Callable,
-    Dict,
-    Iterator,
-    Optional,
-    Union,
-    cast,
-)
+from types import CodeType, FrameType
+from typing import Any, Callable, Dict, Iterator, Optional, Union, cast
+
+import opcode
 
 try:
     from django.utils.functional import cached_property  # type: ignore
@@ -34,7 +21,6 @@ except ImportError:
 
 from monkeytype.typing import get_type
 from monkeytype.util import get_func_fqname
-
 
 logger = logging.getLogger(__name__)
 

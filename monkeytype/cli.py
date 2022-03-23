@@ -12,18 +12,12 @@ import os
 import os.path
 import runpy
 import sys
+from pathlib import Path
+from typing import IO, TYPE_CHECKING, List, Optional, Tuple
 
 from libcst import parse_module
 from libcst.codemod import CodemodContext
 from libcst.codemod.visitors import ApplyTypeAnnotationsVisitor
-from pathlib import Path
-from typing import (
-    IO,
-    List,
-    Optional,
-    Tuple,
-    TYPE_CHECKING,
-)
 
 from monkeytype import trace
 from monkeytype.config import Config
@@ -36,7 +30,6 @@ from monkeytype.stubs import (
 from monkeytype.tracing import CallTrace
 from monkeytype.typing import NoOpRewriter
 from monkeytype.util import get_name_in_module
-
 
 if TYPE_CHECKING:
     # This is not present in Python 3.6.1, so not safe for runtime import

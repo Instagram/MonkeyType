@@ -5,23 +5,17 @@
 # LICENSE file in the root directory of this source tree.
 import importlib
 import inspect
-import types
 import re
+import types
 
 try:
     from django.utils.functional import cached_property  # type: ignore
 except ImportError:
     cached_property = None
 
-from typing import (
-    Any,
-    Callable,
-)
+from typing import Any, Callable
 
-from monkeytype.exceptions import (
-    InvalidTypeError,
-    NameLookupError,
-)
+from monkeytype.exceptions import InvalidTypeError, NameLookupError
 
 
 def get_func_fqname(func: Callable) -> str:

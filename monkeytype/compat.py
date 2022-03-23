@@ -3,7 +3,8 @@
 #
 # This source code is licensed under the BSD-style license found in the
 # LICENSE file in the root directory of this source tree.
-from typing import Any, Union, _GenericAlias, ForwardRef  # type: ignore
+from typing import Any, ForwardRef, Union, _GenericAlias  # type: ignore
+
 from mypy_extensions import _TypedDictMeta  # type: ignore
 
 

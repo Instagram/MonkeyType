@@ -3,15 +3,9 @@
 #
 # This source code is licensed under the BSD-style license found in the
 # LICENSE file in the root directory of this source tree.
-from typing import (
-    ContextManager,
-    Optional,
-)
+from typing import ContextManager, Optional
 
-from monkeytype.config import (
-    Config,
-    get_default_config,
-)
+from monkeytype.config import Config, get_default_config
 from monkeytype.tracing import trace_calls
 
 __version__ = "22.2.0.dev1"
