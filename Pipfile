@@ -4,6 +4,8 @@ verify_ssl = true
 name = "pypi"
 
 [dev-packages]
+black = "*"
+isort = "*"
 flake8 = "*"
 pytest = "*"
 mypy = "*"
