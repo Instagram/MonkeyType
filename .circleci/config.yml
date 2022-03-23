@@ -46,9 +46,19 @@ jobs:
           key: v3-dependencies-{{ checksum "Pipfile.lock" }}
 
       - run:
-          name: lint
+          name: lint with flake8
           command: |
             pipenv run flake8
+
+      - run:
+          name: format with black
+          command: |
+            pipenv run black --diff monkeytype
+
+      - run:
+          name: format with isort
+          command: |
+            pipenv run isort --check monkeytype
 
       - run:
           name: typecheck
