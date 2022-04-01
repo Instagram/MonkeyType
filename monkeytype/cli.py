@@ -13,7 +13,7 @@ import os.path
 import runpy
 import sys
 from pathlib import Path
-from typing import IO, TYPE_CHECKING, List, Optional, Tuple, Callable
+from typing import IO, TYPE_CHECKING, Callable, List, Optional, Tuple
 
 from libcst import parse_module
 from libcst.codemod import CodemodContext
@@ -137,7 +137,12 @@ class HandlerError(Exception):
     pass
 
 
-def run_all_modules(handler: Callable[[argparse.Namespace, IO, IO], None], args: argparse.Namespace, stdout: IO, stderr: IO) -> None:
+def run_all_modules(
+    handler: Callable[[argparse.Namespace, IO, IO], None],
+    args: argparse.Namespace,
+    stdout: IO,
+    stderr: IO,
+) -> None:
     args.all = False
     modules = args.config.trace_store().list_modules()
     for module in module_path(modules):
@@ -151,6 +156,7 @@ def run_all_modules(handler: Callable[[argparse.Namespace, IO, IO], None], args:
         except Exception as e:
             if not args.ignore_errors_in_all:
                 raise e
+
 
 def apply_stub_using_libcst(
     stub: str, source: str, overwrite_existing_annotations: bool
@@ -357,7 +363,8 @@ qualname format.""",
         help="Ignore any errors while applying with `--all`.",
     )
     apply_parser.add_argument(
-        "-a", "--all",
+        "-a",
+        "--all",
         action="store_true",
         default=False,
         help="Apply all traces to modules listed on `monkeytype list-modules`.",
@@ -415,7 +422,8 @@ qualname format.""",
         help="Ignore any errors while generating stubs with `--all`.",
     )
     apply_parser.add_argument(
-        "-a", "--all",
+        "-a",
+        "--all",
         action="store_true",
         default=False,
         help="Generate stubs of all modules listed on `monkeytype list-modules`.",
