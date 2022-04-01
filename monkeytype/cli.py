@@ -146,7 +146,6 @@ def run_all_modules(
     stdout: IO[str],
     stderr: IO[str],
 ) -> None:
-    args.all = False
     modules = args.config.trace_store().list_modules()
     for module in module_path(modules):
         try:
@@ -183,8 +182,7 @@ def apply_stub_using_libcst(
 def apply_stub_handler(
     args: argparse.Namespace, stdout: IO[str], stderr: IO[str]
 ) -> None:
-    if args.all:
-        run_all_modules(apply_stub_handler, args, stdout, stderr)
+    """Handler for `monkeytype apply`"""
     stub = get_stub(args, stdout, stderr)
     if stub is None:
         complain_about_no_traces(args, stderr)
@@ -200,6 +198,13 @@ def apply_stub_handler(
     )
     source_path.write_text(source_with_types)
     print(source_with_types, file=stdout)
+
+
+def apply_all_stubs_handler(
+    args: argparse.Namespace, stdout: IO[str], stderr: IO[str]
+) -> None:
+    """Handler for `monkeytype apply-all`"""
+    run_all_modules(apply_stub_handler, args, stdout, stderr)
 
 
 def get_diff(
@@ -228,8 +233,7 @@ def get_diff(
 def print_stub_handler(
     args: argparse.Namespace, stdout: IO[str], stderr: IO[str]
 ) -> None:
-    if args.all:
-        run_all_modules(print_stub_handler, args, stdout, stderr)
+    """Handler for `monkeytype stub`"""
     output, file = None, stdout
     if args.diff:
         output = get_diff(args, stdout, stderr)
@@ -241,6 +245,13 @@ def print_stub_handler(
         complain_about_no_traces(args, stderr)
         return
     print(output, file=file)
+
+
+def print_all_stubs_handler(
+    args: argparse.Namespace, stdout: IO[str], stderr: IO[str]
+) -> None:
+    """Handler for `monkeytype stub-all`"""
+    run_all_modules(print_stub_handler, args, stdout, stderr)
 
 
 def list_modules_handler(
@@ -369,20 +380,35 @@ def main(argv: List[str], stdout: IO[str], stderr: IO[str]) -> int:
         const=ExistingAnnotationStrategy.IGNORE,
         help="Ignore existing annotations when applying stubs from traces.",
     )
-    apply_parser.add_argument(
-        "--ignore-errors-in-all",
+    apply_parser.set_defaults(handler=apply_stub_handler)
+
+    # parser for `monkeytype apply-all`
+    apply_all_parser = subparsers.add_parser(
+        "apply-all",
+        help="Generate and apply all stubs",
+        description="Generate and apply all stubs",
+    )
+    apply_all_parser.add_argument(
+        "--sample-count",
+        action="store_true",
+        default=False,
+        help="Print to stderr the numbers of traces stubs are based on",
+    )
+    apply_all_parser.add_argument(
+        "--ignore-existing-annotations",
+        action="store_const",
+        dest="existing_annotation_strategy",
+        default=ExistingAnnotationStrategy.REPLICATE,
+        const=ExistingAnnotationStrategy.IGNORE,
+        help="Ignore existing annotations when applying stubs from traces.",
+    )
+    apply_all_parser.add_argument(
+        "--ignore-errors",
         action="store_true",
         default=False,
         help="Ignore any errors while applying with `--all`.",
     )
-    apply_parser.add_argument(
-        "-a",
-        "--all",
-        action="store_true",
-        default=False,
-        help="Apply all traces to modules listed on `monkeytype list-modules`.",
-    )
-    apply_parser.set_defaults(handler=apply_stub_handler)
+    apply_all_parser.set_defaults(handler=apply_all_stubs_handler)
 
     # parser for `monkeytype stub`
     stub_parser = subparsers.add_parser(
@@ -431,20 +457,48 @@ def main(argv: List[str], stdout: IO[str], stderr: IO[str]) -> int:
         default=False,
         help="Compare stubs generated with and without considering existing annotations.",
     )
-    stub_parser.add_argument(
-        "--ignore-errors-in-all",
+    stub_parser.set_defaults(handler=print_stub_handler)
+
+    # parser for `monkeytype stub-all`
+    stub_all_parser = subparsers.add_parser(
+        "stub-all", help="Generate all stubs", description="Generate all stubs"
+    )
+    stub_all_parser.add_argument(
+        "--sample-count",
+        action="store_true",
+        default=False,
+        help="Print to stderr the numbers of traces stubs are based on",
+    )
+    group = stub_all_parser.add_mutually_exclusive_group()
+    group.add_argument(
+        "--ignore-existing-annotations",
+        action="store_const",
+        dest="existing_annotation_strategy",
+        default=ExistingAnnotationStrategy.REPLICATE,
+        const=ExistingAnnotationStrategy.IGNORE,
+        help="Ignore existing annotations and generate stubs only from traces.",
+    )
+    group.add_argument(
+        "--omit-existing-annotations",
+        action="store_const",
+        dest="existing_annotation_strategy",
+        default=ExistingAnnotationStrategy.REPLICATE,
+        const=ExistingAnnotationStrategy.OMIT,
+        help="Omit from stub any existing annotations in source. Implied by --apply.",
+    )
+    stub_all_parser.add_argument(
+        "--diff",
+        action="store_true",
+        default=False,
+        help="Compare stubs generated with and without considering existing annotations.",
+    )
+    stub_all_parser.add_argument(
+        "--ignore-errors",
         action="store_true",
         default=False,
         help="Ignore any errors while generating stubs with `--all`.",
     )
-    stub_parser.add_argument(
-        "-a",
-        "--all",
-        action="store_true",
-        default=False,
-        help="Generate stubs of all modules listed on `monkeytype list-modules`.",
-    )
-    stub_parser.set_defaults(handler=print_stub_handler)
+    stub_all_parser.set_defaults(handler=print_all_stubs_handler)
 
     # parser for `monkeytype list-modules`
     list_modules_parser = subparsers.add_parser(
