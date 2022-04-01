@@ -147,7 +147,7 @@ def run_all_modules(
     stderr: IO[str],
 ) -> None:
     modules = args.config.trace_store().list_modules()
-    for module in module_path(modules):
+    for module in modules:
         try:
             if type(module) is str:
                 print(f"[{module}]", file=stdout)
