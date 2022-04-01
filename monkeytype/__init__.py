@@ -11,7 +11,7 @@ from monkeytype.tracing import trace_calls
 __version__ = "22.2.0.dev1"
 
 
-def trace(config: Optional[Config] = None) -> ContextManager:
+def trace(config: Optional[Config] = None) -> ContextManager[None]:
     """Context manager to trace and log all calls.
 
     Simple wrapper around `monkeytype.tracing.trace_calls` that uses trace

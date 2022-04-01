@@ -3,9 +3,9 @@
 #
 # This source code is licensed under the BSD-style license found in the
 # LICENSE file in the root directory of this source tree.
-from typing import Any, ForwardRef, Union, _GenericAlias  # type: ignore
+from typing import Any, ForwardRef, Union, _GenericAlias  # type: ignore[attr-defined]
 
-from mypy_extensions import _TypedDictMeta  # type: ignore
+from mypy_extensions import _TypedDictMeta  # type: ignore[attr-defined]
 
 
 def is_typed_dict(typ: type) -> bool:
@@ -23,7 +23,7 @@ def is_union(typ: Any) -> bool:
 
 try:
     # Python 3.9
-    from typing import _SpecialGenericAlias  # type: ignore
+    from typing import _SpecialGenericAlias  # type: ignore[attr-defined]
 
     def is_generic(typ: Any) -> bool:
         return (
@@ -43,19 +43,19 @@ def is_generic_of(typ: Any, gen: Any) -> bool:
 
 
 def qualname_of_generic(typ: Any) -> str:
-    return typ._name or typ.__origin__._name or typ.__origin__.__qualname__
+    return str(typ._name or typ.__origin__._name or typ.__origin__.__qualname__)
 
 
 def name_of_generic(typ: Any) -> str:
-    return typ._name or typ.__origin__._name or typ.__origin__.__name__
+    return str(typ._name or typ.__origin__._name or typ.__origin__.__name__)
 
 
 def is_forward_ref(typ: Any) -> bool:
     return isinstance(typ, ForwardRef)
 
 
-def make_forward_ref(s: str) -> type:
-    return ForwardRef(s)  # type: ignore
+def make_forward_ref(s: str) -> ForwardRef:
+    return ForwardRef(s)
 
 
 def repr_forward_ref() -> str:

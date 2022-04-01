@@ -1,0 +1,80 @@
+name: Test
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    env:
+      WORKON_HOME: "~/.venvs"
+    strategy:
+        fail-fast: false
+        matrix:
+            python-version: ["3.7", "3.8", "3.9", "3.10"]
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Restore pip cache
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-${{ matrix.python-version }}-pip-${{ hashFiles('**/Pipfile.lock') }}
+        restore-keys: ${{ runner.os }}-${{ matrix.python-version }}-pip-
+
+    - name: Restore pipenv cache
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pipenv
+        key: ${{ runner.os }}-${{ matrix.python-version }}-pipenv-${{ hashFiles('**/Pipfile.lock') }}
+        restore-keys: ${{ runner.os }}-${{ matrix.python-version }}-pipenv-
+
+    - name: Install dependencies
+      run: |
+        pip install pipenv
+        pipenv install -d
+
+    - name: Lint with flake8
+      run: |
+        pipenv run flake8
+
+    - name: Format with black
+      run: |
+        pipenv run black --check --diff monkeytype
+
+    - name: Format with isort
+      run: |
+        pipenv run isort --check --diff monkeytype
+
+    - name: Typecheck
+      run: |
+        pipenv run mypy monkeytype
+
+    - name: Run tests
+      run: |
+        pipenv run pytest
+
+    - name: Upload htmldoc
+      uses: actions/upload-artifact@v2
+      with:
+        name: htmlcov
+        path: htmlcov
+
+    - name: Build docs
+      run: |
+        cd doc
+        pipenv run make html
+
+    - name: Upload doc
+      uses: actions/upload-artifact@v2
+      with:
+        name: doc
+        path: doc/_build/html

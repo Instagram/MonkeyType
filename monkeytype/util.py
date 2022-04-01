@@ -7,23 +7,19 @@ import importlib
 import inspect
 import re
 import types
+from typing import Any, Callable, Optional
 
-try:
-    from django.utils.functional import cached_property  # type: ignore
-except ImportError:
-    cached_property = None
-
-from typing import Any, Callable
+from django.utils.functional import cached_property
 
 from monkeytype.exceptions import InvalidTypeError, NameLookupError
 
 
-def get_func_fqname(func: Callable) -> str:
+def get_func_fqname(func: Callable[..., Any]) -> str:
     """Return the fully qualified function name."""
     return func.__module__ + "." + func.__qualname__
 
 
-def get_func_in_module(module: str, qualname: str) -> Callable:
+def get_func_in_module(module: str, qualname: str) -> Callable[..., Any]:
     """Return the function specified by qualname in module.
 
     Raises:
@@ -50,13 +46,13 @@ def get_func_in_module(module: str, qualname: str) -> Callable:
         raise InvalidTypeError(
             f"{module}.{qualname} is of type '{type(func)}', not function."
         )
-    return func
+    return func  # type: ignore[no-any-return]
 
 
 def get_name_in_module(
     module: str,
     qualname: str,
-    attr_getter: Callable[[Any, str], Any] = None,
+    attr_getter: Optional[Callable[[Any, str], Any]] = None,
 ) -> Any:
     """Return the python object specified by qualname in module.
 
