@@ -13,7 +13,7 @@ import os.path
 import runpy
 import sys
 from pathlib import Path
-from typing import IO, TYPE_CHECKING, List, Optional, Tuple
+from typing import IO, TYPE_CHECKING, List, Optional, Tuple, Callable
 
 from libcst import parse_module
 from libcst.codemod import CodemodContext
@@ -137,6 +137,21 @@ class HandlerError(Exception):
     pass
 
 
+def run_all_modules(handler: Callable[[argparse.Namespace, IO, IO], None], args: argparse.Namespace, stdout: IO, stderr: IO) -> None:
+    args.all = False
+    modules = args.config.trace_store().list_modules()
+    for module in module_path(modules):
+        try:
+            if type(module) is str:
+                print(f"[{module}]", file=stdout)
+                args.module_path = module_path(module)
+                handler(args, stdout, stderr)
+            else:
+                raise ValueError(f"Given module path is not a string: {repr(module)}")
+        except Exception as e:
+            if not args.ignore_errors_in_all:
+                raise e
+
 def apply_stub_using_libcst(
     stub: str, source: str, overwrite_existing_annotations: bool
 ) -> str:
@@ -157,6 +172,9 @@ def apply_stub_using_libcst(
 
 
 def apply_stub_handler(args: argparse.Namespace, stdout: IO, stderr: IO) -> None:
+    if args.all:
+        run_all_modules(apply_stub_handler, args, stdout, stderr)
+
     stub = get_stub(args, stdout, stderr)
     if stub is None:
         complain_about_no_traces(args, stderr)
@@ -196,6 +214,8 @@ def get_diff(args: argparse.Namespace, stdout: IO, stderr: IO) -> Optional[str]:
 
 
 def print_stub_handler(args: argparse.Namespace, stdout: IO, stderr: IO) -> None:
+    if args.all:
+        run_all_modules(print_stub_handler, args, stdout, stderr)
     output, file = None, stdout
     if args.diff:
         output = get_diff(args, stdout, stderr)
@@ -237,9 +257,11 @@ def update_args_from_config(args: argparse.Namespace) -> None:
 
 
 def main(argv: List[str], stdout: IO, stderr: IO) -> int:
+    """Main function for CLI"""
     parser = argparse.ArgumentParser(
         description="Generate and apply stub files from collected type information.",
     )
+    # common options
     parser.add_argument(
         "--disable-type-rewriting",
         action="store_true",
@@ -277,6 +299,7 @@ def main(argv: List[str], stdout: IO, stderr: IO) -> int:
 
     subparsers = parser.add_subparsers(title="commands", dest="command")
 
+    # parser for `monkeytype run`
     run_parser = subparsers.add_parser(
         "run",
         help="Run a Python script under MonkeyType tracing",
@@ -296,6 +319,7 @@ def main(argv: List[str], stdout: IO, stderr: IO) -> int:
     )
     run_parser.set_defaults(handler=run_handler)
 
+    # parser for `monkeytype apply`
     apply_parser = subparsers.add_parser(
         "apply",
         help="Generate and apply a stub",
@@ -326,8 +350,21 @@ qualname format.""",
         const=ExistingAnnotationStrategy.IGNORE,
         help="Ignore existing annotations when applying stubs from traces.",
     )
+    apply_parser.add_argument(
+        "--ignore-errors-in-all",
+        action="store_true",
+        default=False,
+        help="Ignore any errors while applying with `--all`.",
+    )
+    apply_parser.add_argument(
+        "-a", "--all",
+        action="store_true",
+        default=False,
+        help="Apply all traces to modules listed on `monkeytype list-modules`.",
+    )
     apply_parser.set_defaults(handler=apply_stub_handler)
 
+    # parser for `monkeytype stub`
     stub_parser = subparsers.add_parser(
         "stub", help="Generate a stub", description="Generate a stub"
     )
@@ -371,8 +408,21 @@ qualname format.""",
         default=False,
         help="Compare stubs generated with and without considering existing annotations.",
     )
+    apply_parser.add_argument(
+        "--ignore-errors-in-all",
+        action="store_true",
+        default=False,
+        help="Ignore any errors while generating stubs with `--all`.",
+    )
+    apply_parser.add_argument(
+        "-a", "--all",
+        action="store_true",
+        default=False,
+        help="Generate stubs of all modules listed on `monkeytype list-modules`.",
+    )
     stub_parser.set_defaults(handler=print_stub_handler)
 
+    # parser for `monkeytype list-modules`
     list_modules_parser = subparsers.add_parser(
         "list-modules",
         help="Listing of the unique set of module traces",
