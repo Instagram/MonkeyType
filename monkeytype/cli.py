@@ -12,6 +12,7 @@ import os
 import os.path
 import runpy
 import sys
+import textwrap
 from pathlib import Path
 from typing import IO, TYPE_CHECKING, Callable, List, Optional, Tuple
 
@@ -334,13 +335,16 @@ def main(argv: List[str], stdout: IO, stderr: IO) -> int:
     apply_parser.add_argument(
         "module_path",
         type=module_path,
-        help="""A string of the form <module>[:<qualname>] (e.g.
-my.module:Class.method). This specifies the set of functions/methods for which
-we want to generate stubs.  For example, 'foo.bar' will generate stubs for
-anything in the module 'foo.bar', while 'foo.bar:Baz' will only generate stubs
-for methods attached to the class 'Baz' in module 'foo.bar'. See
-https://www.python.org/dev/peps/pep-3155/ for a detailed description of the
-qualname format.""",
+        help=textwrap.dedent(
+            """\
+            A string of the form <module>[:<qualname>] (e.g.
+            my.module:Class.method). This specifies the set of functions/methods for which
+            we want to generate stubs.  For example, 'foo.bar' will generate stubs for
+            anything in the module 'foo.bar', while 'foo.bar:Baz' will only generate stubs
+            for methods attached to the class 'Baz' in module 'foo.bar'. See
+            https://www.python.org/dev/peps/pep-3155/ for a detailed description of the
+            qualname format."""
+        ),
     )
     apply_parser.add_argument(
         "--sample-count",
@@ -378,13 +382,16 @@ qualname format.""",
     stub_parser.add_argument(
         "module_path",
         type=module_path,
-        help="""A string of the form <module>[:<qualname>] (e.g.
-my.module:Class.method). This specifies the set of functions/methods for which
-we want to generate stubs.  For example, 'foo.bar' will generate stubs for
-anything in the module 'foo.bar', while 'foo.bar:Baz' will only generate stubs
-for methods attached to the class 'Baz' in module 'foo.bar'. See
-https://www.python.org/dev/peps/pep-3155/ for a detailed description of the
-qualname format.""",
+        help=textwrap.dedent(
+            """\
+            A string of the form <module>[:<qualname>] (e.g.
+            my.module:Class.method). This specifies the set of functions/methods for which
+            we want to generate stubs.  For example, 'foo.bar' will generate stubs for
+            anything in the module 'foo.bar', while 'foo.bar:Baz' will only generate stubs
+            for methods attached to the class 'Baz' in module 'foo.bar'. See
+            https://www.python.org/dev/peps/pep-3155/ for a detailed description of the
+            qualname format."""
+        ),
     )
     stub_parser.add_argument(
         "--sample-count",
