@@ -415,13 +415,13 @@ qualname format.""",
         default=False,
         help="Compare stubs generated with and without considering existing annotations.",
     )
-    apply_parser.add_argument(
+    stub_parser.add_argument(
         "--ignore-errors-in-all",
         action="store_true",
         default=False,
         help="Ignore any errors while generating stubs with `--all`.",
     )
-    apply_parser.add_argument(
+    stub_parser.add_argument(
         "-a",
         "--all",
         action="store_true",
