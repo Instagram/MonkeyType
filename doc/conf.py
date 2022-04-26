@@ -62,10 +62,10 @@ author = 'Matt Page & Carl Meyer'
 # built documents.
 #
 
-with open(os.path.join(os.path.dirname(os.path.abspath('.')), 'monkeytype', '__init__.py')) as f:
+with open(os.path.join(os.path.dirname(os.path.abspath('.')), 'setup.cfg')) as f:
     for line in f:
-        if line.startswith('__version__ ='):
-            version_from_code = line.split('=')[1].strip().strip('"\'')
+        if line.startswith('version ='):
+            version_from_code = line.split('=')[1].strip()
 
 # The short X.Y version.
 version = '.'.join(version_from_code.split('.')[:3])
