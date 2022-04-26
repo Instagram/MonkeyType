@@ -8,8 +8,6 @@ from typing import ContextManager, Optional
 from monkeytype.config import Config, get_default_config
 from monkeytype.tracing import trace_calls
 
-__version__ = "22.2.0.dev1"
-
 
 def trace(config: Optional[Config] = None) -> ContextManager[None]:
     """Context manager to trace and log all calls.

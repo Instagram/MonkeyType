@@ -6,7 +6,7 @@ How to release MonkeyType
    digits of the current year, ``M`` is the current month (no leading zero, but
    might be two digits), and ``X`` just increments, starting at ``0`` for the first
    release in a month (can also be multiple digits if needed).
-2. Update ``monkeytype/__init__.py``: change ``__version__`` to the same
+2. Update ``setup.cfg``: change ``version`` to the same
    version as above.
 3. Commit these changes with the commit message "Version YY.M.X" (replacing with
    the real version).
@@ -16,6 +16,6 @@ How to release MonkeyType
 6. Upload the packages to PyPI:
    ``pipenv run twine upload -s dist/MonkeyType-YY.M.X-py3-none-any.whl dist/MonkeyType-YY.M.X.tar.gz``
 7. Add a new "main" heading to ``CHANGES.rst`` and bump the version number in
-   ``monkeytype/__init__.py`` to the next micro version, with ``.dev1`` appended
+   ``setup.cfg`` to the next micro version, with ``.dev1`` appended
    (e.g. after releasing ``18.5.1``, bump to ``18.5.2.dev1``). Commit this.
 8. Push everything to GitHub: ``git push && git push --tags``.
