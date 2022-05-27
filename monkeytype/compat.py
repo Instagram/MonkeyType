@@ -43,11 +43,19 @@ def is_generic_of(typ: Any, gen: Any) -> bool:
 
 
 def qualname_of_generic(typ: Any) -> str:
-    return str(typ._name or typ.__origin__._name or typ.__origin__.__qualname__)
+    return str(
+        getattr(typ, "_name", None)
+        or getattr(typ.__origin__, "_name", None)
+        or typ.__origin__.__qualname__
+    )
 
 
 def name_of_generic(typ: Any) -> str:
-    return str(typ._name or typ.__origin__._name or typ.__origin__.__name__)
+    return str(
+        getattr(typ, "_name", None)
+        or getattr(typ.__origin__, "_name", None)
+        or typ.__origin__.__name__
+    )
 
 
 def is_forward_ref(typ: Any) -> bool:
