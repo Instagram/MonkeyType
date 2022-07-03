@@ -147,7 +147,7 @@ def shrink_types(types, max_typed_dict_size):
         return types[0]
 
     # If they are all lists, shrink their argument types. This way, we avoid
-    # rewriting heterogenous anonymous TypedDicts to Dict.
+    # rewriting heterogeneous anonymous TypedDicts to Dict.
     if all(is_list(typ) for typ in types):
         annotation = shrink_types(
             (getattr(typ, "__args__")[0] for typ in types), max_typed_dict_size
