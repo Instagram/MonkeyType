@@ -73,6 +73,9 @@ def type_to_dict(typ: type) -> TypeDict:
         "qualname": qualname,
     }
     elem_types = getattr(typ, "__args__", None)
+    # in Python 3.11, for Tuple[()] elem_types will be ()
+    if qualname == 'Tuple' and elem_types == ():
+        d["elem_types"] = []
     if elem_types and is_generic(typ):
         # empty typing.Tuple is weird; the spec says it should be Tuple[()],
         # which results in __args__ of `((),)`
