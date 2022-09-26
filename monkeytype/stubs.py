@@ -357,7 +357,8 @@ class RenderAnnotation(GenericTypeRewriter[str]):
         )
 
     def make_builtin_tuple(self, elements: Iterable[str]) -> str:
-        return ", ".join(elements) if elements else "()"
+        res = ', '.join(elements)
+        return res if res else "()"
 
     def make_container_type(self, container_type: str, elements: str) -> str:
         return f"{container_type}[{elements}]"
