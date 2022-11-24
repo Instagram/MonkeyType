@@ -50,3 +50,25 @@ disable coverage measurement for that run, and vice versa.
 
 .. _coverage.py: https://coverage.readthedocs.io/
 .. _sys.setprofile: https://docs.python.org/3/library/sys.html#sys.setprofile
+
+MonkeyType stopped generating TypedDicts.
+-----------------------------------------
+
+Since 19.11.2 TypedDict generation is disabled by default.
+To enable it, create a config file ``monkeytype_config.py`` with the following content::
+
+    from monkeytype.config import DefaultConfig
+
+    class MyConfig(DefaultConfig):
+        ...
+        def max_typed_dict_size(self) -> int:
+            """
+            The maximum size of string-keyed dictionary for which per-key value types
+            will be stored, and (if the traced keys and value types are consistent),
+            a TypedDict will be emitted instead of Dict.
+            Return 0 to disable per-key type tracking and TypedDict generation.
+            """
+            return 10
+
+
+    CONFIG = MyConfig()
