@@ -11,8 +11,8 @@ from typing import (
 )
 
 import pytest
-from django.utils.functional import cached_property
 
+from monkeytype.compat import cached_property
 from monkeytype.tracing import (
     CallTrace,
     CallTraceLogger,
@@ -64,9 +64,10 @@ class GetFuncHelper:
     def a_property(self) -> Optional[FrameType]:
         return inspect.currentframe()
 
-    @cached_property
-    def a_cached_property(self) -> Optional[FrameType]:
-        return inspect.currentframe()
+    if cached_property:
+        @cached_property
+        def a_cached_property(self) -> Optional[FrameType]:
+            return inspect.currentframe()
 
 
 def a_module_function() -> Optional[FrameType]:
@@ -74,17 +75,17 @@ def a_module_function() -> Optional[FrameType]:
 
 
 class TestGetFunc:
-    @pytest.mark.parametrize(
-        'frame, expected_func',
-        [
-            (GetFuncHelper.a_static_method(), GetFuncHelper.a_static_method),
-            (GetFuncHelper.a_class_method(), GetFuncHelper.a_class_method.__func__),
-            (GetFuncHelper().an_instance_method(), GetFuncHelper.an_instance_method),
-            (a_module_function(), a_module_function),
-            (GetFuncHelper().a_property, GetFuncHelper.a_property.fget),
-            (GetFuncHelper().a_cached_property, GetFuncHelper.a_cached_property.func),
-        ],
-    )
+    cases = [
+        (GetFuncHelper.a_static_method(), GetFuncHelper.a_static_method),
+        (GetFuncHelper.a_class_method(), GetFuncHelper.a_class_method.__func__),
+        (GetFuncHelper().an_instance_method(), GetFuncHelper.an_instance_method),
+        (a_module_function(), a_module_function),
+        (GetFuncHelper().a_property, GetFuncHelper.a_property.fget),
+    ]
+    if cached_property:
+        cases.append((GetFuncHelper().a_cached_property, GetFuncHelper.a_cached_property.func))
+
+    @pytest.mark.parametrize('frame, expected_func', cases)
     def test_get_func(self, frame, expected_func):
         assert get_func(frame) == expected_func
 

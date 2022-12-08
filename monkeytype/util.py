@@ -9,8 +9,7 @@ import re
 import types
 from typing import Any, Callable, Optional
 
-from django.utils.functional import cached_property
-
+from monkeytype.compat import cached_property
 from monkeytype.exceptions import InvalidTypeError, NameLookupError
 
 

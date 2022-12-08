@@ -43,7 +43,10 @@ class CallTraceStore(metaclass=ABCMeta):
 
         This is a factory function that is intended to be used by the CLI.
         """
-        pass
+        raise NotImplementedError(
+            f"Your CallTraceStore ({cls.__module__}.{cls.__name__}) "
+            f"does not implement make_store()"
+        )
 
     def list_modules(self) -> List[str]:
         """List of traced modules from the backing store"""

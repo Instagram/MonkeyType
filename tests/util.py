@@ -11,7 +11,8 @@ from typing import (
     List,
     Optional,
 )
-from django.utils.functional import cached_property
+
+from monkeytype.compat import cached_property
 
 
 class Dummy:
@@ -38,9 +39,10 @@ class Dummy:
     def a_settable_property(self, unused) -> Optional[FrameType]:
         return inspect.currentframe()
 
-    @cached_property
-    def a_cached_property(self) -> Optional[FrameType]:
-        return inspect.currentframe()
+    if cached_property:
+        @cached_property
+        def a_cached_property(self) -> Optional[FrameType]:
+            return inspect.currentframe()
 
 
 class Outer:
