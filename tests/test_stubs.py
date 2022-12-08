@@ -25,10 +25,11 @@ from typing import (
     TypeVar,
     Union,
 )
+from unittest import skipIf
 
 import pytest
 
-from monkeytype.compat import make_forward_ref
+from monkeytype.compat import cached_property, make_forward_ref
 from monkeytype.stubs import (
     AttributeStub,
     ClassStub,
@@ -237,6 +238,7 @@ class TestFunctionStub:
         ])
         assert stub.render() == expected
 
+    @skipIf(cached_property is None, "install Django to run this test")
     def test_cached_property(self):
         stub = FunctionStub('test',
                             inspect.signature(Dummy.a_cached_property.func), FunctionKind.DJANGO_CACHED_PROPERTY)
@@ -1021,62 +1023,73 @@ async def an_async_func() -> None:
 
 
 class TestFunctionKind:
+    cases = [
+        (Dummy.a_static_method, FunctionKind.STATIC),
+        (Dummy.a_class_method.__func__, FunctionKind.CLASS),
+        (Dummy.an_instance_method, FunctionKind.INSTANCE),
+        (Dummy.a_property.fget, FunctionKind.PROPERTY),
+        (a_module_func, FunctionKind.MODULE),
+    ]
+    if cached_property:
+        cases.append((Dummy.a_cached_property.func, FunctionKind.DJANGO_CACHED_PROPERTY))
+
     @pytest.mark.parametrize(
         'func, expected',
-        [
-            (Dummy.a_static_method, FunctionKind.STATIC),
-            (Dummy.a_class_method.__func__, FunctionKind.CLASS),
-            (Dummy.an_instance_method, FunctionKind.INSTANCE),
-            (Dummy.a_property.fget, FunctionKind.PROPERTY),
-            (Dummy.a_cached_property.func, FunctionKind.DJANGO_CACHED_PROPERTY),
-            (a_module_func, FunctionKind.MODULE),
-        ],
+        cases,
     )
     def test_from_callable(self, func, expected):
         assert FunctionKind.from_callable(func) == expected
 
 
 class TestFunctionDefinition:
+    cases = [
+        (Dummy.a_static_method, False),
+        (Dummy.a_class_method.__func__, True),
+        (Dummy.an_instance_method, True),
+        (Dummy.a_property.fget, True),
+        (a_module_func, False),
+    ]
+    if cached_property:
+        cases.append((Dummy.a_cached_property.func, True))
+
     @pytest.mark.parametrize(
         'func, expected',
-        [
-            (Dummy.a_static_method, False),
-            (Dummy.a_class_method.__func__, True),
-            (Dummy.an_instance_method, True),
-            (Dummy.a_property.fget, True),
-            (Dummy.a_cached_property.func, True),
-            (a_module_func, False),
-        ],
+        cases,
     )
     def test_has_self(self, func, expected):
         defn = FunctionDefinition.from_callable(func)
         assert defn.has_self == expected
 
-    @pytest.mark.parametrize(
-        'func, expected',
-        [
-            (Dummy.a_static_method, FunctionDefinition(
-                'tests.util', 'Dummy.a_static_method', FunctionKind.STATIC,
-                Signature.from_callable(Dummy.a_static_method))),
-            (Dummy.a_class_method.__func__, FunctionDefinition(
-                'tests.util', 'Dummy.a_class_method', FunctionKind.CLASS,
-                Signature.from_callable(Dummy.a_class_method.__func__))),
-            (Dummy.an_instance_method, FunctionDefinition(
-                'tests.util', 'Dummy.an_instance_method', FunctionKind.INSTANCE,
-                Signature.from_callable(Dummy.an_instance_method))),
-            (Dummy.a_property.fget, FunctionDefinition(
-                'tests.util', 'Dummy.a_property', FunctionKind.PROPERTY,
-                Signature.from_callable(Dummy.a_property.fget))),
+    cases = [
+        (Dummy.a_static_method, FunctionDefinition(
+            'tests.util', 'Dummy.a_static_method', FunctionKind.STATIC,
+            Signature.from_callable(Dummy.a_static_method))),
+        (Dummy.a_class_method.__func__, FunctionDefinition(
+            'tests.util', 'Dummy.a_class_method', FunctionKind.CLASS,
+            Signature.from_callable(Dummy.a_class_method.__func__))),
+        (Dummy.an_instance_method, FunctionDefinition(
+            'tests.util', 'Dummy.an_instance_method', FunctionKind.INSTANCE,
+            Signature.from_callable(Dummy.an_instance_method))),
+        (Dummy.a_property.fget, FunctionDefinition(
+            'tests.util', 'Dummy.a_property', FunctionKind.PROPERTY,
+            Signature.from_callable(Dummy.a_property.fget))),
+        (a_module_func, FunctionDefinition(
+            'tests.test_stubs', 'a_module_func', FunctionKind.MODULE,
+            Signature.from_callable(a_module_func))),
+        (an_async_func, FunctionDefinition(
+            'tests.test_stubs', 'an_async_func', FunctionKind.MODULE,
+            Signature.from_callable(a_module_func), is_async=True)),
+    ]
+    if cached_property:
+        cases.append(
             (Dummy.a_cached_property.func, FunctionDefinition(
                 'tests.util', 'Dummy.a_cached_property', FunctionKind.DJANGO_CACHED_PROPERTY,
-                Signature.from_callable(Dummy.a_cached_property.func))),
-            (a_module_func, FunctionDefinition(
-                'tests.test_stubs', 'a_module_func', FunctionKind.MODULE,
-                Signature.from_callable(a_module_func))),
-            (an_async_func, FunctionDefinition(
-                'tests.test_stubs', 'an_async_func', FunctionKind.MODULE,
-                Signature.from_callable(a_module_func), is_async=True)),
-        ],
+                Signature.from_callable(Dummy.a_cached_property.func)))
+        )
+
+    @pytest.mark.parametrize(
+        'func, expected',
+        cases,
     )
     def test_from_callable(self, func, expected):
         defn = FunctionDefinition.from_callable(func)

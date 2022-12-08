@@ -13,8 +13,8 @@ from types import CodeType, FrameType
 from typing import Any, Callable, Dict, Iterator, Optional, Union, cast
 
 import opcode
-from django.utils.functional import cached_property
 
+from monkeytype.compat import cached_property
 from monkeytype.typing import get_type
 from monkeytype.util import get_func_fqname
 

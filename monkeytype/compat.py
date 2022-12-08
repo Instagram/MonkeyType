@@ -7,6 +7,14 @@ from typing import Any, ForwardRef, Union, _GenericAlias  # type: ignore[attr-de
 
 from mypy_extensions import _TypedDictMeta  # type: ignore[attr-defined]
 
+try:
+    from django.utils.functional import cached_property as cp  # type: ignore[import]
+
+    cached_property = cp
+except ImportError:
+    # Django may not be installed
+    cached_property = None
+
 
 def is_typed_dict(typ: type) -> bool:
     """Test indirectly using _TypedDictMeta because TypedDict does not support `isinstance`."""

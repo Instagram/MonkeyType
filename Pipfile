@@ -5,17 +5,18 @@ name = "pypi"
 
 [dev-packages]
 black = "*"
+typed_ast = {markers="python_version < '3.8.0'"}
 isort = "*"
-flake8 = "*"
+# flake8 6.0 requires Python 3.8
+flake8 = "<6"
 pytest = "*"
+exceptiongroup = {markers="python_version < '3.11.0'"}
 mypy = "*"
 e1839a8 = {path = ".",editable = true}
 sphinx = "*"
 twine = "*"
-django = "*"
+tomli = "*"
 tox = "*"
+setuptools_rust = "*"
 libcst = "*"
 importlib_metadata = "*"
-
-[pipenv]
-keep_outdated = true

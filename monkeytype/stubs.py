@@ -24,9 +24,8 @@ from typing import (
     Union,
 )
 
-from django.utils.functional import cached_property
-
 from monkeytype.compat import (
+    cached_property,
     is_any,
     is_forward_ref,
     is_generic,

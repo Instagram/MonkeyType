@@ -4,7 +4,9 @@
 # This source code is licensed under the BSD-style license found in the
 # LICENSE file in the root directory of this source tree.
 import pytest
+from unittest import skipIf
 
+from monkeytype.compat import cached_property
 from monkeytype.exceptions import (
     InvalidTypeError,
     NameLookupError,
@@ -62,6 +64,7 @@ class TestGetFuncInModule:
         with pytest.raises(InvalidTypeError):
             get_func_in_module(func.__module__, func.__qualname__)
 
+    @skipIf(cached_property is None, "install Django to run this test")
     def test_get_cached_property(self):
         """We should be able to look up properties that are decorated
         with django.utils.functional.cached_property"""
