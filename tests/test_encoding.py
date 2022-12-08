@@ -52,13 +52,15 @@ class TestTypeConversion:
             Outer.Inner,
             Any,
             # Simple generics
+            Dict,
             Dict[Any, Any],
             Dict[int, str],
+            List,
             List[str],
             Optional[str],
             Set[int],
             Tuple[int, str, str],
-            Tuple,  # unparameterized tuple
+            Tuple,
             Tuple[()],  # empty tuple
             Type[Outer],
             Union[Outer.Inner, str, None],

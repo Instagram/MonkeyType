@@ -5,7 +5,7 @@
 # LICENSE file in the root directory of this source tree.
 import json
 import logging
-from typing import Any, Callable, Dict, Iterable, Optional, Type, TypeVar
+from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple, Type, TypeVar
 
 from mypy_extensions import TypedDict
 
@@ -73,9 +73,11 @@ def type_to_dict(typ: type) -> TypeDict:
         "qualname": qualname,
     }
     elem_types = getattr(typ, "__args__", None)
-    if elem_types and is_generic(typ):
+    # In Python < 3.9, bare generics still have args
+    is_bare_generic = typ in {Dict, List, Tuple}
+    if not is_bare_generic and elem_types is not None and is_generic(typ):
         # empty typing.Tuple is weird; the spec says it should be Tuple[()],
-        # which results in __args__ of `((),)`
+        # which results in __args__ of `((),)` pre-Python 3.11
         if elem_types == ((),):
             elem_types = ()
         d["elem_types"] = [type_to_dict(t) for t in elem_types]
