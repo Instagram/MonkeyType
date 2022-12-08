@@ -7,6 +7,8 @@ main
 * Remove hard dependency on Django; ``django.utils.functional.cached_property``
   support is now conditionally enabled depending whether it is importable.
 
+* Add support for Python 3.11.
+
 
 22.2.0
 ------

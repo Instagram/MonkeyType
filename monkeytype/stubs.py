@@ -356,7 +356,8 @@ class RenderAnnotation(GenericTypeRewriter[str]):
         )
 
     def make_builtin_tuple(self, elements: Iterable[str]) -> str:
-        return ", ".join(elements) if elements else "()"
+        elems = list(elements)
+        return ", ".join(elems) if elems else "()"
 
     def make_container_type(self, container_type: str, elements: str) -> str:
         return f"{container_type}[{elements}]"
@@ -591,7 +592,7 @@ class ReplaceTypedDictsWithStubs(TypeRewriter):
         args = getattr(container, "__args__", None)
         if args is None:
             return container
-        elif args == ((),):  # special case of empty tuple `Tuple[()]`
+        elif args == ((),) or args == ():  # special case of empty tuple `Tuple[()]`
             elems: Tuple[Any, ...] = ()
         else:
             # Avoid adding a suffix for the first one so that
