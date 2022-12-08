@@ -4,6 +4,10 @@ Changelog
 main
 ----
 
+* Remove hard dependency on Django; ``django.utils.functional.cached_property``
+  support is now conditionally enabled depending whether it is importable.
+
+
 22.2.0
 ------
 
