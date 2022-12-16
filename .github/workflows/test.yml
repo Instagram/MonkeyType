@@ -17,9 +17,9 @@ jobs:
             python-version: ["3.7", "3.8", "3.9", "3.10", "3.11"]
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python-version }}
 
@@ -63,7 +63,7 @@ jobs:
         pipenv run pytest
 
     - name: Upload htmldoc
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: htmlcov
         path: htmlcov
@@ -74,7 +74,7 @@ jobs:
         pipenv run make html
 
     - name: Upload doc
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: doc
         path: doc/_build/html
