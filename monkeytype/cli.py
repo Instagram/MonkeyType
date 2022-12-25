@@ -13,7 +13,7 @@ import os.path
 import runpy
 import sys
 from pathlib import Path
-from typing import IO, TYPE_CHECKING, List, Optional, Tuple
+from typing import IO, TYPE_CHECKING, List, Optional, Tuple, Any
 
 from libcst import parse_module
 from libcst.codemod import CodemodContext
@@ -26,6 +26,8 @@ from monkeytype.stubs import (
     ExistingAnnotationStrategy,
     Stub,
     build_module_stubs_from_traces,
+    ModuleStub,
+    ImportMap,
 )
 from monkeytype.tracing import CallTrace
 from monkeytype.typing import NoOpRewriter
@@ -141,7 +143,8 @@ class HandlerError(Exception):
 
 def apply_stub_using_libcst(
     stub: str, source: str, overwrite_existing_annotations: bool,
-    contain_new_imports_in_type_checking_block: bool = False
+    contain_new_imports_in_type_checking_block: bool = False,
+    newly_imported_classes_map: Optional[ImportMap] = None,
 ) -> str:
     try:
         stub_module = parse_module(stub)
@@ -160,6 +163,30 @@ def apply_stub_using_libcst(
     return transformed_source_module.code
 
 
+def get_newly_imported_classes(
+    source_mod: Any, module_stub: ModuleStub
+) -> ImportMap:
+    imported_class_list: List[str] = []
+    for name, cls in inspect.getmembers(source_mod):
+        if name.startswith('__'):
+            continue
+        if inspect.isclass(cls):
+            imported_class_list.append(f'{cls.__module__}.{cls.__name__}')
+
+    import_map = ImportMap()
+    import_block_stub = module_stub.imports_stub
+
+    for mod, cls_list in import_block_stub.imports.items():
+        if mod == 'typing':
+            continue
+        for cls in cls_list:
+            klass = f"{mod}.{cls}"
+            if klass not in imported_class_list:
+                import_map[mod].add(cls)
+
+    return import_map
+
+
 def apply_stub_handler(
     args: argparse.Namespace, stdout: IO[str], stderr: IO[str]
 ) -> None:
@@ -169,6 +196,7 @@ def apply_stub_handler(
         return
     module = args.module_path[0]
     mod = importlib.import_module(module)
+    newly_imported_classes_map = get_newly_imported_classes(mod, stub)
     source_path = Path(inspect.getfile(mod))
     source_with_types = apply_stub_using_libcst(
         stub=stub.render(),
@@ -176,6 +204,7 @@ def apply_stub_handler(
         overwrite_existing_annotations=args.existing_annotation_strategy
         == ExistingAnnotationStrategy.IGNORE,
         contain_new_imports_in_type_checking_block=args.pep_563,
+        newly_imported_classes_map=newly_imported_classes_map
     )
     source_path.write_text(source_with_types)
     print(source_with_types, file=stdout)
