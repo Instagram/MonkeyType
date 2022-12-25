@@ -141,7 +141,7 @@ class HandlerError(Exception):
 
 def apply_stub_using_libcst(
     stub: str, source: str, overwrite_existing_annotations: bool,
-    use_future_annotations: bool = False
+    contain_new_imports_in_type_checking_block: bool = False
 ) -> str:
     try:
         stub_module = parse_module(stub)
@@ -151,7 +151,7 @@ def apply_stub_using_libcst(
             context,
             stub_module,
             overwrite_existing_annotations,
-            use_future_annotations=use_future_annotations,
+            use_future_annotations=contain_new_imports_in_type_checking_block,
         )
         transformer = ApplyTypeAnnotationsVisitor(context)
         transformed_source_module = transformer.transform_module(source_module)
@@ -175,7 +175,7 @@ def apply_stub_handler(
         source=source_path.read_text(),
         overwrite_existing_annotations=args.existing_annotation_strategy
         == ExistingAnnotationStrategy.IGNORE,
-        use_future_annotations=args.use_future_annotations,
+        contain_new_imports_in_type_checking_block=args.pep_563,
     )
     source_path.write_text(source_with_types)
     print(source_with_types, file=stdout)
@@ -340,10 +340,11 @@ qualname format.""",
         help="Ignore existing annotations when applying stubs from traces.",
     )
     apply_parser.add_argument(
-        "--use_future_annotations",
+        "--pep_563",
         action="store_true",
         default=False,
-        help="Add the \"from __future__ import annotation\" import at the top",
+        help="""Add the "from __future__ import annotation" import at the top
+and keep the newly imported modules inside the "if TYPE_CHECKING" block."""
     )
     apply_parser.set_defaults(handler=apply_stub_handler)
 
