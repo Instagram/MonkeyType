@@ -15,9 +15,9 @@ import sys
 from pathlib import Path
 from typing import IO, TYPE_CHECKING, List, Optional, Tuple, Any
 
-from libcst import parse_module
+from libcst import parse_module, Module
 from libcst.codemod import CodemodContext
-from libcst.codemod.visitors import ApplyTypeAnnotationsVisitor
+from libcst.codemod.visitors import ApplyTypeAnnotationsVisitor, AddImportsVisitor
 
 from monkeytype import trace
 from monkeytype.config import Config
@@ -140,6 +140,18 @@ class HandlerError(Exception):
     pass
 
 
+def add_new_imports_in_type_checking_block(
+        source_module: Module,
+        newly_imported_classes_map: ImportMap,
+) -> Module:
+    context = CodemodContext()
+    AddImportsVisitor.add_needed_import(context, "typing", "TYPE_CHECKING")
+    transformer = AddImportsVisitor(context)
+    transformed_source_module = transformer.transform_module(source_module)
+
+    return transformed_source_module
+
+
 def apply_stub_using_libcst(
     stub: str, source: str, overwrite_existing_annotations: bool,
     contain_new_imports_in_type_checking_block: bool = False,
@@ -157,6 +169,13 @@ def apply_stub_using_libcst(
         )
         transformer = ApplyTypeAnnotationsVisitor(context)
         transformed_source_module = transformer.transform_module(source_module)
+
+        if contain_new_imports_in_type_checking_block:
+            transformed_source_module = add_new_imports_in_type_checking_block(
+                transformed_source_module,
+                newly_imported_classes_map,
+            )
+
     except Exception as exception:
         raise HandlerError(f"Failed applying stub with libcst:\n{exception}")
     return transformed_source_module.code
