@@ -183,8 +183,6 @@ def get_newly_imported_classes(
             if klass not in imported_class_list:
                 import_map[mod].add(cls)
 
-    import_map['typing'].append('TYPE_CHECKING')
-
     return import_map
 
 
