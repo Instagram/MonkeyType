@@ -24,7 +24,6 @@ from monkeytype.config import Config
 from monkeytype.exceptions import MonkeyTypeError
 from monkeytype.stubs import (
     ExistingAnnotationStrategy,
-    Stub,
     build_module_stubs_from_traces,
     ModuleStub,
     ImportMap,
