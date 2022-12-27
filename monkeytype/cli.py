@@ -104,7 +104,7 @@ def display_sample_count(traces: List[CallTrace], stderr: IO[str]) -> None:
 
 def get_stub(
     args: argparse.Namespace, stdout: IO[str], stderr: IO[str]
-) -> Optional[Stub]:
+) -> Optional[ModuleStub]:
     module, qualname = args.module_path
     thunks = args.config.trace_store().filter(module, qualname, args.limit)
     traces = []
@@ -184,6 +184,8 @@ def get_newly_imported_classes(
             if klass not in imported_class_list:
                 import_map[mod].add(cls)
 
+    import_map['typing'].append('TYPE_CHECKING')
+
     return import_map
 
 
@@ -196,7 +198,11 @@ def apply_stub_handler(
         return
     module = args.module_path[0]
     mod = importlib.import_module(module)
-    newly_imported_classes_map = get_newly_imported_classes(mod, stub)
+
+    newly_imported_classes_map = ImportMap()
+    if args.pep_563:
+        newly_imported_classes_map = get_newly_imported_classes(mod, stub)
+
     source_path = Path(inspect.getfile(mod))
     source_with_types = apply_stub_using_libcst(
         stub=stub.render(),
