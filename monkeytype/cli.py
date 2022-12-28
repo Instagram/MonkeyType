@@ -166,20 +166,6 @@ def add_type_checking_import(source_module: Module) -> Module:
     return transformed_source_module
 
 
-class ModifiedRemoveImportsVisitor(RemoveImportsVisitor):
-    def __init__(
-            self,
-            context: CodemodContext,
-            unused_imports: Sequence[Tuple[str, Optional[str], Optional[str]]] = (),
-    ) -> None:
-        super().__init__(context, unused_imports)
-
-    def visit_Module(self, node: libcst.Module) -> None:
-        visitor = GatherImportsVisitor(self.context)
-        node.visit(visitor)
-        self._unused_imports = {k: v for (k, v) in visitor.unused_imports}
-
-
 class RemoveImportsTransformer(CSTTransformer):
     def __init__(
         self,
@@ -194,19 +180,19 @@ class RemoveImportsTransformer(CSTTransformer):
     ) -> Union[
         BaseSmallStatement, FlattenSentinel[BaseSmallStatement], RemovalSentinel
     ]:
-        return self._leave_import(original_node, updated_node)
+        names_to_keep = []
+        for name in updated_node.names:
+            module_name = name.evaluated_name
+            if module_name not in self.import_modules_to_remove:
+                names_to_keep.append(name.with_changes(comma=MaybeSentinel.DEFAULT))
+
+        if not names_to_keep:
+            return RemoveFromParent()
+        else:
+            return updated_node.with_changes(names=names_to_keep)
 
     def leave_ImportFrom(
         self, original_node: libcst.ImportFrom, updated_node: libcst.ImportFrom
-    ) -> Union[
-        BaseSmallStatement, FlattenSentinel[BaseSmallStatement], RemovalSentinel
-    ]:
-        return self._leave_import(original_node, updated_node)
-
-    def _leave_import(
-        self,
-        original_node: Union[libcst.Import, libcst.ImportFrom],
-        updated_node: Union[libcst.Import, libcst.ImportFrom],
     ) -> Union[
         BaseSmallStatement, FlattenSentinel[BaseSmallStatement], RemovalSentinel
     ]:
@@ -235,8 +221,8 @@ def remove_new_imports(
 
 def add_new_imports_in_type_checking_block(
     source_module: Module,
-    newly_imported_objects: Dict[str, Set[str]],
     newly_imported_modules: Set[str],
+    newly_imported_objects: Dict[str, Set[str]],
 ) -> Module:
     source_module = add_type_checking_import(source_module)
 
@@ -298,8 +284,8 @@ def apply_stub_using_libcst(
         if contain_new_imports_in_type_checking_block:
             transformed_source_module = add_new_imports_in_type_checking_block(
                 transformed_source_module,
-                newly_imported_objects,
                 newly_imported_modules,
+                newly_imported_objects,
             )
 
     except Exception as exception:
