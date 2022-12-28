@@ -233,7 +233,11 @@ def add_new_imports_in_type_checking_block(
 
     # Remove the newer imports since those are to be
     # shifted inside the if TYPE_CHECKING block
-    source_module = remove_new_imports(source_module, newly_imported_modules, newly_imported_objects)
+    source_module = remove_new_imports(
+        source_module,
+        newly_imported_modules,
+        newly_imported_objects,
+    )
 
     return source_module
 
