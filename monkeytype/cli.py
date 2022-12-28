@@ -28,13 +28,15 @@ from libcst import (
     parse_module,
     Module,
     CSTTransformer,
-    RemovalSentinel, FlattenSentinel, BaseSmallStatement, MaybeSentinel, RemoveFromParent,
+    RemovalSentinel, FlattenSentinel, BaseSmallStatement, MaybeSentinel, RemoveFromParent, If, Name, IndentedBlock,
+    SimpleStatementLine, ImportFrom, ImportAlias, Comma, Newline, SimpleWhitespace, LeftParen, ParenthesizedWhitespace,
+    TrailingWhitespace, RightParen, EmptyLine,
 )
 from libcst.codemod import CodemodContext
 from libcst.codemod.visitors import (
     ApplyTypeAnnotationsVisitor,
     AddImportsVisitor,
-    GatherImportsVisitor, RemoveImportsVisitor,
+    GatherImportsVisitor, RemoveImportsVisitor, ImportItem,
 )
 from libcst.helpers import get_absolute_module_from_package_for_import
 
@@ -219,6 +221,50 @@ def remove_new_imports(
     return transformed_source_module
 
 
+def get_import_module(
+    newly_imported_modules: Set[str],
+    newly_imported_objects: Dict[str, Set[str]],
+) -> Module:
+    empty_code = libcst.parse_module("")
+    context = CodemodContext()
+    imports: List[ImportItem] = []
+    for k, v_list in newly_imported_objects.items():
+        for v in v_list:
+            imports.append(ImportItem(k, v))
+
+    for mod in newly_imported_modules:
+        imports.append(ImportItem(mod))
+
+    context.scratch[AddImportsVisitor.CONTEXT_KEY] = imports
+    transformer = AddImportsVisitor(context)
+    transformed_source_module = transformer.transform_module(empty_code)
+
+    return transformed_source_module
+
+
+def replace_pass_with_imports(
+    placeholder_module: Module,
+    import_module: Module
+) -> Module:
+    return placeholder_module.with_deep_changes(
+        old_node=placeholder_module.body[0].body,
+        body=import_module.body,
+    )
+
+
+def add_if_type_checking_block(
+    source_module: Module,
+    newly_imported_modules: Set[str],
+    newly_imported_objects: Dict[str, Set[str]],
+) -> Module:
+    import_module = get_import_module(newly_imported_modules, newly_imported_objects)
+    placeholder_module = libcst.parse_module("if TYPE_CHECKING:\n    pass")
+    type_checking_block_module = replace_pass_with_imports(placeholder_module, import_module)
+
+    # Find the node number where TYPE_CHECKING was imported
+
+
+
 def add_new_imports_in_type_checking_block(
     source_module: Module,
     newly_imported_modules: Set[str],
@@ -234,6 +280,13 @@ def add_new_imports_in_type_checking_block(
     # Remove the newer imports since those are to be
     # shifted inside the if TYPE_CHECKING block
     source_module = remove_new_imports(
+        source_module,
+        newly_imported_modules,
+        newly_imported_objects,
+    )
+
+    # Add the new imports inside if TYPE_CHECKING block
+    source_module = add_if_type_checking_block(
         source_module,
         newly_imported_modules,
         newly_imported_objects,
