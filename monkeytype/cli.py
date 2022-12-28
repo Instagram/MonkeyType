@@ -151,7 +151,11 @@ class HandlerError(Exception):
     pass
 
 
-def add_new_imports_in_type_checking_block(source_module: Module) -> Module:
+def add_new_imports_in_type_checking_block(
+        source_module: Module,
+        newly_imported_objects: Dict[str, Set[str]],
+        newly_imported_modules: Set[str],
+) -> Module:
     context = CodemodContext()
     AddImportsVisitor.add_needed_import(context, "typing", "TYPE_CHECKING")
     transformer = AddImportsVisitor(context)
@@ -203,6 +207,8 @@ def apply_stub_using_libcst(
         if contain_new_imports_in_type_checking_block:
             transformed_source_module = add_new_imports_in_type_checking_block(
                 source_module,
+                newly_imported_objects,
+                newly_imported_modules,
             )
 
     except Exception as exception:
