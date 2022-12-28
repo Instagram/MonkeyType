@@ -390,7 +390,7 @@ def get_newly_imported_objects_and_modules(
     source_module_imports = gatherer.module_imports
 
     for k, v in stub_object_mapping.items():
-        stub_object_mapping[k] = v.difference(source_object_mapping[k])
+        stub_object_mapping[k] = v.difference(source_object_mapping.get(k, {}))
 
     return stub_object_mapping, stub_module_imports.difference(source_module_imports)
 
