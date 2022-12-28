@@ -325,7 +325,7 @@ def add_if_type_checking_block(
     newly_imported_objects: Dict[str, Set[str]],
 ) -> Module:
     import_module = get_import_module(newly_imported_modules, newly_imported_objects)
-    placeholder_module = libcst.parse_module("if TYPE_CHECKING:\n    pass")
+    placeholder_module = libcst.parse_module("\nif TYPE_CHECKING:\n    pass\n")
     type_checking_block_module = replace_pass_with_imports(placeholder_module, import_module)
 
     # Find the node number where TYPE_CHECKING was imported
