@@ -186,7 +186,9 @@ def get_newly_imported_objects_and_modules(
 
 
 def apply_stub_using_libcst(
-    stub: str, source: str, overwrite_existing_annotations: bool,
+    stub: str,
+    source: str,
+    overwrite_existing_annotations: bool,
     contain_new_imports_in_type_checking_block: bool = False,
 ) -> str:
     try:
