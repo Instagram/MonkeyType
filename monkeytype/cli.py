@@ -336,6 +336,12 @@ def add_if_type_checking_block(
     first_non_import_idx = get_first_non_import_idx(source_module, type_checking_import_index)
 
     # Insert type_checking_block_module at first_non_import_idx
+    updated_body_list = [
+        *source_module.body[:first_non_import_idx],
+        type_checking_block_module,
+        *source_module.body[first_non_import_idx:],
+    ]
+    return source_module.with_changes(body=updated_body_list)
 
 
 def add_new_imports_in_type_checking_block(
