@@ -43,6 +43,7 @@ from libcst.codemod.visitors import (
     ImportItem,
 )
 from libcst.helpers import get_absolute_module_from_package_for_import
+from libcst.metadata import ScopeProvider
 
 from monkeytype import trace
 from monkeytype.config import Config
@@ -256,6 +257,69 @@ def replace_pass_with_imports(
     )
 
 
+class TypeCheckingImportVisitor(libcst.CSTVisitor):
+    def __init__(self):
+        self.found = False
+
+    def visit_ImportFrom(self, node: libcst.ImportFrom) -> Optional[bool]:
+        module_name = get_absolute_module_from_package_for_import(None, node)
+        if module_name != "typing":
+            return False
+
+        for name in node.names:
+            name_value = name.name.value
+            if name_value == "TYPE_CHECKING":
+                self.found = True
+                return False
+
+        return True
+
+
+def get_type_checking_import_index(source_module: Module) -> int:
+    type_checking_import_index = 0
+    for idx, node in enumerate(source_module.body):
+        visitor = TypeCheckingImportVisitor()
+        node.visit(visitor)
+        if visitor.found:
+            type_checking_import_index = idx
+            break
+
+    return type_checking_import_index
+
+
+class ImportVisitorWithScope(libcst.CSTVisitor):
+    def __init__(self):
+        self.found = False
+
+    def visit_ClassDef(self, node: libcst.ClassDef) -> Optional[bool]:
+        return False
+
+    def visit_FunctionDef(self, node: libcst.FunctionDef) -> Optional[bool]:
+        return False
+
+    def visit_Import(self, node: libcst.Import) -> Optional[bool]:
+        self.found = True
+        return True
+
+    def visit_ImportFrom(self, node: libcst.ImportFrom) -> Optional[bool]:
+        self.found = True
+        return True
+
+
+def get_first_non_import_idx(source_module: Module, type_checking_import_index: int) -> int:
+    first_non_import_idx = type_checking_import_index + 1
+    for idx, node in enumerate(source_module.body):
+        if idx <= type_checking_import_index:
+            continue
+        visitor = ImportVisitorWithScope()
+        node.visit(visitor)
+        if not visitor.found:
+            first_non_import_idx = idx
+            break
+
+    return first_non_import_idx
+
+
 def add_if_type_checking_block(
     source_module: Module,
     newly_imported_modules: Set[str],
@@ -266,7 +330,12 @@ def add_if_type_checking_block(
     type_checking_block_module = replace_pass_with_imports(placeholder_module, import_module)
 
     # Find the node number where TYPE_CHECKING was imported
+    type_checking_import_index = get_type_checking_import_index(source_module)
 
+    # Find the first non import statement after type_checking_import_index
+    first_non_import_idx = get_first_non_import_idx(source_module, type_checking_import_index)
+
+    # Insert type_checking_block_module at first_non_import_idx
 
 
 def add_new_imports_in_type_checking_block(
