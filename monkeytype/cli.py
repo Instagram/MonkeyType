@@ -43,7 +43,6 @@ from libcst.codemod.visitors import (
     ImportItem,
 )
 from libcst.helpers import get_absolute_module_from_package_for_import
-from libcst.metadata import ScopeProvider
 
 from monkeytype import trace
 from monkeytype.config import Config
