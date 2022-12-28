@@ -20,7 +20,8 @@ from typing import (
     Optional,
     Tuple,
     Dict,
-    Set, Sequence, Union,
+    Set,
+    Union,
 )
 
 import libcst
@@ -28,15 +29,18 @@ from libcst import (
     parse_module,
     Module,
     CSTTransformer,
-    RemovalSentinel, FlattenSentinel, BaseSmallStatement, MaybeSentinel, RemoveFromParent, If, Name, IndentedBlock,
-    SimpleStatementLine, ImportFrom, ImportAlias, Comma, Newline, SimpleWhitespace, LeftParen, ParenthesizedWhitespace,
-    TrailingWhitespace, RightParen, EmptyLine,
+    RemovalSentinel,
+    FlattenSentinel,
+    BaseSmallStatement,
+    MaybeSentinel,
+    RemoveFromParent,
 )
 from libcst.codemod import CodemodContext
 from libcst.codemod.visitors import (
     ApplyTypeAnnotationsVisitor,
     AddImportsVisitor,
-    GatherImportsVisitor, RemoveImportsVisitor, ImportItem,
+    GatherImportsVisitor,
+    ImportItem,
 )
 from libcst.helpers import get_absolute_module_from_package_for_import
 
