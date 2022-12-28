@@ -20,16 +20,23 @@ from typing import (
     Optional,
     Tuple,
     Dict,
-    Set,
+    Set, Sequence, Union,
 )
 
-from libcst import parse_module, Module
+import libcst
+from libcst import (
+    parse_module,
+    Module,
+    CSTTransformer,
+    RemovalSentinel, FlattenSentinel, BaseSmallStatement, MaybeSentinel, RemoveFromParent,
+)
 from libcst.codemod import CodemodContext
 from libcst.codemod.visitors import (
     ApplyTypeAnnotationsVisitor,
     AddImportsVisitor,
     GatherImportsVisitor, RemoveImportsVisitor,
 )
+from libcst.helpers import get_absolute_module_from_package_for_import
 
 from monkeytype import trace
 from monkeytype.config import Config
@@ -159,23 +166,95 @@ def add_type_checking_import(source_module: Module) -> Module:
     return transformed_source_module
 
 
+class ModifiedRemoveImportsVisitor(RemoveImportsVisitor):
+    def __init__(
+            self,
+            context: CodemodContext,
+            unused_imports: Sequence[Tuple[str, Optional[str], Optional[str]]] = (),
+    ) -> None:
+        super().__init__(context, unused_imports)
+
+    def visit_Module(self, node: libcst.Module) -> None:
+        visitor = GatherImportsVisitor(self.context)
+        node.visit(visitor)
+        self._unused_imports = {k: v for (k, v) in visitor.unused_imports}
+
+
+class RemoveImportsTransformer(CSTTransformer):
+    def __init__(
+        self,
+        import_modules_to_remove: Set[str],
+        import_objects_to_remove: Dict[str, Set[str]],
+    ) -> None:
+        self.import_modules_to_remove = import_modules_to_remove
+        self.import_objects_to_remove = import_objects_to_remove
+
+    def leave_Import(
+        self, original_node: libcst.Import, updated_node: libcst.Import
+    ) -> Union[
+        BaseSmallStatement, FlattenSentinel[BaseSmallStatement], RemovalSentinel
+    ]:
+        return self._leave_import(original_node, updated_node)
+
+    def leave_ImportFrom(
+        self, original_node: libcst.ImportFrom, updated_node: libcst.ImportFrom
+    ) -> Union[
+        BaseSmallStatement, FlattenSentinel[BaseSmallStatement], RemovalSentinel
+    ]:
+        return self._leave_import(original_node, updated_node)
+
+    def _leave_import(
+        self,
+        original_node: Union[libcst.Import, libcst.ImportFrom],
+        updated_node: Union[libcst.Import, libcst.ImportFrom],
+    ) -> Union[
+        BaseSmallStatement, FlattenSentinel[BaseSmallStatement], RemovalSentinel
+    ]:
+        names_to_keep = []
+        module_name = get_absolute_module_from_package_for_import(None, updated_node)
+        for name in updated_node.names:
+            name_value = name.name.value
+            if name_value not in self.import_objects_to_remove.get(module_name, {}):
+                names_to_keep.append(name.with_changes(comma=MaybeSentinel.DEFAULT))
+
+        if not names_to_keep:
+            return RemoveFromParent()
+        else:
+            return updated_node.with_changes(names=names_to_keep)
+
+
+def remove_new_imports(
+    source_module: Module,
+    import_modules_to_remove: Set[str],
+    import_objects_to_remove: Dict[str, Set[str]],
+) -> Module:
+    transformer = RemoveImportsTransformer(import_modules_to_remove, import_objects_to_remove)
+    transformed_source_module = source_module.visit(transformer)
+    return transformed_source_module
+
+
 def add_new_imports_in_type_checking_block(
-        source_module: Module,
-        newly_imported_objects: Dict[str, Set[str]],
-        newly_imported_modules: Set[str],
+    source_module: Module,
+    newly_imported_objects: Dict[str, Set[str]],
+    newly_imported_modules: Set[str],
 ) -> Module:
     source_module = add_type_checking_import(source_module)
 
     # Remove typing library since we do not want it
     # to be imported inside the if TYPE_CHECKING block
     newly_imported_objects.pop("typing", None)
-    newly_imported_modules.remove("typing")
+    newly_imported_modules.discard("typing")
+
+    # Remove the newer imports since those are to be
+    # shifted inside the if TYPE_CHECKING block
+    source_module = remove_new_imports(source_module, newly_imported_modules, newly_imported_objects)
 
     return source_module
 
 
 def get_newly_imported_objects_and_modules(
-        stub_module: Module, source_module: Module
+    stub_module: Module,
+    source_module: Module
 ) -> Tuple[Dict[str, Set[str]], Set[str]]:
     context = CodemodContext()
     gatherer = GatherImportsVisitor(context)
