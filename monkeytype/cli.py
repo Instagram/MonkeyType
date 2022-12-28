@@ -28,7 +28,7 @@ from libcst.codemod import CodemodContext
 from libcst.codemod.visitors import (
     ApplyTypeAnnotationsVisitor,
     AddImportsVisitor,
-    GatherImportsVisitor,
+    GatherImportsVisitor, RemoveImportsVisitor,
 )
 
 from monkeytype import trace
@@ -151,17 +151,27 @@ class HandlerError(Exception):
     pass
 
 
+def add_type_checking_import(source_module: Module) -> Module:
+    context = CodemodContext()
+    AddImportsVisitor.add_needed_import(context, "typing", "TYPE_CHECKING")
+    transformer = AddImportsVisitor(context)
+    transformed_source_module = transformer.transform_module(source_module)
+    return transformed_source_module
+
+
 def add_new_imports_in_type_checking_block(
         source_module: Module,
         newly_imported_objects: Dict[str, Set[str]],
         newly_imported_modules: Set[str],
 ) -> Module:
-    context = CodemodContext()
-    AddImportsVisitor.add_needed_import(context, "typing", "TYPE_CHECKING")
-    transformer = AddImportsVisitor(context)
-    transformed_source_module = transformer.transform_module(source_module)
+    source_module = add_type_checking_import(source_module)
 
-    return transformed_source_module
+    # Remove typing library since we do not want it
+    # to be imported inside the if TYPE_CHECKING block
+    newly_imported_objects.pop("typing", None)
+    newly_imported_modules.remove("typing")
+
+    return source_module
 
 
 def get_newly_imported_objects_and_modules(
@@ -208,7 +218,7 @@ def apply_stub_using_libcst(
 
         if contain_new_imports_in_type_checking_block:
             transformed_source_module = add_new_imports_in_type_checking_block(
-                source_module,
+                transformed_source_module,
                 newly_imported_objects,
                 newly_imported_modules,
             )
