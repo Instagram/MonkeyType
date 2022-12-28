@@ -37,7 +37,7 @@ from monkeytype.exceptions import MonkeyTypeError
 from monkeytype.stubs import (
     ExistingAnnotationStrategy,
     build_module_stubs_from_traces,
-    ModuleStub,
+    Stub,
 )
 from monkeytype.tracing import CallTrace
 from monkeytype.typing import NoOpRewriter
@@ -114,7 +114,7 @@ def display_sample_count(traces: List[CallTrace], stderr: IO[str]) -> None:
 
 def get_stub(
     args: argparse.Namespace, stdout: IO[str], stderr: IO[str]
-) -> Optional[ModuleStub]:
+) -> Optional[Stub]:
     module, qualname = args.module_path
     thunks = args.config.trace_store().filter(module, qualname, args.limit)
     traces = []
