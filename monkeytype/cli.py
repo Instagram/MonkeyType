@@ -21,28 +21,17 @@ from typing import (
     Tuple,
     Dict,
     Set,
-    Union,
 )
 
-import libcst
 from libcst import (
     parse_module,
     Module,
-    CSTTransformer,
-    RemovalSentinel,
-    FlattenSentinel,
-    BaseSmallStatement,
-    MaybeSentinel,
-    RemoveFromParent,
 )
 from libcst.codemod import CodemodContext
 from libcst.codemod.visitors import (
     ApplyTypeAnnotationsVisitor,
-    AddImportsVisitor,
     GatherImportsVisitor,
-    ImportItem,
 )
-from libcst.helpers import get_absolute_module_from_package_for_import
 
 from monkeytype import trace
 from monkeytype.config import Config
@@ -53,6 +42,7 @@ from monkeytype.stubs import (
     build_module_stubs_from_traces,
 )
 from monkeytype.tracing import CallTrace
+from monkeytype.type_checking_imports_transformer import MoveImportsToTypeCheckingBlockVisitor
 from monkeytype.typing import NoOpRewriter
 from monkeytype.util import get_name_in_module
 
@@ -164,218 +154,6 @@ class HandlerError(Exception):
     pass
 
 
-def add_type_checking_import(source_module: Module) -> Module:
-    context = CodemodContext()
-    AddImportsVisitor.add_needed_import(context, "typing", "TYPE_CHECKING")
-    transformer = AddImportsVisitor(context)
-    transformed_source_module = transformer.transform_module(source_module)
-    return transformed_source_module
-
-
-class RemoveImportsTransformer(CSTTransformer):
-    def __init__(
-        self,
-        import_modules_to_remove: Set[str],
-        import_objects_to_remove: Dict[str, Set[str]],
-    ) -> None:
-        self.import_modules_to_remove = import_modules_to_remove
-        self.import_objects_to_remove = import_objects_to_remove
-
-    def leave_Import(
-        self, original_node: libcst.Import, updated_node: libcst.Import
-    ) -> Union[
-        BaseSmallStatement, FlattenSentinel[BaseSmallStatement], RemovalSentinel
-    ]:
-        names_to_keep = []
-        for name in updated_node.names:
-            module_name = name.evaluated_name
-            if module_name not in self.import_modules_to_remove:
-                names_to_keep.append(name.with_changes(comma=MaybeSentinel.DEFAULT))
-
-        if not names_to_keep:
-            return RemoveFromParent()
-        else:
-            return updated_node.with_changes(names=names_to_keep)
-
-    def leave_ImportFrom(
-        self, original_node: libcst.ImportFrom, updated_node: libcst.ImportFrom
-    ) -> Union[
-        BaseSmallStatement, FlattenSentinel[BaseSmallStatement], RemovalSentinel
-    ]:
-        names_to_keep = []
-        module_name = get_absolute_module_from_package_for_import(None, updated_node)
-        for name in updated_node.names:
-            name_value = name.name.value
-            if name_value not in self.import_objects_to_remove.get(module_name, {}):
-                names_to_keep.append(name.with_changes(comma=MaybeSentinel.DEFAULT))
-
-        if not names_to_keep:
-            return RemoveFromParent()
-        else:
-            return updated_node.with_changes(names=names_to_keep)
-
-
-def remove_new_imports(
-    source_module: Module,
-    import_modules_to_remove: Set[str],
-    import_objects_to_remove: Dict[str, Set[str]],
-) -> Module:
-    transformer = RemoveImportsTransformer(import_modules_to_remove, import_objects_to_remove)
-    transformed_source_module = source_module.visit(transformer)
-    return transformed_source_module
-
-
-def get_import_module(
-    newly_imported_modules: Set[str],
-    newly_imported_objects: Dict[str, Set[str]],
-) -> Module:
-    empty_code = libcst.parse_module("")
-    context = CodemodContext()
-    imports: List[ImportItem] = []
-    for k, v_list in newly_imported_objects.items():
-        for v in v_list:
-            imports.append(ImportItem(k, v))
-
-    for mod in newly_imported_modules:
-        imports.append(ImportItem(mod))
-
-    context.scratch[AddImportsVisitor.CONTEXT_KEY] = imports
-    transformer = AddImportsVisitor(context)
-    transformed_source_module = transformer.transform_module(empty_code)
-
-    return transformed_source_module
-
-
-def replace_pass_with_imports(
-    placeholder_module: Module,
-    import_module: Module
-) -> Module:
-    return placeholder_module.with_deep_changes(
-        old_node=placeholder_module.body[0].body,
-        body=import_module.body,
-    )
-
-
-class TypeCheckingImportVisitor(libcst.CSTVisitor):
-    def __init__(self):
-        self.found = False
-
-    def visit_ImportFrom(self, node: libcst.ImportFrom) -> Optional[bool]:
-        module_name = get_absolute_module_from_package_for_import(None, node)
-        if module_name != "typing":
-            return False
-
-        for name in node.names:
-            name_value = name.name.value
-            if name_value == "TYPE_CHECKING":
-                self.found = True
-                return False
-
-        return True
-
-
-def get_type_checking_import_index(source_module: Module) -> int:
-    type_checking_import_index = 0
-    for idx, node in enumerate(source_module.body):
-        visitor = TypeCheckingImportVisitor()
-        node.visit(visitor)
-        if visitor.found:
-            type_checking_import_index = idx
-            break
-
-    return type_checking_import_index
-
-
-class ImportVisitorWithScope(libcst.CSTVisitor):
-    def __init__(self):
-        self.found = False
-
-    def visit_ClassDef(self, node: libcst.ClassDef) -> Optional[bool]:
-        return False
-
-    def visit_FunctionDef(self, node: libcst.FunctionDef) -> Optional[bool]:
-        return False
-
-    def visit_Import(self, node: libcst.Import) -> Optional[bool]:
-        self.found = True
-        return True
-
-    def visit_ImportFrom(self, node: libcst.ImportFrom) -> Optional[bool]:
-        self.found = True
-        return True
-
-
-def get_first_non_import_idx(source_module: Module, type_checking_import_index: int) -> int:
-    first_non_import_idx = type_checking_import_index + 1
-    for idx, node in enumerate(source_module.body):
-        if idx <= type_checking_import_index:
-            continue
-        visitor = ImportVisitorWithScope()
-        node.visit(visitor)
-        if not visitor.found:
-            first_non_import_idx = idx
-            break
-
-    return first_non_import_idx
-
-
-def add_if_type_checking_block(
-    source_module: Module,
-    newly_imported_modules: Set[str],
-    newly_imported_objects: Dict[str, Set[str]],
-) -> Module:
-    import_module = get_import_module(newly_imported_modules, newly_imported_objects)
-    if not import_module:
-        return source_module
-
-    placeholder_module = libcst.parse_module("\nif TYPE_CHECKING:\n    pass\n")
-    type_checking_block_module = replace_pass_with_imports(placeholder_module, import_module)
-
-    # Find the node number where TYPE_CHECKING was imported
-    type_checking_import_index = get_type_checking_import_index(source_module)
-
-    # Find the first non import statement after type_checking_import_index
-    first_non_import_idx = get_first_non_import_idx(source_module, type_checking_import_index)
-
-    # Insert type_checking_block_module at first_non_import_idx
-    updated_body_list = [
-        *source_module.body[:first_non_import_idx],
-        type_checking_block_module,
-        *source_module.body[first_non_import_idx:],
-    ]
-    return source_module.with_changes(body=updated_body_list)
-
-
-def add_new_imports_in_type_checking_block(
-    source_module: Module,
-    newly_imported_modules: Set[str],
-    newly_imported_objects: Dict[str, Set[str]],
-) -> Module:
-    source_module = add_type_checking_import(source_module)
-
-    # Remove typing library since we do not want it
-    # to be imported inside the if TYPE_CHECKING block
-    newly_imported_objects.pop("typing", None)
-    newly_imported_modules.discard("typing")
-
-    # Remove the newer imports since those are to be
-    # shifted inside the if TYPE_CHECKING block
-    source_module = remove_new_imports(
-        source_module,
-        newly_imported_modules,
-        newly_imported_objects,
-    )
-
-    # Add the new imports inside if TYPE_CHECKING block
-    source_module = add_if_type_checking_block(
-        source_module,
-        newly_imported_modules,
-        newly_imported_objects,
-    )
-
-    return source_module
-
-
 def get_newly_imported_objects_and_modules(
     stub_module: Module,
     source_module: Module
@@ -407,8 +185,6 @@ def apply_stub_using_libcst(
     try:
         stub_module = parse_module(stub)
         source_module = parse_module(source)
-        newly_imported_objects, newly_imported_modules = get_newly_imported_objects_and_modules(
-            stub_module, source_module)
         context = CodemodContext()
         ApplyTypeAnnotationsVisitor.store_stub_in_context(
             context,
@@ -420,11 +196,17 @@ def apply_stub_using_libcst(
         transformed_source_module = transformer.transform_module(source_module)
 
         if confine_new_imports_in_type_checking_block:
-            transformed_source_module = add_new_imports_in_type_checking_block(
-                transformed_source_module,
-                newly_imported_modules,
+            newly_imported_objects, newly_imported_modules = get_newly_imported_objects_and_modules(
+                stub_module, source_module)
+
+            context = CodemodContext()
+            MoveImportsToTypeCheckingBlockVisitor.store_imports_in_context(
+                context,
                 newly_imported_objects,
+                newly_imported_modules,
             )
+            transformer = MoveImportsToTypeCheckingBlockVisitor(context)
+            transformed_source_module = transformer.transform_module(transformed_source_module)
 
     except Exception as exception:
         raise HandlerError(f"Failed applying stub with libcst:\n{exception}")
