@@ -2,7 +2,9 @@ from collections import defaultdict
 from typing import (
     Dict,
     Set,
-    Union, List, Tuple, Optional,
+    Union,
+    List,
+    Tuple,
 )
 
 import libcst
@@ -15,13 +17,18 @@ from libcst import (
     MaybeSentinel,
     RemoveFromParent,
     ImportFrom,
-    FlattenSentinel, BaseCompoundStatement, SimpleStatementLine, CSTVisitor,
+    FlattenSentinel,
+    BaseCompoundStatement,
+    SimpleStatementLine,
 )
 from libcst.codemod import (
     ContextAwareTransformer,
     CodemodContext,
 )
-from libcst.codemod.visitors import AddImportsVisitor, ImportItem, GatherImportsVisitor
+from libcst.codemod.visitors import (
+    AddImportsVisitor,
+    ImportItem,
+    GatherImportsVisitor,)
 from libcst.helpers import get_absolute_module_from_package_for_import
 
 
