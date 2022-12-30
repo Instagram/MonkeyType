@@ -402,7 +402,7 @@ def apply_stub_using_libcst(
     stub: str,
     source: str,
     overwrite_existing_annotations: bool,
-    contain_new_imports_in_type_checking_block: bool = False,
+    confine_new_imports_in_type_checking_block: bool = False,
 ) -> str:
     try:
         stub_module = parse_module(stub)
@@ -414,12 +414,12 @@ def apply_stub_using_libcst(
             context,
             stub_module,
             overwrite_existing_annotations,
-            use_future_annotations=contain_new_imports_in_type_checking_block,
+            use_future_annotations=confine_new_imports_in_type_checking_block,
         )
         transformer = ApplyTypeAnnotationsVisitor(context)
         transformed_source_module = transformer.transform_module(source_module)
 
-        if contain_new_imports_in_type_checking_block:
+        if confine_new_imports_in_type_checking_block:
             transformed_source_module = add_new_imports_in_type_checking_block(
                 transformed_source_module,
                 newly_imported_modules,
@@ -447,7 +447,7 @@ def apply_stub_handler(
         source=source_path.read_text(),
         overwrite_existing_annotations=args.existing_annotation_strategy
         == ExistingAnnotationStrategy.IGNORE,
-        contain_new_imports_in_type_checking_block=args.pep_563,
+        confine_new_imports_in_type_checking_block=args.pep_563,
     )
     source_path.write_text(source_with_types)
     print(source_with_types, file=stdout)
