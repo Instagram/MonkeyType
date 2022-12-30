@@ -1,7 +1,4 @@
-from collections import defaultdict
 from typing import (
-    Dict,
-    Set,
     Union,
     List,
     Tuple,
@@ -42,18 +39,15 @@ class MoveImportsToTypeCheckingBlockVisitor(ContextAwareTransformer):
     ) -> None:
         super().__init__(context)
 
-        self.object_mappings_to_be_moved = defaultdict(set)
-        self.module_imports_to_be_moved = set()
+        self.import_items_to_be_moved: List[ImportItem] = []
 
     @staticmethod
     def store_imports_in_context(
         context: CodemodContext,
-        object_mappings_to_be_moved: Dict[str, Set[str]],
-        module_imports_to_be_moved: Set[str],
+        import_items_to_be_moved: List[ImportItem],
     ) -> None:
         context.scratch[MoveImportsToTypeCheckingBlockVisitor.CONTEXT_KEY] = (
-            object_mappings_to_be_moved,
-            module_imports_to_be_moved,
+            import_items_to_be_moved,
         )
 
     @staticmethod
@@ -65,28 +59,16 @@ class MoveImportsToTypeCheckingBlockVisitor(ContextAwareTransformer):
         return transformed_source_module
 
     def _remove_imports(self, tree: Module) -> Module:
-        transformer = RemoveImportsTransformer(
-            self.object_mappings_to_be_moved,
-            self.module_imports_to_be_moved
-        )
+        transformer = RemoveImportsTransformer(self.import_items_to_be_moved)
         transformed_source_module = tree.visit(transformer)
         return transformed_source_module
 
-    def _get_import_module(self):
+    def _get_import_module(self) -> Module:
         empty_code = libcst.parse_module("")
         context = CodemodContext()
-        imports: List[ImportItem] = []
-        for k, v_list in self.object_mappings_to_be_moved.items():
-            for v in v_list:
-                imports.append(ImportItem(k, v))
-
-        for mod in self.module_imports_to_be_moved:
-            imports.append(ImportItem(mod))
-
-        context.scratch[AddImportsVisitor.CONTEXT_KEY] = imports
+        context.scratch[AddImportsVisitor.CONTEXT_KEY] = self.import_items_to_be_moved
         transformer = AddImportsVisitor(context)
         transformed_source_module = transformer.transform_module(empty_code)
-
         return transformed_source_module
 
     @staticmethod
@@ -125,10 +107,7 @@ class MoveImportsToTypeCheckingBlockVisitor(ContextAwareTransformer):
         )
 
     def _add_if_type_checking_block(self, module: Module) -> Module:
-        if (
-            not self.object_mappings_to_be_moved
-            and not self.module_imports_to_be_moved
-        ):
+        if not self.import_items_to_be_moved:
             return module
 
         import_module = self._get_import_module()
@@ -150,6 +129,16 @@ class MoveImportsToTypeCheckingBlockVisitor(ContextAwareTransformer):
 
         return module.with_changes(body=updated_body_list)
 
+    @staticmethod
+    def _remove_typing_module(
+        import_item_list: List[ImportItem]
+    ) -> List[ImportItem]:
+        ret: List[ImportItem] = []
+        for import_item in import_item_list:
+            if import_item.module_name != 'typing':
+                ret.append(import_item)
+        return ret
+
     def transform_module_impl(
         self,
         tree: Module,
@@ -162,17 +151,15 @@ class MoveImportsToTypeCheckingBlockVisitor(ContextAwareTransformer):
         )
         if context_contents is not None:
             (
-                object_mappings_to_be_moved,
-                module_imports_to_be_moved,
+                import_items_to_be_moved,
             ) = context_contents
 
-            self.object_mappings_to_be_moved = object_mappings_to_be_moved
-            self.module_imports_to_be_moved = module_imports_to_be_moved
+            self.import_items_to_be_moved = import_items_to_be_moved
 
             # Remove typing library since we do not want it
             # to be imported inside the if TYPE_CHECKING block
-            self.object_mappings_to_be_moved.pop("typing", None)
-            self.module_imports_to_be_moved.discard("typing")
+            self.import_items_to_be_moved = self._remove_typing_module(
+                self.import_items_to_be_moved)
 
             # Remove the newer imports since those are to be
             # shifted inside the if TYPE_CHECKING block
@@ -187,11 +174,10 @@ class MoveImportsToTypeCheckingBlockVisitor(ContextAwareTransformer):
 class RemoveImportsTransformer(CSTTransformer):
     def __init__(
         self,
-        import_objects_to_remove: Dict[str, Set[str]],
-        import_modules_to_remove: Set[str],
+        import_items_to_be_removed: List[ImportItem],
     ) -> None:
-        self.import_objects_to_remove = import_objects_to_remove
-        self.import_modules_to_remove = import_modules_to_remove
+        super().__init__()
+        self.import_items_to_be_removed = import_items_to_be_removed
 
     def leave_Import(
         self, original_node: Import, updated_node: Import
@@ -201,7 +187,12 @@ class RemoveImportsTransformer(CSTTransformer):
         names_to_keep = []
         for name in updated_node.names:
             module_name = name.evaluated_name
-            if module_name not in self.import_modules_to_remove:
+            found = False
+            for import_item in self.import_items_to_be_removed:
+                if import_item.module_name == module_name:
+                    found = True
+                    break
+            if not found:
                 names_to_keep.append(name.with_changes(comma=MaybeSentinel.DEFAULT))
 
         if not names_to_keep:
@@ -218,7 +209,15 @@ class RemoveImportsTransformer(CSTTransformer):
         module_name = get_absolute_module_from_package_for_import(None, updated_node)
         for name in updated_node.names:
             name_value = name.name.value
-            if name_value not in self.import_objects_to_remove.get(module_name, {}):
+            found = False
+            for import_item in self.import_items_to_be_removed:
+                if (
+                    import_item.module_name == module_name
+                    and import_item.obj_name == name_value
+                ):
+                    found = True
+                    break
+            if not found:
                 names_to_keep.append(name.with_changes(comma=MaybeSentinel.DEFAULT))
 
         if not names_to_keep:

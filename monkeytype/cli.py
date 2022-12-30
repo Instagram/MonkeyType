@@ -19,8 +19,6 @@ from typing import (
     List,
     Optional,
     Tuple,
-    Dict,
-    Set,
 )
 
 from libcst import (
@@ -31,6 +29,7 @@ from libcst.codemod import CodemodContext
 from libcst.codemod.visitors import (
     ApplyTypeAnnotationsVisitor,
     GatherImportsVisitor,
+    ImportItem,
 )
 
 from monkeytype import trace
@@ -154,26 +153,21 @@ class HandlerError(Exception):
     pass
 
 
-def get_newly_imported_objects_and_modules(
+def get_newly_imported_items(
     stub_module: Module,
     source_module: Module
-) -> Tuple[Dict[str, Set[str]], Set[str]]:
+) -> List[ImportItem]:
     context = CodemodContext()
     gatherer = GatherImportsVisitor(context)
     stub_module.visit(gatherer)
-    stub_object_mapping = gatherer.object_mapping
-    stub_module_imports = gatherer.module_imports
+    stub_imports = list(gatherer.symbol_mapping.values())
 
     context = CodemodContext()
     gatherer = GatherImportsVisitor(context)
     source_module.visit(gatherer)
-    source_object_mapping = gatherer.object_mapping
-    source_module_imports = gatherer.module_imports
+    source_imports = list(gatherer.symbol_mapping.values())
 
-    for k, v in stub_object_mapping.items():
-        stub_object_mapping[k] = v.difference(source_object_mapping.get(k, {}))
-
-    return stub_object_mapping, stub_module_imports.difference(source_module_imports)
+    return list(set(stub_imports).difference(set(source_imports)))
 
 
 def apply_stub_using_libcst(
@@ -196,14 +190,13 @@ def apply_stub_using_libcst(
         transformed_source_module = transformer.transform_module(source_module)
 
         if confine_new_imports_in_type_checking_block:
-            newly_imported_objects, newly_imported_modules = get_newly_imported_objects_and_modules(
+            newly_imported_items = get_newly_imported_items(
                 stub_module, source_module)
 
             context = CodemodContext()
             MoveImportsToTypeCheckingBlockVisitor.store_imports_in_context(
                 context,
-                newly_imported_objects,
-                newly_imported_modules,
+                newly_imported_items,
             )
             transformer = MoveImportsToTypeCheckingBlockVisitor(context)
             transformed_source_module = transformer.transform_module(transformed_source_module)
