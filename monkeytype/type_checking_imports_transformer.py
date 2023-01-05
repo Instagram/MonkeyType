@@ -73,8 +73,7 @@ class MoveImportsToTypeCheckingBlockVisitor(ContextAwareTransformer):
 
     @staticmethod
     def _replace_pass_with_imports(
-        placeholder_module: Module,
-        import_module: Module
+        placeholder_module: Module, import_module: Module
     ) -> Module:
         return placeholder_module.with_deep_changes(
             old_node=placeholder_module.body[0].body,
@@ -82,8 +81,7 @@ class MoveImportsToTypeCheckingBlockVisitor(ContextAwareTransformer):
         )
 
     def _split_module(
-        self,
-        module: Module
+        self, module: Module
     ) -> Tuple[
         List[Union[SimpleStatementLine, BaseCompoundStatement]],
         List[Union[SimpleStatementLine, BaseCompoundStatement]],
@@ -130,12 +128,10 @@ class MoveImportsToTypeCheckingBlockVisitor(ContextAwareTransformer):
         return module.with_changes(body=updated_body_list)
 
     @staticmethod
-    def _remove_typing_module(
-        import_item_list: List[ImportItem]
-    ) -> List[ImportItem]:
+    def _remove_typing_module(import_item_list: List[ImportItem]) -> List[ImportItem]:
         ret: List[ImportItem] = []
         for import_item in import_item_list:
-            if import_item.module_name != 'typing':
+            if import_item.module_name != "typing":
                 ret.append(import_item)
         return ret
 
@@ -150,16 +146,15 @@ class MoveImportsToTypeCheckingBlockVisitor(ContextAwareTransformer):
             MoveImportsToTypeCheckingBlockVisitor.CONTEXT_KEY
         )
         if context_contents is not None:
-            (
-                import_items_to_be_moved,
-            ) = context_contents
+            (import_items_to_be_moved,) = context_contents
 
             self.import_items_to_be_moved = import_items_to_be_moved
 
             # Remove typing library since we do not want it
             # to be imported inside the if TYPE_CHECKING block
             self.import_items_to_be_moved = self._remove_typing_module(
-                self.import_items_to_be_moved)
+                self.import_items_to_be_moved
+            )
 
             # Remove the newer imports since those are to be
             # shifted inside the if TYPE_CHECKING block

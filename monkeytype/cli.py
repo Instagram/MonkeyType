@@ -41,7 +41,9 @@ from monkeytype.stubs import (
     build_module_stubs_from_traces,
 )
 from monkeytype.tracing import CallTrace
-from monkeytype.type_checking_imports_transformer import MoveImportsToTypeCheckingBlockVisitor
+from monkeytype.type_checking_imports_transformer import (
+    MoveImportsToTypeCheckingBlockVisitor,
+)
 from monkeytype.typing import NoOpRewriter
 from monkeytype.util import get_name_in_module
 
@@ -154,8 +156,7 @@ class HandlerError(Exception):
 
 
 def get_newly_imported_items(
-    stub_module: Module,
-    source_module: Module
+    stub_module: Module, source_module: Module
 ) -> List[ImportItem]:
     context = CodemodContext()
     gatherer = GatherImportsVisitor(context)
@@ -190,8 +191,7 @@ def apply_stub_using_libcst(
         transformed_source_module = transformer.transform_module(source_module)
 
         if confine_new_imports_in_type_checking_block:
-            newly_imported_items = get_newly_imported_items(
-                stub_module, source_module)
+            newly_imported_items = get_newly_imported_items(stub_module, source_module)
 
             context = CodemodContext()
             MoveImportsToTypeCheckingBlockVisitor.store_imports_in_context(
@@ -199,7 +199,9 @@ def apply_stub_using_libcst(
                 newly_imported_items,
             )
             transformer = MoveImportsToTypeCheckingBlockVisitor(context)
-            transformed_source_module = transformer.transform_module(transformed_source_module)
+            transformed_source_module = transformer.transform_module(
+                transformed_source_module
+            )
 
     except Exception as exception:
         raise HandlerError(f"Failed applying stub with libcst:\n{exception}")
@@ -391,7 +393,7 @@ qualname format.""",
         action="store_true",
         default=False,
         help="""Add the "from __future__ import annotation" import at the top
-and keep the newly imported modules inside the "if TYPE_CHECKING" block."""
+and keep the newly imported modules inside the "if TYPE_CHECKING" block.""",
     )
     apply_parser.set_defaults(handler=apply_stub_handler)
 
