@@ -13,18 +13,9 @@ import os.path
 import runpy
 import sys
 from pathlib import Path
-from typing import (
-    IO,
-    TYPE_CHECKING,
-    List,
-    Optional,
-    Tuple,
-)
+from typing import IO, TYPE_CHECKING, List, Optional, Tuple
 
-from libcst import (
-    parse_module,
-    Module,
-)
+from libcst import Module, parse_module
 from libcst.codemod import CodemodContext
 from libcst.codemod.visitors import (
     ApplyTypeAnnotationsVisitor,

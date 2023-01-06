@@ -1,32 +1,21 @@
-from typing import (
-    Union,
-    List,
-    Tuple,
-)
+from typing import List, Tuple, Union
 
 import libcst
 from libcst import (
-    Module,
-    CSTTransformer,
-    Import,
-    BaseSmallStatement,
-    RemovalSentinel,
-    MaybeSentinel,
-    RemoveFromParent,
-    ImportFrom,
-    FlattenSentinel,
     BaseCompoundStatement,
+    BaseSmallStatement,
+    CSTTransformer,
+    FlattenSentinel,
+    Import,
+    ImportFrom,
+    MaybeSentinel,
+    Module,
+    RemovalSentinel,
+    RemoveFromParent,
     SimpleStatementLine,
 )
-from libcst.codemod import (
-    ContextAwareTransformer,
-    CodemodContext,
-)
-from libcst.codemod.visitors import (
-    AddImportsVisitor,
-    ImportItem,
-    GatherImportsVisitor,
-)
+from libcst.codemod import CodemodContext, ContextAwareTransformer
+from libcst.codemod.visitors import AddImportsVisitor, GatherImportsVisitor, ImportItem
 from libcst.helpers import get_absolute_module_from_package_for_import
 
 
