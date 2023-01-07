@@ -16,6 +16,8 @@ from typing import Iterator
 
 from unittest import mock
 
+from libcst import parse_module
+from libcst.codemod.visitors import ImportItem
 
 from monkeytype import cli
 from monkeytype.config import DefaultConfig
@@ -482,3 +484,37 @@ def test_apply_stub_using_libcst__confine_new_imports_in_type_checking_block():
         overwrite_existing_annotations=True,
         confine_new_imports_in_type_checking_block=True,
     ) == textwrap.dedent(expected)
+
+
+def test_get_newly_imported_items():
+    source = """
+        import q
+        from x import Y    
+    """
+    stub = """
+        from a import (
+            B,
+            C,
+        )
+        import d
+        import q, w, e
+        from x import (
+            Y,
+            Z,
+        )
+        import z as t
+    """
+    expected = {
+        ImportItem('a', 'B'),
+        ImportItem('a', 'C'),
+        ImportItem('d'),
+        ImportItem('w'),
+        ImportItem('e'),
+        ImportItem('x', 'Z'),
+        ImportItem('z', None, 't'),
+    }
+
+    assert expected == set(cli.get_newly_imported_items(
+        parse_module(textwrap.dedent(stub)),
+        parse_module(textwrap.dedent(source)),
+    ))
