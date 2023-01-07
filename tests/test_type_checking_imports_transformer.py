@@ -3,7 +3,9 @@ from typing import Type, List
 from libcst.codemod import CodemodTest, Codemod, CodemodContext
 from libcst.codemod.visitors import ImportItem
 
-from monkeytype.type_checking_imports_transformer import MoveImportsToTypeCheckingBlockVisitor
+from monkeytype.type_checking_imports_transformer import (
+    MoveImportsToTypeCheckingBlockVisitor,
+)
 
 
 class TestMoveImportsToTypeCheckingBlockVisitor(CodemodTest):
