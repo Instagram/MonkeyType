@@ -189,8 +189,10 @@ def apply_stub_using_libcst(
                 context,
                 newly_imported_items,
             )
-            transformer = MoveImportsToTypeCheckingBlockVisitor(context)
-            transformed_source_module = transformer.transform_module(
+            type_checking_block_transformer = MoveImportsToTypeCheckingBlockVisitor(
+                context
+            )
+            transformed_source_module = type_checking_block_transformer.transform_module(
                 transformed_source_module
             )
 
