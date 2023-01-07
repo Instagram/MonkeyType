@@ -450,3 +450,32 @@ def test_apply_stub_using_libcst__overwrite_existing_annotations():
         textwrap.dedent(source),
         overwrite_existing_annotations=True,
     ) == textwrap.dedent(expected)
+
+
+def test_apply_stub_using_libcst__confine_new_imports_in_type_checking_block():
+    source = """
+        def spoof(x):
+            return x.get_some_object()
+    """
+    stub = """
+        from some.module import SomeObject
+        from some.module import AnotherObject
+        def spoof(x: AnotherObject) -> SomeObject: ...
+    """
+    expected = """
+        from __future__ import annotations
+        from typing import TYPE_CHECKING
+        
+        if TYPE_CHECKING:
+            from some.module import AnotherObject, SomeObject
+            
+        def spoof(x: AnotherObject) -> SomeObject:
+            return x.get_some_object()
+    """
+
+    assert cli.apply_stub_using_libcst(
+        textwrap.dedent(stub),
+        textwrap.dedent(source),
+        overwrite_existing_annotations=True,
+        confine_new_imports_in_type_checking_block=True,
+    ) == textwrap.dedent(expected)
