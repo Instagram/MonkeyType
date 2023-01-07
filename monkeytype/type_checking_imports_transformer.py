@@ -4,6 +4,7 @@ import libcst
 from libcst import (
     BaseCompoundStatement,
     BaseSmallStatement,
+    BaseSuite,
     CSTTransformer,
     FlattenSentinel,
     Import,
@@ -13,7 +14,7 @@ from libcst import (
     Module,
     RemovalSentinel,
     RemoveFromParent,
-    SimpleStatementLine, BaseSuite,
+    SimpleStatementLine,
 )
 from libcst.codemod import CodemodContext, ContextAwareTransformer
 from libcst.codemod.visitors import AddImportsVisitor, GatherImportsVisitor, ImportItem
