@@ -458,8 +458,11 @@ def test_apply_stub_using_libcst__confine_new_imports_in_type_checking_block():
             return x.get_some_object()
     """
     stub = """
-        from some.module import SomeObject
-        from some.module import AnotherObject
+        from some.module import (
+            AnotherObject,
+            SomeObject,
+        )
+         
         def spoof(x: AnotherObject) -> SomeObject: ...
     """
     expected = """
