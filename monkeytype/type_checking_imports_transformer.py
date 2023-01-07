@@ -8,6 +8,7 @@ from libcst import (
     FlattenSentinel,
     Import,
     ImportFrom,
+    ImportStar,
     MaybeSentinel,
     Module,
     RemovalSentinel,
@@ -189,6 +190,9 @@ class RemoveImportsTransformer(CSTTransformer):
     ) -> Union[
         BaseSmallStatement, FlattenSentinel[BaseSmallStatement], RemovalSentinel
     ]:
+        if isinstance(updated_node.names, ImportStar):
+            return updated_node
+
         names_to_keep = []
         module_name = get_absolute_module_from_package_for_import(None, updated_node)
         for name in updated_node.names:
