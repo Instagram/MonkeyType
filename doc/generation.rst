@@ -124,6 +124,14 @@ Additionally, ``monkeytype stub`` accepts:
 
 .. module:: monkeytype.typing
 
+Additionally, ``monkeytype apply`` accepts:
+
+.. option:: --pep_563
+
+  Adds ``from __future__ import annotations`` to the applied file,
+  and confines all the newly added imports from the stub in the
+  ``if TYPE_CHECKING`` block to prevent potential circular dependencies.
+
 .. _rewriters:
 
 Type rewriters
