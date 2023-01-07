@@ -1,4 +1,4 @@
-from typing import List, Tuple, Union
+from typing import List, Tuple, Union, cast
 
 import libcst
 from libcst import (
@@ -13,7 +13,7 @@ from libcst import (
     Module,
     RemovalSentinel,
     RemoveFromParent,
-    SimpleStatementLine,
+    SimpleStatementLine, BaseSuite,
 )
 from libcst.codemod import CodemodContext, ContextAwareTransformer
 from libcst.codemod.visitors import AddImportsVisitor, GatherImportsVisitor, ImportItem
@@ -66,7 +66,7 @@ class MoveImportsToTypeCheckingBlockVisitor(ContextAwareTransformer):
         placeholder_module: Module, import_module: Module
     ) -> Module:
         return placeholder_module.with_deep_changes(
-            old_node=placeholder_module.body[0].body,
+            old_node=cast(BaseSuite, placeholder_module.body[0].body),
             body=import_module.body,
         )
 
