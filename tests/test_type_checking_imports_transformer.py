@@ -119,6 +119,7 @@ class TestMoveImportsToTypeCheckingBlockVisitor(CodemodTest):
                 I,
                 J,
             )
+            from n import *
             
             if TYPE_CHECKING:
                 from k import L, M
@@ -144,6 +145,7 @@ class TestMoveImportsToTypeCheckingBlockVisitor(CodemodTest):
             from f import G
             from h import (
                 J)
+            from n import *
             
             if TYPE_CHECKING:
                 import e
