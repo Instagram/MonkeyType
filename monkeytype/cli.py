@@ -192,8 +192,10 @@ def apply_stub_using_libcst(
             type_checking_block_transformer = MoveImportsToTypeCheckingBlockVisitor(
                 context
             )
-            transformed_source_module = type_checking_block_transformer.transform_module(
-                transformed_source_module
+            transformed_source_module = (
+                type_checking_block_transformer.transform_module(
+                    transformed_source_module
+                )
             )
 
     except Exception as exception:
