@@ -4,6 +4,9 @@ Changelog
 main
 ----
 
+* Add ``--pep_563`` flag to ``apply`` command. Thanks Sagar Badiyani.
+  Merge of #282, fixes #111 and #203.
+
 * Remove hard dependency on Django; ``django.utils.functional.cached_property``
   support is now conditionally enabled depending whether it is importable.
 

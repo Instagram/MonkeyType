@@ -15,9 +15,13 @@ import sys
 from pathlib import Path
 from typing import IO, TYPE_CHECKING, List, Optional, Tuple
 
-from libcst import parse_module
+from libcst import Module, parse_module
 from libcst.codemod import CodemodContext
-from libcst.codemod.visitors import ApplyTypeAnnotationsVisitor
+from libcst.codemod.visitors import (
+    ApplyTypeAnnotationsVisitor,
+    GatherImportsVisitor,
+    ImportItem,
+)
 
 from monkeytype import trace
 from monkeytype.config import Config
@@ -28,6 +32,9 @@ from monkeytype.stubs import (
     build_module_stubs_from_traces,
 )
 from monkeytype.tracing import CallTrace
+from monkeytype.type_checking_imports_transformer import (
+    MoveImportsToTypeCheckingBlockVisitor,
+)
 from monkeytype.typing import NoOpRewriter
 from monkeytype.util import get_name_in_module
 
@@ -139,8 +146,27 @@ class HandlerError(Exception):
     pass
 
 
+def get_newly_imported_items(
+    stub_module: Module, source_module: Module
+) -> List[ImportItem]:
+    context = CodemodContext()
+    gatherer = GatherImportsVisitor(context)
+    stub_module.visit(gatherer)
+    stub_imports = list(gatherer.symbol_mapping.values())
+
+    context = CodemodContext()
+    gatherer = GatherImportsVisitor(context)
+    source_module.visit(gatherer)
+    source_imports = list(gatherer.symbol_mapping.values())
+
+    return list(set(stub_imports).difference(set(source_imports)))
+
+
 def apply_stub_using_libcst(
-    stub: str, source: str, overwrite_existing_annotations: bool
+    stub: str,
+    source: str,
+    overwrite_existing_annotations: bool,
+    confine_new_imports_in_type_checking_block: bool = False,
 ) -> str:
     try:
         stub_module = parse_module(stub)
@@ -150,9 +176,28 @@ def apply_stub_using_libcst(
             context,
             stub_module,
             overwrite_existing_annotations,
+            use_future_annotations=confine_new_imports_in_type_checking_block,
         )
         transformer = ApplyTypeAnnotationsVisitor(context)
         transformed_source_module = transformer.transform_module(source_module)
+
+        if confine_new_imports_in_type_checking_block:
+            newly_imported_items = get_newly_imported_items(stub_module, source_module)
+
+            context = CodemodContext()
+            MoveImportsToTypeCheckingBlockVisitor.store_imports_in_context(
+                context,
+                newly_imported_items,
+            )
+            type_checking_block_transformer = MoveImportsToTypeCheckingBlockVisitor(
+                context
+            )
+            transformed_source_module = (
+                type_checking_block_transformer.transform_module(
+                    transformed_source_module
+                )
+            )
+
     except Exception as exception:
         raise HandlerError(f"Failed applying stub with libcst:\n{exception}")
     return transformed_source_module.code
@@ -167,12 +212,14 @@ def apply_stub_handler(
         return
     module = args.module_path[0]
     mod = importlib.import_module(module)
+
     source_path = Path(inspect.getfile(mod))
     source_with_types = apply_stub_using_libcst(
         stub=stub.render(),
         source=source_path.read_text(),
         overwrite_existing_annotations=args.existing_annotation_strategy
         == ExistingAnnotationStrategy.IGNORE,
+        confine_new_imports_in_type_checking_block=args.pep_563,
     )
     source_path.write_text(source_with_types)
     print(source_with_types, file=stdout)
@@ -335,6 +382,13 @@ qualname format.""",
         default=ExistingAnnotationStrategy.REPLICATE,
         const=ExistingAnnotationStrategy.IGNORE,
         help="Ignore existing annotations when applying stubs from traces.",
+    )
+    apply_parser.add_argument(
+        "--pep_563",
+        action="store_true",
+        default=False,
+        help="""Add the "from __future__ import annotation" import at the top
+and keep the newly imported modules inside the "if TYPE_CHECKING" block.""",
     )
     apply_parser.set_defaults(handler=apply_stub_handler)
 
