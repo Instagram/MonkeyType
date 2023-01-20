@@ -28,7 +28,7 @@ class TestMoveImportsToTypeCheckingBlockVisitor(CodemodTest):
     def test_simple_add_type_checking(self):
         source = """
             from __future__ import annotations
-            
+
             from a import B
             import c.C
         """
@@ -39,7 +39,7 @@ class TestMoveImportsToTypeCheckingBlockVisitor(CodemodTest):
         expected = """
             from __future__ import annotations
             from typing import TYPE_CHECKING
-            
+
             if TYPE_CHECKING:
                 import c.C
                 from a import B
@@ -50,12 +50,12 @@ class TestMoveImportsToTypeCheckingBlockVisitor(CodemodTest):
     def test_type_checking_block_already_exists(self):
         source = """
             from __future__ import annotations
-            
+
             from typing import TYPE_CHECKING
 
             from a import B
             import c.C
-            
+
             if TYPE_CHECKING:
                 from d import E
         """
@@ -65,13 +65,13 @@ class TestMoveImportsToTypeCheckingBlockVisitor(CodemodTest):
         ]
         expected = """
             from __future__ import annotations
-            
+
             from typing import TYPE_CHECKING
-            
+
             if TYPE_CHECKING:
                 import c.C
                 from a import B
-            
+
             if TYPE_CHECKING:
                 from d import E
         """
@@ -83,7 +83,7 @@ class TestMoveImportsToTypeCheckingBlockVisitor(CodemodTest):
             from __future__ import annotations
 
             from typing import List
-            
+
             from a import B
         """
         import_items_to_be_moved = [
@@ -92,9 +92,9 @@ class TestMoveImportsToTypeCheckingBlockVisitor(CodemodTest):
         ]
         expected = """
             from __future__ import annotations
-            
+
             from typing import TYPE_CHECKING, List
-            
+
             if TYPE_CHECKING:
                 from a import B
         """
@@ -105,9 +105,9 @@ class TestMoveImportsToTypeCheckingBlockVisitor(CodemodTest):
         source = """
             from __future__ import annotations
             from __future__ import division
-            
+
             from typing import Dict, List, TYPE_CHECKING
-            
+
             import e
             from a import (
                 B,
@@ -120,10 +120,10 @@ class TestMoveImportsToTypeCheckingBlockVisitor(CodemodTest):
                 J,
             )
             from n import *
-            
+
             if TYPE_CHECKING:
                 from k import L, M
-                
+
             def func():
                 pass
         """
@@ -138,7 +138,7 @@ class TestMoveImportsToTypeCheckingBlockVisitor(CodemodTest):
         expected = """
             from __future__ import annotations
             from __future__ import division
-            
+
             from typing import Dict, List, TYPE_CHECKING
             from a import (
                 D)
@@ -146,15 +146,15 @@ class TestMoveImportsToTypeCheckingBlockVisitor(CodemodTest):
             from h import (
                 J)
             from n import *
-            
+
             if TYPE_CHECKING:
                 import e
                 from a import B, C
                 from h import I
-            
+
             if TYPE_CHECKING:
                 from k import L, M
-                
+
             def func():
                 pass
         """

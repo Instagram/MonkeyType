@@ -464,16 +464,16 @@ def test_apply_stub_using_libcst__confine_new_imports_in_type_checking_block():
             AnotherObject,
             SomeObject,
         )
-         
+
         def spoof(x: AnotherObject) -> SomeObject: ...
     """
     expected = """
         from __future__ import annotations
         from typing import TYPE_CHECKING
-        
+
         if TYPE_CHECKING:
             from some.module import AnotherObject, SomeObject
-            
+
         def spoof(x: AnotherObject) -> SomeObject:
             return x.get_some_object()
     """
@@ -489,7 +489,7 @@ def test_apply_stub_using_libcst__confine_new_imports_in_type_checking_block():
 def test_get_newly_imported_items():
     source = """
         import q
-        from x import Y    
+        from x import Y
     """
     stub = """
         from a import (
