@@ -1,8 +1,8 @@
 Changelog
 =========
 
-main
-----
+23.3.0
+------
 
 * Add ``--pep_563`` flag to ``apply`` command. Thanks Sagar Badiyani.
   Merge of #282, fixes #111 and #203.
