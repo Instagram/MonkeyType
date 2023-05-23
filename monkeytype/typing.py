@@ -86,7 +86,8 @@ def shrink_typed_dict_types(typed_dicts: List[type], max_typed_dict_size: int) -
     Required fields are keys that appear as a required field in all the TypedDicts.
     Optional fields are those that appear as a required field in only some
     of the TypedDicts or appear as a optional field in even one TypedDict.
-    If the same key has multiple value types, then its value is the Union of the value types."""
+    If the same key has multiple value types, then its value is the Union of the value types.
+    """
     num_typed_dicts = len(typed_dicts)
     key_value_types_dict = defaultdict(list)
     existing_optional_fields = []
@@ -135,7 +136,8 @@ def shrink_types(types, max_typed_dict_size):
     """Return the smallest type equivalent to Union[types].
     If all the types are anonymous TypedDicts, shrink them ourselves.
     Otherwise, recursively turn the anonymous TypedDicts into Dicts.
-    Union will handle deduplicating types (both by equality and subtype relationships)."""
+    Union will handle deduplicating types (both by equality and subtype relationships).
+    """
     types = tuple(types)
     if len(types) == 0:
         return Any

@@ -4,6 +4,9 @@ Changelog
 main
 ----
 
+* Drop support for Python 3.7.
+
+
 23.3.0
 ------
 
