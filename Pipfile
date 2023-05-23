@@ -20,3 +20,6 @@ tox = "*"
 setuptools_rust = "*"
 libcst = "*"
 importlib_metadata = "*"
+
+[packages]
+requests = "==2.31.0"
