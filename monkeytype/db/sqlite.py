@@ -21,19 +21,26 @@ DEFAULT_TABLE = "monkeytype_call_traces"
 def create_call_trace_table(
     conn: sqlite3.Connection, table: str = DEFAULT_TABLE
 ) -> None:
-    query = """
-CREATE TABLE IF NOT EXISTS {table} (
-  created_at  TEXT,
-  module      TEXT,
-  qualname    TEXT,
-  arg_types   TEXT,
-  return_type TEXT,
-  yield_type  TEXT);
-""".format(
-        table=table
-    )
+    queries = [
+        """
+        CREATE TABLE IF NOT EXISTS {table} (
+          created_at  TEXT,
+          module      TEXT,
+          qualname    TEXT,
+          arg_types   TEXT,
+          return_type TEXT,
+          yield_type  TEXT);
+        """,
+        """
+        -- This index speeds up lookups of call traces of a single module
+        -- (see `make_query()`).
+        CREATE INDEX IF NOT EXISTS {table}_module ON {table} (module);
+        """,
+    ]
+
     with conn:
-        conn.execute(query)
+        for query in queries:
+            conn.execute(query.format(table=table))
 
 
 QueryValue = Union[str, int]
