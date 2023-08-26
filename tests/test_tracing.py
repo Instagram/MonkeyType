@@ -39,8 +39,8 @@ def simple_add(a: int, b: int) -> int:
     return a + b
 
 
-def has_optional_kwarg(a: int, b: str = None) -> Optional[FrameType]:
-    return inspect.currentframe()
+def uses_kw_only_arg(a: int, *, b: int) -> int:
+    return a + b
 
 
 def has_locals(foo: str) -> Optional[FrameType]:
@@ -186,6 +186,11 @@ class TestTraceCalls:
         with trace_calls(collector, max_typed_dict_size=0):
             simple_add(1, 2)
         assert collector.traces == [CallTrace(simple_add, {'a': int, 'b': int}, int)]
+
+    def test_kw_only_arg(self, collector):
+        with trace_calls(collector, max_typed_dict_size=0):
+            uses_kw_only_arg(1, b=2)
+        assert collector.traces == [CallTrace(uses_kw_only_arg, {'a': int, 'b': int}, int)]
 
     def test_flushes(self, collector):
         with trace_calls(collector, max_typed_dict_size=0):
