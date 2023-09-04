@@ -130,6 +130,17 @@ def _has_code(
     return None
 
 
+def get_previous_frames(frame: Optional[FrameType]) -> Iterator[FrameType]:
+    while frame is not None:
+        yield frame
+        frame = frame.f_back
+
+
+def get_locals_from_previous_frames(frame: FrameType) -> Iterator[Any]:
+    for previous_frame in get_previous_frames(frame):
+        yield from previous_frame.f_locals.values()
+
+
 def get_func(frame: FrameType) -> Optional[Callable[..., Any]]:
     """Return the function whose code object corresponds to the supplied stack frame."""
     code = frame.f_code
@@ -152,6 +163,14 @@ def get_func(frame: FrameType) -> Optional[Callable[..., Any]]:
             if not isinstance(v, type):
                 continue
             func = get_func_in_mro(v, code)
+            if func is not None:
+                break
+    # If we still can't find the function, try looking at the locals of all previous frames.
+    if func is None:
+        for v in get_locals_from_previous_frames(frame):
+            if not callable(v):
+                continue
+            func = _has_code(v, code)
             if func is not None:
                 break
     return func
