@@ -6,8 +6,10 @@
 import inspect
 from types import FrameType
 from typing import (
+    Callable,
     Iterator,
     Optional,
+    Tuple,
 )
 
 import pytest
@@ -128,6 +130,21 @@ async def sum_squares(n: int) -> int:
     return tot
 
 
+def call_method_on_locally_defined_class(n: int) -> Tuple[type, Callable]:
+    class Math:
+        def square(self, n: int) -> int:
+            return n * n
+    Math().square(n)
+    return Math, Math.square
+
+
+def call_locally_defined_function(n: int) -> Callable:
+    def square(n: int) -> int:
+        return n * n
+    square(n)
+    return square
+
+
 def implicit_return_none() -> None:
     pass
 
@@ -246,6 +263,18 @@ class TestTraceCalls:
             for _ in squares(3):
                 pass
         assert collector.traces == [CallTrace(squares, {'n': int}, NoneType, int)]
+
+    def test_locally_defined_class_trace(self, collector):
+        with trace_calls(collector, max_typed_dict_size=0):
+            cls, method = call_method_on_locally_defined_class(3)
+        assert len(collector.traces) == 2
+        assert collector.traces[0] == CallTrace(method, {'self': cls, 'n': int}, int)
+
+    def test_locally_defined_function_trace(self, collector):
+        with trace_calls(collector, max_typed_dict_size=0):
+            function = call_locally_defined_function(3)
+        assert len(collector.traces) == 2
+        assert collector.traces[0] == CallTrace(function, {'n': int}, int)
 
     def test_return_none(self, collector):
         """Ensure traces have a return_type of NoneType for functions that return a value of None"""
