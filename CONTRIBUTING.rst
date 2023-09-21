@@ -19,8 +19,9 @@ We welcome your pull requests.
 3. If you've changed APIs, update the documentation and ensure it builds
    (``cd doc && pipenv run make html``).
 4. Ensure the test suite passes (``pipenv run pytest``).
-5. Make sure your code lints (``pipenv run flake8``) and typechecks
-   (``pipenv run mypy monkeytype``).
+5. Make sure your code lints (``pipenv run flake8``), is autoformatted
+   (``pipenv run isort monkeytype`` and ``pipenv run black monkeytype``), and
+   typechecks (``pipenv run mypy monkeytype``).
 6. If your change is a user-visible feature or bugfix, add an entry to
    ``CHANGES.rst`` (see format of previous entries). Yes, you should add a
    thanks to yourself :)
