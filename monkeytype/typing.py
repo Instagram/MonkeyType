@@ -3,6 +3,7 @@
 #
 # This source code is licensed under the BSD-style license found in the
 # LICENSE file in the root directory of this source tree.
+import functools
 import inspect
 import types
 from abc import ABC, abstractmethod
@@ -499,6 +500,71 @@ class RewriteGenerator(TypeRewriter):
         if args[1] is NoneType and args[2] is NoneType:
             return Iterator[args[0]]
         return typ
+
+
+class RewriteMostSpecificCommonBase(TypeRewriter):
+    """
+    Relaces a union of classes by the most specific
+    common base of its members (while avoiding multiple
+    inheritance).
+    """
+
+    def _compute_bases(self, klass):
+        """
+        Returns list of bases of a given class,
+        going from general (i.e., closer to object)
+        to specific (i.e., closer to klass).
+        The list ends with the klass itself, its
+        first element is the most general base of
+        the klass up to (but excluding) any
+        base that has multiple inheritance.
+        """
+        bases = []
+
+        curr_klass = klass
+
+        while curr_klass is not object:
+            bases.append(curr_klass)
+
+            curr_bases = curr_klass.__bases__
+
+            if len(curr_bases) != 1:
+                break
+
+            curr_base = curr_bases[0]
+            curr_klass = curr_base
+        return bases[::-1]
+
+    def _merge_common_bases(self, first_bases, second_bases):
+        merged_bases = []
+
+        # Only process up to shorter of the lists
+        for first_base, second_base in zip(first_bases,
+                                           second_bases,
+                                           strict=False):
+            if first_base is second_base:
+                merged_bases.append(second_base)
+            else:
+                break
+
+        return merged_bases
+
+    def rewrite_Union(self, union):
+        klasses = union.__args__
+
+        bases = []
+
+        for klass in klasses:
+            base = self._compute_bases(klass)
+            if base is None:
+                return union
+            bases.append(base)
+
+        common_bases = functools.reduce(self._merge_common_bases, bases)
+
+        if common_bases:
+            return common_bases[-1]
+        return union
 
 
 DEFAULT_REWRITER = ChainedRewriter(
