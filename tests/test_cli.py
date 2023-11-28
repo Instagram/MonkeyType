@@ -22,7 +22,7 @@ from libcst.codemod.visitors import ImportItem
 from monkeytype import cli
 from monkeytype.config import DefaultConfig
 from monkeytype.db.sqlite import (
-    create_call_trace_table,
+    create_call_trace_tables,
     SQLiteStore,
     )
 from monkeytype.exceptions import MonkeyTypeError
@@ -75,7 +75,7 @@ class LoudContextConfig(DefaultConfig):
 def store_data():
     with tempfile.NamedTemporaryFile(prefix='monkeytype_tests') as db_file:
         conn = sqlite3.connect(db_file.name)
-        create_call_trace_table(conn)
+        create_call_trace_tables(conn)
         with mock.patch.dict(os.environ, {DefaultConfig.DB_PATH_VAR: db_file.name}):
             yield SQLiteStore(conn), db_file
 
