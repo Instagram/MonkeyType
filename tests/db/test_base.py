@@ -8,7 +8,7 @@ import sqlite3
 
 from monkeytype.db.base import CallTraceStoreLogger
 from monkeytype.db.sqlite import (
-    create_call_trace_table,
+    create_call_trace_tables,
     SQLiteStore,
 )
 from monkeytype.tracing import trace_calls
@@ -26,7 +26,7 @@ def main_func(a, b):
 @pytest.fixture
 def logger() -> CallTraceStoreLogger:
     conn = sqlite3.connect(':memory:')
-    create_call_trace_table(conn)
+    create_call_trace_tables(conn)
     return CallTraceStoreLogger(SQLiteStore(conn))
 
 
