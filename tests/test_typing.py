@@ -519,6 +519,9 @@ def get_default_dict_with_dict(key, value):
     return m
 
 
+instance_method = Dummy().an_instance_method
+
+
 class TestGetType:
 
     @pytest.mark.parametrize(
@@ -537,15 +540,15 @@ class TestGetType:
             ([1, 2, 3], List[int]),
             ([1, True], List[Union[int, bool]]),
             (tuple(), typing_Tuple[()]),
-            (helper, Callable),
-            (lambda x: x, Callable),
-            (Dummy().an_instance_method, Callable),
+            (helper, helper),
+            (instance_method, instance_method),
             (len, Callable),
             (generator(), Iterator[Any]),
         ],
     )
     def test_builtin_types(self, value, expected_type):
         """Return the appropriate type for builtins"""
+
         assert get_type(value, max_typed_dict_size=VERY_LARGE_MAX_TYPED_DICT_SIZE) == expected_type
         assert get_type(value, max_typed_dict_size=0) == expected_type
 

@@ -170,12 +170,15 @@ def make_generator(yield_typ, send_typ, return_typ):
     return Generator[yield_typ, send_typ, return_typ]
 
 
-_BUILTIN_CALLABLE_TYPES = (
-    types.FunctionType,
-    types.LambdaType,
-    types.MethodType,
+BUILTIN_CALLABLE_TYPE = (
     types.BuiltinMethodType,
     types.BuiltinFunctionType,
+)
+
+CALLABLE_TYPES = (
+    types.LambdaType,
+    types.FunctionType,
+    types.MethodType,
 )
 
 
@@ -210,8 +213,10 @@ def get_type(obj, max_typed_dict_size):
     """Return the static type that would be used in a type hint"""
     if isinstance(obj, type):
         return Type[obj]
-    elif isinstance(obj, _BUILTIN_CALLABLE_TYPES):
+    elif isinstance(obj, BUILTIN_CALLABLE_TYPE):
         return Callable
+    elif isinstance(obj, CALLABLE_TYPES):
+        return obj
     elif isinstance(obj, types.GeneratorType):
         return Iterator[Any]
     typ = type(obj)

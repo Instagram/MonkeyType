@@ -5,6 +5,7 @@
 # LICENSE file in the root directory of this source tree.
 from typing import (
     Any,
+    Callable,
     Dict,
     List,
     Optional,
@@ -27,16 +28,32 @@ from monkeytype.encoding import (
     serialize_traces,
 )
 from mypy_extensions import TypedDict
-from monkeytype.exceptions import InvalidTypeError
 from monkeytype.tracing import CallTrace
 from monkeytype.typing import DUMMY_TYPED_DICT_NAME, NoneType, NotImplementedType, mappingproxy
+from monkeytype.db.base import CallTraceStore
+
 from .util import Outer
 
 from unittest.mock import Mock
 
 
+class EmptyStore(CallTraceStore):
+    def add(self, traces):
+        pass
+
+    def filter(self, module, qualname_prefix=None, limit=2000):
+        return []
+
+    def list_modules(self):
+        return []
+
+
 def dummy_func(a, b):
     return a + b
+
+
+def typed_func(a: int, b: float) -> int:
+    return a + int(b)
 
 
 class TestTypeConversion:
@@ -79,8 +96,9 @@ class TestTypeConversion:
         ],
     )
     def test_type_round_trip(self, typ):
-        assert type_from_dict(type_to_dict(typ)) == typ
-        assert type_from_json(type_to_json(typ)) == typ
+        store = EmptyStore()
+        assert type_from_dict(type_to_dict(typ), store) == typ
+        assert type_from_json(type_to_json(typ), store) == typ
 
     @pytest.mark.parametrize(
         'typ, expected',
@@ -150,7 +168,8 @@ class TestTypeConversion:
         ],
     )
     def test_type_from_dict(self, type_dict, expected):
-        assert type_from_dict(type_dict) == expected
+        store = EmptyStore()
+        assert type_from_dict(type_dict, store) == expected
 
     @pytest.mark.parametrize(
         'type_dict, expected',
@@ -177,7 +196,8 @@ class TestTypeConversion:
         ],
     )
     def test_type_from_dict_nested(self, type_dict, expected):
-        assert type_from_dict(type_dict) == expected
+        store = EmptyStore()
+        assert type_from_dict(type_dict, store) == expected
 
     @pytest.mark.parametrize(
         'type_dict, expected',
@@ -205,7 +225,8 @@ class TestTypeConversion:
         ],
     )
     def test_type_from_json(self, type_dict_string, expected):
-        assert type_from_json(type_dict_string) == expected
+        store = EmptyStore()
+        assert type_from_json(type_dict_string, store) == expected
 
     @pytest.mark.parametrize(
         'type_dict',
@@ -214,19 +235,34 @@ class TestTypeConversion:
         ],
     )
     def test_type_round_trip_typed_dict(self, type_dict):
-        assert type_from_dict(type_to_dict(type_dict)) == type_dict
-        assert type_from_json(type_to_json(type_dict)) == type_dict
+        store = EmptyStore()
+        assert type_from_dict(type_to_dict(type_dict), store) == type_dict
+        assert type_from_json(type_to_json(type_dict), store) == type_dict
 
     def test_trace_round_trip(self):
         trace = CallTrace(dummy_func, {'a': int, 'b': int}, int)
-        assert CallTraceRow.from_trace(trace).to_trace() == trace
+        store = EmptyStore()
+        assert CallTraceRow.from_trace(trace, store).to_trace(store) == trace
 
-    def test_convert_non_type(self):
-        with pytest.raises(InvalidTypeError):
-            type_from_dict({
+    @pytest.mark.parametrize(
+        'obj, type',
+        [
+            ({
+                'module': typed_func.__module__,
+                'qualname': typed_func.__qualname__,
+            },
+             Callable[[int, float], int]),
+            ({
                 'module': Outer.Inner.f.__module__,
                 'qualname': Outer.Inner.f.__qualname__,
-            })
+            },
+             Callable[[], None]
+             ),
+        ],
+    )
+    def test_func_types(self, obj, type):
+        store = EmptyStore()
+        assert type_from_dict(obj, store) == type
 
     @pytest.mark.parametrize(
         'encoder, typ, expected, should_call_encoder',
@@ -252,9 +288,10 @@ class TestTypeConversion:
         ]
     )
     def test_maybe_decode_type(self, encoder, typ, expected, should_call_encoder):
-        ret = maybe_decode_type(encoder, typ)
+        store = EmptyStore()
+        ret = maybe_decode_type(encoder, typ, store)
         if should_call_encoder:
-            encoder.assert_called_with(typ)
+            encoder.assert_called_with(typ, store)
 
         else:
             encoder.assert_not_called()
@@ -268,10 +305,12 @@ class TestSerializeTraces:
             CallTrace(object(), {}),  # object() will fail to serialize
             CallTrace(dummy_func, {'a': str, 'b': str}, str),
         ]
-        rows = list(serialize_traces(traces))
+        store = EmptyStore()
+        rows = list(serialize_traces(traces, store))
+        store = EmptyStore()
         expected = [
-            CallTraceRow.from_trace(traces[0]),
-            CallTraceRow.from_trace(traces[2]),
+            CallTraceRow.from_trace(traces[0], store),
+            CallTraceRow.from_trace(traces[2], store),
         ]
         assert rows == expected
         assert [r.msg for r in caplog.records] == ["Failed to serialize trace"]

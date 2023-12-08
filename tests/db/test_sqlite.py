@@ -34,7 +34,7 @@ def test_round_trip(store):
     store.add([trace])
     thunks = store.filter(func.__module__)
     assert len(thunks) == 1
-    assert thunks[0].to_trace() == trace
+    assert thunks[0].to_trace(store) == trace
 
 
 def test_dedup(store):
@@ -43,7 +43,7 @@ def test_dedup(store):
     store.add([trace, trace, trace, trace])
     thunks = store.filter(func.__module__)
     assert len(thunks) == 1
-    assert thunks[0].to_trace() == trace
+    assert thunks[0].to_trace(store) == trace
 
 
 def test_qualname_filtering(store):
@@ -55,7 +55,7 @@ def test_qualname_filtering(store):
     store.add(traces)
     thunks = store.filter(func.__module__, qualname_prefix='func')
     assert len(thunks) == 2
-    assert traces == [thunk.to_trace() for thunk in thunks]
+    assert traces == [thunk.to_trace(store) for thunk in thunks]
 
 
 def test_limit_resultset(store):

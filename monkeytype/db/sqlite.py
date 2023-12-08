@@ -107,8 +107,6 @@ class SQLiteStore(CallTraceStore):
         if signature is not None:
             return signature
 
-        print(f"Adding signature: {arg_type}, {return_type}, {yield_type}")
-
         cur = self.conn.cursor()
 
         query = "INSERT INTO monkeytype_signatures(arg_type, return_type, yield_type) VALUES(?, ?, ?) RETURNING id"
@@ -212,7 +210,7 @@ class SQLiteStore(CallTraceStore):
 
     def add(self, traces: Iterable[CallTraceType]) -> None:
         with self.conn:
-            for trace in serialize_traces(traces):
+            for trace in serialize_traces(traces, self):
                 self.add_trace(trace)
 
     def filter(

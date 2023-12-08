@@ -111,12 +111,13 @@ def get_stub(
     args: argparse.Namespace, stdout: IO[str], stderr: IO[str]
 ) -> Optional[Stub]:
     module, qualname = args.module_path
-    thunks = args.config.trace_store().filter(module, qualname, args.limit)
+    store = args.config.trace_store()
+    thunks = store.filter(module, qualname, args.limit)
     traces = []
     failed_to_decode_count = 0
     for thunk in thunks:
         try:
-            traces.append(thunk.to_trace())
+            traces.append(thunk.to_trace(store))
         except MonkeyTypeError as mte:
             if args.verbose:
                 print(f"WARNING: Failed decoding trace: {mte}", file=stderr)
