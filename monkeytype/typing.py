@@ -549,13 +549,13 @@ class RewriteMostSpecificCommonBase(TypeRewriter):
     def rewrite_Union(self, union):
         klasses = union.__args__
 
-        bases = []
+        all_bases = []
 
         for klass in klasses:
-            base = self._compute_bases(klass)
-            bases.append(base)
+            klass_bases = self._compute_bases(klass)
+            all_bases.append(klass_bases)
 
-        common_bases = functools.reduce(self._merge_common_bases, bases)
+        common_bases = functools.reduce(self._merge_common_bases, all_bases)
 
         if common_bases:
             return common_bases[-1]
