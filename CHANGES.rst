@@ -4,6 +4,9 @@ Changelog
 main
 ----
 
+* Add rewriter to replace union of derived classes with common
+  base class (not enabled by default)
+
 * Drop support for Python 3.7.
 
 
