@@ -171,6 +171,14 @@ are performed through configured type rewriters.
   type frequently occurs when a method that takes ``List[int]`` also sometimes
   receives the empty list, which will be typed as ``List[Any]``.
 
+.. class:: RewriteMostSpecificCommonBase()
+
+  Rewrites e.g. ``Union[Derived1, Derived2]`` to ``Base``, where
+  ``Derived1`` and ``Derived2`` are both subclasses of a common ``Base``.
+  Unions of arbitrarily many subclasses of a common base class are rewritten
+  as a single class, provided that multiple inherit does not occur in the
+  chain from derived classes to base class.
+
 .. class:: RewriteConfigDict()
 
   Takes a generated type like ``Union[Dict[K, V1], Dict[K, V2]]`` and rewrites
