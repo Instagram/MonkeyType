@@ -504,20 +504,23 @@ class RewriteGenerator(TypeRewriter):
 
 class RewriteMostSpecificCommonBase(TypeRewriter):
     """
-    Relaces a union of classes by the most specific
+    Relace a union of classes by the most specific
     common base of its members (while avoiding multiple
-    inheritance).
+    inheritance), i.e.,
+
+    Union[Derived1, Derived2] -> Base
     """
 
     def _compute_bases(self, klass):
         """
-        Returns list of bases of a given class,
+        Return list of bases of a given class,
         going from general (i.e., closer to object)
-        to specific (i.e., closer to klass).
-        The list ends with the klass itself, its
+        to specific (i.e., closer to class).
+        The list ends with the class itself, its
         first element is the most general base of
-        the klass up to (but excluding) any
-        base that has multiple inheritance.
+        the class up to (but excluding) any
+        base class having multiple inheritance
+        or the object class itself.
         """
         bases = []
 
@@ -535,6 +538,11 @@ class RewriteMostSpecificCommonBase(TypeRewriter):
         return bases[::-1]
 
     def _merge_common_bases(self, first_bases, second_bases):
+        """
+        Return list of bases common to both* classes,
+        going from general (i.e., closer to object)
+        to specific (i.e., closer to both classes).
+        """
         merged_bases = []
 
         # Only process up to shorter of the lists
@@ -547,6 +555,10 @@ class RewriteMostSpecificCommonBase(TypeRewriter):
         return merged_bases
 
     def rewrite_Union(self, union):
+        """
+        Rewrite the union if possible, if no meaningful rewrite is possible,
+        return the original union.
+        """
         klasses = union.__args__
 
         all_bases = []
