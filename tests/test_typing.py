@@ -27,6 +27,7 @@ from monkeytype.typing import (
     RemoveEmptyContainers,
     RewriteConfigDict,
     RewriteLargeUnion,
+    RewriteMostSpecificCommonBase,
     RewriteAnonymousTypedDictToDict,
     field_annotations,
     get_type,
@@ -718,6 +719,91 @@ class TestRewriteConfigDict:
     def test_rewrite(self, typ, expected):
         rewritten = RewriteConfigDict().rewrite(typ)
         assert rewritten == expected
+
+
+class TestRewriteMostSpecificCommonBase:
+    class Base:
+        pass
+
+    class Intermediate(Base):
+        pass
+
+    class FirstDerived(Intermediate):
+        pass
+
+    class SecondDerived(Intermediate):
+        pass
+
+    class Unrelated:
+        pass
+
+    class MoreDerived(SecondDerived):
+        pass
+
+    @pytest.mark.parametrize(
+        'typ, expected',
+        [
+            (
+                Union[FirstDerived, SecondDerived],
+                Intermediate,
+            ),
+            (
+                Union[FirstDerived, Base],
+                Base,
+            ),
+            (
+                Union[FirstDerived, MoreDerived],
+                Intermediate,
+            ),
+            (
+                Union[FirstDerived, Unrelated],
+                Union[FirstDerived, Unrelated],
+            ),
+
+        ])
+    def test_rewrite(self, typ, expected):
+        rewritten = RewriteMostSpecificCommonBase().rewrite(typ)
+        assert rewritten == expected
+
+    def test_multiple_bases(self):
+
+        class Base1:
+            pass
+
+        class Base2:
+            pass
+
+        class FirstDerived(Base1, Base2):
+            pass
+
+        class SecondDerived(Base1, Base2):
+            pass
+
+        typ = Union[FirstDerived, SecondDerived]
+        assert RewriteMostSpecificCommonBase().rewrite(typ) == typ
+
+    def test_multiple_bases_nontrivial(self):
+        class Base1:
+            pass
+
+        class Base2:
+            pass
+
+        class FirstDerived(Base1, Base2):
+            pass
+
+        class SecondDerived(Base1, Base2):
+            pass
+
+        class FirstDerived1(FirstDerived):
+            pass
+
+        class FirstDerived2(FirstDerived):
+            pass
+
+        typ = Union[FirstDerived1, FirstDerived2]
+        rewritten = RewriteMostSpecificCommonBase().rewrite(typ)
+        assert rewritten == FirstDerived
 
 
 class TestRewriteLargeUnion:
