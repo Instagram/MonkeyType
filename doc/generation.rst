@@ -176,7 +176,7 @@ are performed through configured type rewriters.
   Rewrites e.g. ``Union[Derived1, Derived2]`` to ``Base``, where
   ``Derived1`` and ``Derived2`` are both subclasses of a common ``Base``.
   Unions of arbitrarily many subclasses of a common base class are rewritten
-  as a single class, provided that multiple inherit does not occur in the
+  as a single class, provided that multiple inheritance does not occur in the
   chain from derived classes to base class.
 
 .. class:: RewriteConfigDict()
