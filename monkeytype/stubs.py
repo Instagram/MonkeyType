@@ -452,10 +452,10 @@ def render_signature(
 
         formatted_params.append(formatted)
 
-        if render_pos_only_separator:
-            # There were only positional-only parameters, hence the
-            # flag was not reset to 'False'
-            formatted_params.append("/")
+    if render_pos_only_separator:
+        # There were only positional-only parameters, hence the
+        # flag was not reset to 'False'
+        formatted_params.append("/")
 
     rendered_return = ""
     if sig.return_annotation is not inspect.Signature.empty:
