@@ -560,7 +560,8 @@ class TestModuleStub:
     def test_render(self):
         cm_stub = _func_stub_from_callable(Dummy.a_class_method)
         im_stub = _func_stub_from_callable(Dummy.an_instance_method)
-        func_stubs = (cm_stub, im_stub)
+        sig_stub = _func_stub_from_callable(Dummy.has_complex_signature)
+        func_stubs = (cm_stub, im_stub, sig_stub)
         test_stub = ClassStub('Test', function_stubs=func_stubs)
         test2_stub = ClassStub('Test2', function_stubs=func_stubs)
         other_class_stubs = module_stub_for_method_with_typed_dict['tests.util'].class_stubs.values()
@@ -586,6 +587,20 @@ class TestModuleStub:
             'def an_instance_method(self, foo: Any, bar: Any) -> Optional[frame]: ...',
             '',
             '',
+            'def has_complex_signature(',
+            '    self,',
+            '    a: Any,',
+            '    b: Any,',
+            '    /,',
+            '    c: Any,',
+            '    d: Any = ...,',
+            '    *e: Any,',
+            '    f: Any,',
+            '    g: Any = ...,',
+            '    **h: Any',
+            ') -> Optional[frame]: ...',
+            '',
+            '',
             'class Dummy:',
             '    def an_instance_method(',
             '        self,',
@@ -598,12 +613,36 @@ class TestModuleStub:
             '    @classmethod',
             '    def a_class_method(foo: Any) -> Optional[frame]: ...',
             '    def an_instance_method(self, foo: Any, bar: Any) -> Optional[frame]: ...',
+            '    def has_complex_signature(',
+            '        self,',
+            '        a: Any,',
+            '        b: Any,',
+            '        /,',
+            '        c: Any,',
+            '        d: Any = ...,',
+            '        *e: Any,',
+            '        f: Any,',
+            '        g: Any = ...,',
+            '        **h: Any',
+            '    ) -> Optional[frame]: ...',
             '',
             '',
             'class Test2:',
             '    @classmethod',
             '    def a_class_method(foo: Any) -> Optional[frame]: ...',
             '    def an_instance_method(self, foo: Any, bar: Any) -> Optional[frame]: ...',
+            '    def has_complex_signature(',
+            '        self,',
+            '        a: Any,',
+            '        b: Any,',
+            '        /,',
+            '        c: Any,',
+            '        d: Any = ...,',
+            '        *e: Any,',
+            '        f: Any,',
+            '        g: Any = ...,',
+            '        **h: Any',
+            '    ) -> Optional[frame]: ...',
         ])
         assert mod_stub.render() == expected
 
