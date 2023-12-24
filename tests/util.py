@@ -27,6 +27,20 @@ class Dummy:
     def an_instance_method(self, foo: Any, bar: Any) -> Optional[FrameType]:
         return inspect.currentframe()
 
+    def has_complex_signature(
+        self,
+        a: Any,
+        b: Any,
+        /,
+        c: Any,
+        d: Any = 0,
+        *e: Any,
+        f: Any,
+        g: Any = 0,
+        **h: Any,
+    ) -> Optional[FrameType]:
+        return inspect.currentframe()
+
     @property
     def a_property(self) -> Optional[FrameType]:
         return inspect.currentframe()
