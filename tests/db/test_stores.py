@@ -5,9 +5,9 @@
 # LICENSE file in the root directory of this source tree.
 import pytest
 
-from monkeytype.db.sqlite import (
-    SQLiteStore,
-    )
+from monkeytype.db.sqlite import SQLiteStore
+from monkeytype.db.reduced_sqlite import ReducedSQLiteStore
+
 from monkeytype.tracing import CallTrace
 
 
@@ -19,9 +19,10 @@ def func2(a, b):
     pass
 
 
-@pytest.fixture
-def store() -> SQLiteStore:
-    return SQLiteStore.make_store(':memory:')
+@pytest.fixture(params=[SQLiteStore, ReducedSQLiteStore])
+def store(request) -> SQLiteStore:
+    Store = request.param
+    return Store.make_store(':memory:')
 
 
 def test_round_trip(store):
