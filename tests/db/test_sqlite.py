@@ -4,10 +4,8 @@
 # This source code is licensed under the BSD-style license found in the
 # LICENSE file in the root directory of this source tree.
 import pytest
-import sqlite3
 
 from monkeytype.db.sqlite import (
-    create_call_trace_table,
     SQLiteStore,
     )
 from monkeytype.tracing import CallTrace
@@ -23,9 +21,7 @@ def func2(a, b):
 
 @pytest.fixture
 def store() -> SQLiteStore:
-    conn = sqlite3.connect(':memory:')
-    create_call_trace_table(conn)
-    return SQLiteStore(conn)
+    return SQLiteStore.make_store(':memory:')
 
 
 def test_round_trip(store):
