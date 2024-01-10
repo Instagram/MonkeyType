@@ -28,14 +28,12 @@ jobs:
       with:
         path: ~/.cache/pip
         key: ${{ runner.os }}-${{ matrix.python-version }}-pip-${{ hashFiles('**/Pipfile.lock') }}
-        restore-keys: ${{ runner.os }}-${{ matrix.python-version }}-pip-
 
     - name: Restore pipenv cache
       uses: actions/cache@v3
       with:
         path: ~/.cache/pipenv
         key: ${{ runner.os }}-${{ matrix.python-version }}-pipenv-${{ hashFiles('**/Pipfile.lock') }}
-        restore-keys: ${{ runner.os }}-${{ matrix.python-version }}-pipenv-
 
     - name: Install dependencies
       run: |

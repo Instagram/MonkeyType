@@ -145,7 +145,7 @@ def get_default_config() -> Config:
     distribution, it must be created by the user.
     """
     try:
-        import monkeytype_config  # type: ignore[import]
+        import monkeytype_config  # type: ignore[import-not-found]
     except ImportError:
         return DefaultConfig()
     return monkeytype_config.CONFIG  # type: ignore[no-any-return]
