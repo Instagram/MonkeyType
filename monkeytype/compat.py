@@ -8,9 +8,7 @@ from typing import Any, ForwardRef, Union, _GenericAlias  # type: ignore[attr-de
 from mypy_extensions import _TypedDictMeta  # type: ignore[attr-defined]
 
 try:
-    from django.utils.functional import (
-        cached_property as cp,  # type: ignore[import-not-found]
-    )
+    from django.utils.functional import cached_property as cp
 
     cached_property = cp
 except ImportError:
