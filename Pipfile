@@ -7,6 +7,8 @@ name = "pypi"
 black = "*"
 isort = "*"
 flake8 = "*"
+# necessary to work with flake8 6.0.0
+pycodestyle = "<2.11"
 pytest = "*"
 exceptiongroup = {markers="python_version < '3.11.0'"}
 mypy = "*"
