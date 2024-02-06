@@ -78,7 +78,7 @@ For more on the motivation and design of Python type annotations, see
 Requirements
 ------------
 
-MonkeyType requires Python 3.7+ and the `libcst`_ library (for applying type
+MonkeyType requires Python 3.9+ and the `libcst`_ library (for applying type
 stubs to code files). It generates only Python 3 type annotations (no type
 comments).
 

@@ -901,9 +901,9 @@ class StubIndexBuilder(CallTraceLogger):
 
     def __init__(self, module_re: str, max_typed_dict_size: int) -> None:
         self.re = re.compile(module_re)
-        self.index: DefaultDict[
-            Callable[..., Any], Set[CallTrace]
-        ] = collections.defaultdict(set)
+        self.index: DefaultDict[Callable[..., Any], Set[CallTrace]] = (
+            collections.defaultdict(set)
+        )
         self.max_typed_dict_size = max_typed_dict_size
 
     def log(self, trace: CallTrace) -> None:
