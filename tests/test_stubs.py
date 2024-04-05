@@ -389,7 +389,7 @@ class TestClassStub:
                 AttributeStub("foo", int),
                 AttributeStub("bar", str),
             ],
-            nested_class_stubs=[nested_nested_class_stub],
+            class_stubs=[nested_nested_class_stub],
         )
 
         # outermost class
@@ -400,7 +400,7 @@ class TestClassStub:
                 AttributeStub("foo", int),
                 AttributeStub("bar", str),
             ],
-            nested_class_stubs=[nested_class_stub],
+            class_stubs=[nested_class_stub],
         )
         expected = "\n".join(
             [
@@ -623,11 +623,11 @@ class TestModuleStub:
         test_stub = ClassStub(
             'Test',
             function_stubs=func_stubs,
-            nested_class_stubs=[
+            class_stubs=[
                 ClassStub(
                     'Nested1',
                     attribute_stubs=[AttributeStub('a', int)],
-                    nested_class_stubs=[
+                    class_stubs=[
                         ClassStub(
                             'Nested2',
                             attribute_stubs=[AttributeStub('b', str)],
@@ -936,6 +936,46 @@ class TestBuildModuleStubs:
         )
         entries = [function]
         expected = module_stub_for_method_with_typed_dict
+        self.maxDiff = None
+        assert build_module_stubs(entries) == expected
+
+    def test_build_module_stubs_with_nested_classes(self):
+        entries = [
+            FunctionDefinition.from_callable(Dummy.a_static_method),
+            FunctionDefinition.from_callable(Dummy.a_class_method.__func__),
+            FunctionDefinition.from_callable(Dummy.an_instance_method),
+            FunctionDefinition.from_callable(simple_add),
+            FunctionDefinition.from_callable(Dummy.Nested1.an_instance_method),
+            FunctionDefinition.from_callable(Dummy.Nested1.Nested2.an_instance_method),
+        ]
+
+        to_strip = ['typing']
+
+        nested2_stub = ClassStub('Nested2', function_stubs=[
+            _func_stub_from_callable(Dummy.Nested1.Nested2.an_instance_method, to_strip),
+        ])
+
+        nested_stub = ClassStub(
+            'Nested1',
+            function_stubs=[_func_stub_from_callable(Dummy.Nested1.an_instance_method, to_strip)],
+            class_stubs=[nested2_stub],
+        )
+
+        simple_add_stub = _func_stub_from_callable(simple_add)
+        dummy_stub = ClassStub(
+            'Dummy',
+            function_stubs=[
+                _func_stub_from_callable(Dummy.a_class_method.__func__, to_strip),
+                _func_stub_from_callable(Dummy.an_instance_method, to_strip),
+                _func_stub_from_callable(Dummy.a_static_method, to_strip),
+            ],
+            class_stubs=[nested_stub],
+        )
+        imports = {'typing': {'Any', 'Optional'}}
+        expected = {
+            'tests.test_stubs': ModuleStub(function_stubs=[simple_add_stub]),
+            'tests.util': ModuleStub(class_stubs=[dummy_stub], imports_stub=ImportBlockStub(imports)),
+        }
         self.maxDiff = None
         assert build_module_stubs(entries) == expected
 

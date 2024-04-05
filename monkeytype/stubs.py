@@ -546,12 +546,14 @@ class ClassStub(Stub):
         name: str,
         function_stubs: Optional[Iterable[FunctionStub]] = None,
         attribute_stubs: Optional[Iterable[AttributeStub]] = None,
-        nested_class_stubs: Optional[Iterable["ClassStub"]] = None,
+        class_stubs: Optional[Iterable["ClassStub"]] = None,
     ) -> None:
         self.name = name
         self.function_stubs: Dict[str, FunctionStub] = {}
         self.attribute_stubs = attribute_stubs or []
-        self.nested_class_stubs = nested_class_stubs or []
+        self.class_stubs: Dict[str, "ClassStub"] = {}
+        if class_stubs is not None:
+            self.class_stubs = {stub.name: stub for stub in class_stubs}
         if function_stubs is not None:
             self.function_stubs = {stub.name: stub for stub in function_stubs}
 
@@ -567,7 +569,7 @@ class ClassStub(Stub):
                 stub.render(prefix=nested_prefix)
                 for _, stub in sorted(self.function_stubs.items())
             ],
-            *[stub.render(prefix=nested_prefix) for stub in self.nested_class_stubs],
+            *[stub.render(prefix=nested_prefix) for stub in self.class_stubs.values()],
         ]
         return "\n".join(parts)
 
@@ -576,7 +578,7 @@ class ClassStub(Stub):
             repr(self.name),
             tuple(self.function_stubs.values()),
             tuple(self.attribute_stubs),
-            tuple(self.nested_class_stubs),
+            tuple(self.class_stubs),
         )
 
 
@@ -843,41 +845,49 @@ def get_updated_definition(
     )
 
 
-def build_module_stubs(entries: Iterable[FunctionDefinition]) -> Dict[str, ModuleStub]:
-    """Given an iterable of function definitions, build the corresponding stubs"""
-    mod_stubs: Dict[str, ModuleStub] = {}
+def _build_module_stub(entries: Iterable[FunctionDefinition]) -> ModuleStub:
+    """Given an iterable of function definitions for one module, update the module stub"""
+    mod_stub = ModuleStub()
     for entry in entries:
-        path = entry.qualname.split(".")
-        name = path.pop()
-        class_path = path
-        # TODO: Handle nested classes
-        klass = None
-        if len(class_path) > 0:
-            klass = ".".join(class_path)
-        if entry.module not in mod_stubs:
-            mod_stubs[entry.module] = ModuleStub()
-        mod_stub = mod_stubs[entry.module]
+        # handle imports
         imports = get_imports_for_signature(entry.signature)
         # Import TypedDict, if needed.
         if entry.typed_dict_class_stubs:
             imports["mypy_extensions"].add("TypedDict")
-        func_stub = FunctionStub(
-            name, entry.signature, entry.kind, list(imports.keys()), entry.is_async
-        )
         # Don't need to import anything from the same module
         imports.pop(entry.module, None)
         mod_stub.imports_stub.imports.merge(imports)
-        if klass is not None:
-            if klass not in mod_stub.class_stubs:
-                mod_stub.class_stubs[klass] = ClassStub(klass)
-            class_stub = mod_stub.class_stubs[klass]
-            class_stub.function_stubs[func_stub.name] = func_stub
-        else:
-            mod_stub.function_stubs[func_stub.name] = func_stub
+
+        path = entry.qualname.split(".")
+        class_path, name = path[:-1], path[-1]
+
+        # Handle classes including nested classes
+        fn_container = mod_stub
+        while len(class_path) > 0:
+            outer_class, *inner_classes = class_path
+
+            if outer_class not in fn_container.class_stubs:
+                fn_container.class_stubs[outer_class] = ClassStub(outer_class)
+
+            fn_container = fn_container.class_stubs[outer_class]
+            class_path = inner_classes
+
+        # Add the function to the containing class or module
+        func_stub = FunctionStub(
+            name, entry.signature, entry.kind, list(imports.keys()), entry.is_async
+        )
+        fn_container.function_stubs[func_stub.name] = func_stub
 
         mod_stub.typed_dict_class_stubs.extend(entry.typed_dict_class_stubs)
+    return mod_stub
 
-    return mod_stubs
+def build_module_stubs(entries: Iterable[FunctionDefinition]) -> Dict[str, ModuleStub]:
+    """Given an iterable of function definitions, build the corresponding stubs"""
+    entry_groups: Dict[str, List[FunctionDefinition]] = collections.defaultdict(list)
+    for entry in entries:
+        entry_groups[entry.module].append(entry)
+
+    return {module: _build_module_stub(entries) for module, entries in entry_groups.items()}
 
 
 def build_module_stubs_from_traces(
