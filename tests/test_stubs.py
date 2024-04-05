@@ -366,6 +366,64 @@ class TestClassStub:
             '    def a_class_method(cls, foo: Any) -> Optional[frame]: ...',
             '    def an_instance_method(self, foo: Any, bar: Any) -> Optional[frame]: ...',
         ])
+
+    def test_render_nested_class(self):
+        cm_stub = _func_stub_from_callable(Dummy.a_class_method.__func__)
+        im_stub = _func_stub_from_callable(Dummy.an_instance_method)
+
+        # innermost class
+        nested_nested_class_stub = ClassStub(
+            "TestNestedNested",
+            function_stubs=(cm_stub, im_stub),
+            attribute_stubs=[
+                AttributeStub("foo", int),
+                AttributeStub("bar", str),
+            ],
+        )
+
+        # intermediate class
+        nested_class_stub = ClassStub(
+            "TestNested",
+            function_stubs=(cm_stub, im_stub),
+            attribute_stubs=[
+                AttributeStub("foo", int),
+                AttributeStub("bar", str),
+            ],
+            nested_class_stubs=[nested_nested_class_stub],
+        )
+
+        # outermost class
+        class_stub = ClassStub(
+            "Test",
+            function_stubs=(cm_stub, im_stub),
+            attribute_stubs=[
+                AttributeStub("foo", int),
+                AttributeStub("bar", str),
+            ],
+            nested_class_stubs=[nested_class_stub],
+        )
+        expected = "\n".join(
+            [
+                "class Test:",
+                "    bar: str",
+                "    foo: int",
+                "    @classmethod",
+                "    def a_class_method(cls, foo: Any) -> Optional[frame]: ...",
+                "    def an_instance_method(self, foo: Any, bar: Any) -> Optional[frame]: ...",
+                "    class TestNested:",
+                "        bar: str",
+                "        foo: int",
+                "        @classmethod",
+                "        def a_class_method(cls, foo: Any) -> Optional[frame]: ...",
+                "        def an_instance_method(self, foo: Any, bar: Any) -> Optional[frame]: ...",
+                "        class TestNestedNested:",
+                "            bar: str",
+                "            foo: int",
+                "            @classmethod",
+                "            def a_class_method(cls, foo: Any) -> Optional[frame]: ...",
+                "            def an_instance_method(self, foo: Any, bar: Any) -> Optional[frame]: ...",
+            ]
+        )
         assert class_stub.render() == expected
 
 
@@ -562,7 +620,22 @@ class TestModuleStub:
         im_stub = _func_stub_from_callable(Dummy.an_instance_method)
         sig_stub = _func_stub_from_callable(Dummy.has_complex_signature)
         func_stubs = (cm_stub, im_stub, sig_stub)
-        test_stub = ClassStub('Test', function_stubs=func_stubs)
+        test_stub = ClassStub(
+            'Test',
+            function_stubs=func_stubs,
+            nested_class_stubs=[
+                ClassStub(
+                    'Nested1',
+                    attribute_stubs=[AttributeStub('a', int)],
+                    nested_class_stubs=[
+                        ClassStub(
+                            'Nested2',
+                            attribute_stubs=[AttributeStub('b', str)],
+                            function_stubs=[im_stub]
+                        )]
+                )
+            ]
+        )
         test2_stub = ClassStub('Test2', function_stubs=func_stubs)
         other_class_stubs = module_stub_for_method_with_typed_dict['tests.util'].class_stubs.values()
         class_stubs = (*other_class_stubs, test_stub, test2_stub)
@@ -625,6 +698,11 @@ class TestModuleStub:
             '        g: Any = ...,',
             '        **h: Any',
             '    ) -> Optional[frame]: ...',
+            '    class Nested1:',
+            '        a: int',
+            '        class Nested2:',
+            '            b: str',
+            '            def an_instance_method(self, foo: Any, bar: Any) -> Optional[frame]: ...',
             '',
             '',
             'class Test2:',

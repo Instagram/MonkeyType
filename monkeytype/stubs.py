@@ -546,32 +546,37 @@ class ClassStub(Stub):
         name: str,
         function_stubs: Optional[Iterable[FunctionStub]] = None,
         attribute_stubs: Optional[Iterable[AttributeStub]] = None,
+        nested_class_stubs: Optional[Iterable["ClassStub"]] = None,
     ) -> None:
         self.name = name
         self.function_stubs: Dict[str, FunctionStub] = {}
         self.attribute_stubs = attribute_stubs or []
+        self.nested_class_stubs = nested_class_stubs or []
         if function_stubs is not None:
             self.function_stubs = {stub.name: stub for stub in function_stubs}
 
-    def render(self) -> str:
+    def render(self, prefix: str = "") -> str:
+        nested_prefix = prefix + "    "
         parts = [
-            f"class {self.name}:",
+            f"{prefix}class {self.name}:",
             *[
-                stub.render(prefix="    ")
+                stub.render(prefix=nested_prefix)
                 for stub in sorted(self.attribute_stubs, key=lambda stub: stub.name)
             ],
             *[
-                stub.render(prefix="    ")
+                stub.render(prefix=nested_prefix)
                 for _, stub in sorted(self.function_stubs.items())
             ],
+            *[stub.render(prefix=nested_prefix) for stub in self.nested_class_stubs],
         ]
         return "\n".join(parts)
 
     def __repr__(self) -> str:
-        return "ClassStub(%s, %s, %s)" % (
+        return "ClassStub(%s, %s, %s, %s)" % (
             repr(self.name),
             tuple(self.function_stubs.values()),
             tuple(self.attribute_stubs),
+            tuple(self.nested_class_stubs),
         )
 
 
