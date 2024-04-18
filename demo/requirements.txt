@@ -1,5 +1,5 @@
 attrs==19.2.0
-black==18.4a2
+black==24.3.0
 click==6.7
 coverage==4.5.1
 dataclasses==0.5
