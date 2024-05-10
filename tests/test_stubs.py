@@ -4,6 +4,8 @@
 # This source code is licensed under the BSD-style license found in the
 # LICENSE file in the root directory of this source tree.
 import inspect
+import xml.dom.minidom
+import xml.etree.ElementTree
 from inspect import (
     Parameter,
     Signature,
@@ -49,7 +51,7 @@ from monkeytype.stubs import (
     render_signature,
     shrink_traced_types,
     update_signature_args,
-    update_signature_return,
+    update_signature_return, RenderContext,
 )
 from monkeytype.tracing import CallTrace
 from monkeytype.typing import NoneType, make_typed_dict
@@ -86,7 +88,7 @@ class TestImportBlockStub:
             'from a.module import AClass',
             'from another.module import AnotherClass',
         ])
-        assert stub.render() == expected
+        assert stub.render(context=RenderContext()) == expected
 
     def test_io_import_single(self):
         """Single _io imports should convert to io"""
@@ -96,7 +98,7 @@ class TestImportBlockStub:
         expected = "\n".join([
             'from io import BytesIO',
         ])
-        assert stub.render() == expected
+        assert stub.render(context=RenderContext()) == expected
 
     def test_multiple_imports(self):
         """Multiple imports from a single module should each be on their own line"""
@@ -110,7 +112,7 @@ class TestImportBlockStub:
             '    AnotherClass,',
             ')',
         ])
-        assert stub.render() == expected
+        assert stub.render(context=RenderContext()) == expected
 
     def test_multiple_io_imports(self):
         """Multiple imports from single _io module should be convert to io import"""
@@ -123,7 +125,7 @@ class TestImportBlockStub:
             '    FileIO,',
             ')',
         ])
-        assert stub.render() == expected
+        assert stub.render(context=RenderContext()) == expected
 
 
 def simple_add(a: int, b: int) -> int:
@@ -178,7 +180,7 @@ class TestAttributeStub:
         ],
     )
     def test_simple_attribute(self, stub, expected):
-        assert stub.render('    ') == expected
+        assert stub.render('    ', context=RenderContext()) == expected
 
 
 class TestRenderAnnotation:
@@ -210,7 +212,7 @@ class TestRenderAnnotation:
         ],
     )
     def test_render_annotation(self, annotation, expected):
-        assert render_annotation(annotation) == expected
+        assert render_annotation(annotation, context=RenderContext()) == expected
 
 
 class TestFunctionStub:
@@ -218,25 +220,25 @@ class TestFunctionStub:
         stub = FunctionStub('test', inspect.signature(Dummy.a_class_method), FunctionKind.CLASS)
         expected = "\n".join([
             '@classmethod',
-            'def test%s: ...' % (render_signature(stub.signature),),
+            'def test%s: ...' % (render_signature(stub.signature, context=RenderContext()),),
         ])
-        assert stub.render() == expected
+        assert stub.render(context=RenderContext()) == expected
 
     def test_staticmethod(self):
         stub = FunctionStub('test', inspect.signature(Dummy.a_static_method), FunctionKind.STATIC)
         expected = "\n".join([
             '@staticmethod',
-            'def test%s: ...' % (render_signature(stub.signature),),
+            'def test%s: ...' % (render_signature(stub.signature, context=RenderContext()),),
         ])
-        assert stub.render() == expected
+        assert stub.render(context=RenderContext()) == expected
 
     def test_property(self):
         stub = FunctionStub('test', inspect.signature(Dummy.a_property.fget), FunctionKind.PROPERTY)
         expected = "\n".join([
             '@property',
-            'def test%s: ...' % (render_signature(stub.signature),),
+            'def test%s: ...' % (render_signature(stub.signature, context=RenderContext()),),
         ])
-        assert stub.render() == expected
+        assert stub.render(context=RenderContext()) == expected
 
     @skipIf(cached_property is None, "install Django to run this test")
     def test_cached_property(self):
@@ -244,20 +246,20 @@ class TestFunctionStub:
                             inspect.signature(Dummy.a_cached_property.func), FunctionKind.DJANGO_CACHED_PROPERTY)
         expected = "\n".join([
             '@cached_property',
-            'def test%s: ...' % (render_signature(stub.signature),),
+            'def test%s: ...' % (render_signature(stub.signature, context=RenderContext()),),
         ])
-        assert stub.render() == expected
+        assert stub.render(context=RenderContext()) == expected
 
     def test_simple(self):
         for kind in [FunctionKind.MODULE, FunctionKind.INSTANCE]:
             stub = FunctionStub('test', inspect.signature(simple_add), kind)
-            expected = 'def test%s: ...' % (render_signature(stub.signature),)
-            assert stub.render() == expected
+            expected = 'def test%s: ...' % (render_signature(stub.signature, context=RenderContext()),)
+            assert stub.render(context=RenderContext()) == expected
 
     def test_with_prefix(self):
         stub = FunctionStub('test', inspect.signature(simple_add), FunctionKind.MODULE)
-        expected = '  def test%s: ...' % (render_signature(stub.signature),)
-        assert stub.render(prefix='  ') == expected
+        expected = '  def test%s: ...' % (render_signature(stub.signature, context=RenderContext()),)
+        assert stub.render(prefix='  ', context=RenderContext()) == expected
 
     def test_strip_modules(self):
         """We should strip modules from annotations in the signature"""
@@ -265,30 +267,30 @@ class TestFunctionStub:
         f = strip_modules_helper
         stub = FunctionStub(f.__name__, inspect.signature(f), FunctionKind.MODULE, to_strip)
         expected = 'def strip_modules_helper(d1: Dummy, d2: Dummy) -> None: ...'
-        assert stub.render() == expected
+        assert stub.render(context=RenderContext()) == expected
 
     def test_async_function(self):
         stub = FunctionStub('test', inspect.signature(simple_add), FunctionKind.MODULE, is_async=True)
-        expected = 'async def test%s: ...' % (render_signature(stub.signature),)
-        assert stub.render() == expected
+        expected = 'async def test%s: ...' % (render_signature(stub.signature, context=RenderContext()),)
+        assert stub.render(context=RenderContext()) == expected
 
     def test_optional_parameter_annotation(self):
         """Optional should always be included in parameter annotations, even if the default value is None"""
         stub = FunctionStub('test', inspect.signature(has_optional_param), FunctionKind.MODULE)
         expected = 'def test(x: Optional[int] = ...) -> None: ...'
-        assert stub.render() == expected
+        assert stub.render(context=RenderContext()) == expected
 
     def test_optional_union_parameter_annotation(self):
         """Optional[Union[X, Y]] should always be rendered as such, not Union[X, Y, None]"""
         stub = FunctionStub('test', inspect.signature(has_optional_union_param), FunctionKind.MODULE)
         expected = 'def test(x: Optional[Union[int, float]]) -> None: ...'
-        assert stub.render() == expected
+        assert stub.render(context=RenderContext()) == expected
 
     def test_optional_return_annotation(self):
         """Optional should always be included in return annotations"""
         stub = FunctionStub('test', inspect.signature(has_optional_return), FunctionKind.MODULE)
         expected = 'def test() -> Optional[int]: ...'
-        assert stub.render() == expected
+        assert stub.render(context=RenderContext()) == expected
 
     def test_split_parameters_across_multiple_lines(self):
         """When single-line length exceeds 120 characters, parameters should be split into multiple lines."""
@@ -300,24 +302,24 @@ class TestFunctionStub:
             very_long_name_parameter_1: float,
             very_long_name_parameter_2: float
         ) -> Optional[float]: ...''')
-        assert stub.render() == expected
+        assert stub.render(context=RenderContext()) == expected
 
         expected = '\n'.join([
             '    def has_length_exceeds_120_chars(',
             '        very_long_name_parameter_1: float,',
             '        very_long_name_parameter_2: float',
             '    ) -> Optional[float]: ...'])
-        assert stub.render(prefix='    ') == expected
+        assert stub.render(prefix='    ', context=RenderContext()) == expected
 
     def test_default_none_parameter_annotation(self):
         stub = FunctionStub('test', inspect.signature(default_none_parameter), FunctionKind.MODULE)
         expected = 'def test(x: Optional[int] = ...) -> None: ...'
-        assert stub.render() == expected
+        assert stub.render(context=RenderContext()) == expected
 
     def test_newtype_parameter_annotation(self):
         stub = FunctionStub('test', inspect.signature(has_newtype_param), FunctionKind.MODULE)
         expected = 'def test(user_id: UserId) -> None: ...'
-        assert stub.render() == expected
+        assert stub.render(context=RenderContext()) == expected
 
     def test_nonetype_annotation(self):
         """NoneType should always be rendered as None"""
@@ -326,13 +328,13 @@ class TestFunctionStub:
                                     existing_annotation_strategy=ExistingAnnotationStrategy.IGNORE)
         stub = FunctionStub('test', sig, FunctionKind.MODULE)
         expected = 'def test(a: Dict[str, None], b) -> int: ...'
-        assert stub.render() == expected
+        assert stub.render(context=RenderContext()) == expected
 
     def test_forward_ref_annotation(self):
         """Forward refs should be rendered as strings, not _ForwardRef(...)."""
         stub = FunctionStub('has_forward_ref', inspect.signature(has_forward_ref), FunctionKind.MODULE)
         expected = "def has_forward_ref() -> Optional['TestFunctionStub']: ..."
-        assert stub.render() == expected
+        assert stub.render(context=RenderContext()) == expected
 
     @pytest.mark.xfail(reason='We get Generator[ForwardRef(), ...].')
     def test_forward_ref_annotation_within_generator(self):
@@ -340,7 +342,7 @@ class TestFunctionStub:
                             inspect.signature(has_forward_ref_within_generator),
                             FunctionKind.MODULE)
         expected = "def foo() -> Generator['TestFunctionStub', None, int]: ..."
-        assert stub.render() == expected
+        assert stub.render(context=RenderContext()) == expected
 
 
 def _func_stub_from_callable(func: Callable, strip_modules: List[str] = None):
@@ -366,7 +368,7 @@ class TestClassStub:
             '    def a_class_method(cls, foo: Any) -> Optional[frame]: ...',
             '    def an_instance_method(self, foo: Any, bar: Any) -> Optional[frame]: ...',
         ])
-        assert class_stub.render() == expected
+        assert class_stub.render(context=RenderContext()) == expected
 
 
 class TestReplaceTypedDictsWithStubs:
@@ -644,7 +646,7 @@ class TestModuleStub:
             '        **h: Any',
             '    ) -> Optional[frame]: ...',
         ])
-        assert mod_stub.render() == expected
+        assert mod_stub.render(context=RenderContext()) == expected
 
     def test_render_nested_typed_dict(self):
         function = FunctionDefinition.from_callable_and_traced_types(
@@ -681,7 +683,7 @@ class TestModuleStub:
             'class Dummy:',
             '    def an_instance_method(self, foo: \'FooTypedDict__RENAME_ME__\', bar: int) -> int: ...'])
         self.maxDiff = None
-        assert build_module_stubs(entries)['tests.util'].render() == expected
+        assert build_module_stubs(entries)['tests.util'].render(context=RenderContext()) == expected
 
     def test_render_return_typed_dict(self):
         function = FunctionDefinition.from_callable_and_traced_types(
@@ -709,7 +711,7 @@ class TestModuleStub:
             ' -> \'DummyAnInstanceMethodTypedDict__RENAME_ME__\': ...',
         ])
         self.maxDiff = None
-        assert build_module_stubs(entries)['tests.util'].render() == expected
+        assert build_module_stubs(entries)['tests.util'].render(context=RenderContext()) == expected
 
     def test_render_yield_typed_dict(self):
         function = FunctionDefinition.from_callable_and_traced_types(
@@ -741,7 +743,7 @@ class TestModuleStub:
             '    ) -> Generator[\'DummyAnInstanceMethodYieldTypedDict__RENAME_ME__\', None, int]: ...',
         ])
         self.maxDiff = None
-        assert build_module_stubs(entries)['tests.util'].render() == expected
+        assert build_module_stubs(entries)['tests.util'].render(context=RenderContext()) == expected
 
     def test_render_typed_dict_in_list(self):
         function = FunctionDefinition.from_callable_and_traced_types(
@@ -767,7 +769,7 @@ class TestModuleStub:
             'class Dummy:',
             '    def an_instance_method(self, foo: List[\'FooTypedDict__RENAME_ME__\'], bar: int) -> int: ...'])
         self.maxDiff = None
-        assert build_module_stubs(entries)['tests.util'].render() == expected
+        assert build_module_stubs(entries)['tests.util'].render(context=RenderContext()) == expected
 
     def test_render_typed_dict_base_and_subclass(self):
         function = FunctionDefinition.from_callable_and_traced_types(
@@ -795,7 +797,7 @@ class TestModuleStub:
             '',
             'class Dummy:',
             '    def an_instance_method(self, foo: \'FooTypedDict__RENAME_ME__NonTotal\', bar: int) -> int: ...'])
-        assert build_module_stubs(entries)['tests.util'].render() == expected
+        assert build_module_stubs(entries)['tests.util'].render(context=RenderContext()) == expected
 
     def test_render_return_empty_tuple(self):
         """Regression test for #190."""
@@ -819,7 +821,31 @@ class TestModuleStub:
             ' -> Tuple[()]: ...',
         ])
         self.maxDiff = None
-        assert build_module_stubs(entries)['tests.util'].render() == expected
+        assert build_module_stubs(entries)['tests.util'].render(context=RenderContext()) == expected
+
+    def test_multiple_imported_symbols_same_name(self):
+        function = FunctionDefinition.from_callable_and_traced_types(
+            Dummy.an_instance_method,
+            {
+                'foo': xml.dom.minidom.Element,
+                'bar': xml.etree.ElementTree.Element,
+            },
+            type(None),
+            yield_type=None,
+            existing_annotation_strategy=ExistingAnnotationStrategy.IGNORE
+        )
+        entries = [function]
+        expected = '\n'.join([
+            'from xml.dom.minidom import Element as xdm_Element',
+            'from xml.etree.ElementTree import Element as xeE_Element',
+            '',
+            '',
+            'class Dummy:',
+            '    def an_instance_method(self, foo: xdm_Element, bar: xeE_Element)'
+            ' -> None: ...',
+        ])
+        self.maxDiff = None
+        assert build_module_stubs(entries)['tests.util'].render(context=RenderContext()) == expected
 
 
 class TestBuildModuleStubs:

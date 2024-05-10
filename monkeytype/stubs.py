@@ -7,9 +7,11 @@ import asyncio
 import collections
 import enum
 import inspect
+import itertools
 import logging
 import re
 from abc import ABCMeta, abstractmethod
+from dataclasses import dataclass, field
 from typing import (
     Any,
     Callable,
@@ -18,6 +20,8 @@ from typing import (
     ForwardRef,
     Iterable,
     List,
+    MutableMapping,
+    MutableSet,
     Optional,
     Set,
     Tuple,
@@ -249,6 +253,19 @@ def get_typed_dict_class_name(parameter_name: str) -> str:
     return f"{pascal_case(parameter_name)}TypedDict__RENAME_ME__"
 
 
+@dataclass
+class RenderContext:
+    """
+    Value that is passed to methods in `Stub` and related helper methods that
+    are responsible for rendering the stub. It can be used to pass information
+    to influence the rendered result.
+    """
+
+    # Mapping from (module, name) of imported symbols that should renamed while
+    # being imported. This is used to resolve naming conflicts.
+    import_renames: MutableMapping[Tuple[str, str], str] = field(default_factory=dict)
+
+
 class Stub(metaclass=ABCMeta):
     def __eq__(self, other: Any) -> bool:
         if isinstance(other, self.__class__):
@@ -256,28 +273,100 @@ class Stub(metaclass=ABCMeta):
         return NotImplemented
 
     @abstractmethod
-    def render(self) -> str:
+    def render(self, *, context: RenderContext) -> str:
         pass
+
+
+def _get_unused_name(used_names: MutableSet[str], name_base: str) -> str:
+    """
+    Add a numeric suffix to the passed `base_name` until it's not contained in
+    `used_names` anymore and add it to that set.
+    """
+    for i in itertools.count(1):
+        if i == 1:
+            # Try without a suffix first.
+            renamed_name = name_base
+        else:
+            renamed_name = f"{name_base}_{i}"
+
+        if renamed_name not in used_names:
+            used_names.add(renamed_name)
+
+            return renamed_name
+
+    # Never happens. Make flake 8 happy.
+    assert False
 
 
 class ImportBlockStub(Stub):
     def __init__(self, imports: Optional[ImportMap] = None) -> None:
         self.imports = imports if imports else ImportMap()
 
-    def render(self) -> str:
+    def render(self, *, context: RenderContext) -> str:
+        def get_name_part(module_name: str, name: str) -> str:
+            renamed_name = context.import_renames.get((module_name, name))
+
+            # Generate a renamed import if requested by the render context.
+            if renamed_name is None:
+                return name
+            else:
+                return f"{name} as {renamed_name}"
+
         imports = []
         for module in sorted(self.imports.keys()):
             names = sorted(self.imports[module])
             if module == "_io":
                 module = module[1:]
             if len(names) == 1:
-                imports.append("from %s import %s" % (module, names[0]))
+                imports.append(
+                    "from %s import %s" % (module, get_name_part(module, names[0]))
+                )
             else:
                 stanza = ["from %s import (" % (module,)]
-                stanza.extend(["    %s," % (name,) for name in names])
+                stanza.extend(
+                    ["    %s," % (get_name_part(module, name),) for name in names]
+                )
                 stanza.append(")")
                 imports.append("\n".join(stanza))
         return "\n".join(imports)
+
+    def resolve_import_conflicts(self, context: RenderContext) -> None:
+        """
+        This method should be called before rendering a module stub that might
+        import multiple symbols with the same name from different modules. It
+        generates renames for the affected symbols and stores them in the
+        passed render context.
+
+        If that same context is then later passed to the ModuleStub's
+        `render()`, the symbols will be renamed on import and usages will use
+        the renamed name.
+        """
+        # Map from symbol name to all modules from where a symbol with that name
+        # is imported.
+        imported_names: Dict[str, Set[str]] = {}
+
+        for module_name, names in self.imports.items():
+            for name in names:
+                imported_names.setdefault(name, set()).add(module_name)
+
+        for name, module_names in imported_names.items():
+            # Nothing to do if no more than one symbol with the same name is
+            # imported.
+            if len(module_names) < 2:
+                continue
+
+            used_names: Set[str] = set()
+
+            for module_name in module_names:
+                # Try to figure out a "good" name to rename the symbol to by
+                # prefixing it with the initial letters of its parent module
+                # chain.
+                prefix = "".join(i[0] for i in module_name.split("."))
+
+                # We might still have a conflict, so we add a numeric suffix if
+                # that's the case.
+                new_name = _get_unused_name(used_names, f"{prefix}_{name}")
+                context.import_renames[(module_name, name)] = new_name
 
     def __repr__(self) -> str:
         return "ImportBlockStub(%s)" % (repr(self.imports),)
@@ -302,6 +391,11 @@ def _get_optional_elem(anno: Any) -> Any:
 
 
 class RenderAnnotation(GenericTypeRewriter[str]):
+    def __init__(self, context: RenderContext):
+        super().__init__()
+
+        self.context = context
+
     """Render annotation recursively."""
 
     def make_anonymous_typed_dict(
@@ -333,7 +427,14 @@ class RenderAnnotation(GenericTypeRewriter[str]):
             if typ.__module__ in ("builtins",):
                 rendered = typ.__qualname__
             else:
-                rendered = typ.__module__ + "." + typ.__qualname__
+                renamed_name = self.context.import_renames.get(
+                    (typ.__module__, typ.__qualname__)
+                )
+
+                if renamed_name is not None:
+                    return renamed_name
+
+                return typ.__module__ + "." + typ.__qualname__
         elif isinstance(typ, str):
             rendered = typ
         else:
@@ -377,12 +478,12 @@ class RenderAnnotation(GenericTypeRewriter[str]):
         return rendered
 
 
-def render_annotation(anno: Any) -> str:
+def render_annotation(anno: Any, *, context: RenderContext) -> str:
     """Convert an annotation into its stub representation."""
-    return RenderAnnotation().rewrite(anno)
+    return RenderAnnotation(context).rewrite(anno)
 
 
-def render_parameter(param: inspect.Parameter) -> str:
+def render_parameter(param: inspect.Parameter, context: RenderContext) -> str:
     """Convert a parameter into its stub representation.
 
     NB: This is copied almost entirely from https://github.com/python/cpython/blob/3.6/Lib/inspect.py
@@ -398,7 +499,7 @@ def render_parameter(param: inspect.Parameter) -> str:
         anno = param.annotation
         if not _is_optional(anno) and param.default is None:
             anno = Optional[anno]
-        rendered = render_annotation(anno)
+        rendered = render_annotation(anno, context=context)
         formatted = "{}: {}".format(formatted, rendered)
 
     if param.default is not inspect.Parameter.empty:
@@ -413,7 +514,11 @@ def render_parameter(param: inspect.Parameter) -> str:
 
 
 def render_signature(
-    sig: inspect.Signature, max_line_len: Optional[int] = None, prefix: str = ""
+    sig: inspect.Signature,
+    max_line_len: Optional[int] = None,
+    prefix: str = "",
+    *,
+    context: RenderContext,
 ) -> str:
     """Convert a signature into its stub representation.
 
@@ -426,7 +531,7 @@ def render_signature(
     render_pos_only_separator = False
     render_kw_only_separator = True
     for param in sig.parameters.values():
-        formatted = render_parameter(param)
+        formatted = render_parameter(param, context=context)
         kind = param.kind
 
         if kind == inspect.Parameter.POSITIONAL_ONLY:
@@ -459,7 +564,7 @@ def render_signature(
 
     rendered_return = ""
     if sig.return_annotation is not inspect.Signature.empty:
-        anno = render_annotation(sig.return_annotation)
+        anno = render_annotation(sig.return_annotation, context=context)
         rendered_return = " -> {}".format(anno)
 
     # first try render it into one single line, if it doesn't exceed
@@ -488,8 +593,8 @@ class AttributeStub(Stub):
         self.name = name
         self.typ = typ
 
-    def render(self, prefix: str = "") -> str:
-        return f"{prefix}{self.name}: {render_annotation(self.typ)}"
+    def render(self, prefix: str = "", *, context: RenderContext) -> str:
+        return f"{prefix}{self.name}: {render_annotation(self.typ, context=context)}"
 
     def __repr__(self) -> str:
         return f"AttributeStub({self.name}, {self.typ})"
@@ -510,12 +615,13 @@ class FunctionStub(Stub):
         self.strip_modules = strip_modules or []
         self.is_async = is_async
 
-    def render(self, prefix: str = "") -> str:
+    def render(self, prefix: str = "", *, context: RenderContext) -> str:
         s = prefix
         if self.is_async:
             s += "async "
         s += "def " + self.name
-        s += render_signature(self.signature, 120 - len(s), prefix) + ": ..."
+        s += render_signature(self.signature, 120 - len(s), prefix, context=context)
+        s += ": ..."
         # Yes, this is a horrible hack, but inspect.py gives us no way to
         # specify the function that should be used to format annotations.
         for module in self.strip_modules:
@@ -553,15 +659,15 @@ class ClassStub(Stub):
         if function_stubs is not None:
             self.function_stubs = {stub.name: stub for stub in function_stubs}
 
-    def render(self) -> str:
+    def render(self, *, context: RenderContext) -> str:
         parts = [
             f"class {self.name}:",
             *[
-                stub.render(prefix="    ")
+                stub.render(prefix="    ", context=context)
                 for stub in sorted(self.attribute_stubs, key=lambda stub: stub.name)
             ],
             *[
-                stub.render(prefix="    ")
+                stub.render(prefix="    ", context=context)
                 for _, stub in sorted(self.function_stubs.items())
             ],
         ]
@@ -686,18 +792,22 @@ class ModuleStub(Stub):
         if typed_dict_class_stubs is not None:
             self.typed_dict_class_stubs = list(typed_dict_class_stubs)
 
-    def render(self) -> str:
+    def render(self, *, context: RenderContext) -> str:
+        # Add necessary import renames to the context before rendering the
+        # module.
+        self.imports_stub.resolve_import_conflicts(context)
+
         parts = []
         if self.imports_stub.imports:
-            parts.append(self.imports_stub.render())
+            parts.append(self.imports_stub.render(context=context))
         for typed_dict_class_stub in sorted(
             self.typed_dict_class_stubs, key=lambda s: s.name
         ):
-            parts.append(typed_dict_class_stub.render())
+            parts.append(typed_dict_class_stub.render(context=context))
         for func_stub in sorted(self.function_stubs.values(), key=lambda s: s.name):
-            parts.append(func_stub.render())
+            parts.append(func_stub.render(context=context))
         for class_stub in sorted(self.class_stubs.values(), key=lambda s: s.name):
-            parts.append(class_stub.render())
+            parts.append(class_stub.render(context=context))
         return "\n\n\n".join(parts)
 
     def __repr__(self) -> str:
