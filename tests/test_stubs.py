@@ -366,6 +366,64 @@ class TestClassStub:
             '    def a_class_method(cls, foo: Any) -> Optional[frame]: ...',
             '    def an_instance_method(self, foo: Any, bar: Any) -> Optional[frame]: ...',
         ])
+
+    def test_render_nested_class(self):
+        cm_stub = _func_stub_from_callable(Dummy.a_class_method.__func__)
+        im_stub = _func_stub_from_callable(Dummy.an_instance_method)
+
+        # innermost class
+        nested_nested_class_stub = ClassStub(
+            "TestNestedNested",
+            function_stubs=(cm_stub, im_stub),
+            attribute_stubs=[
+                AttributeStub("foo", int),
+                AttributeStub("bar", str),
+            ],
+        )
+
+        # intermediate class
+        nested_class_stub = ClassStub(
+            "TestNested",
+            function_stubs=(cm_stub, im_stub),
+            attribute_stubs=[
+                AttributeStub("foo", int),
+                AttributeStub("bar", str),
+            ],
+            class_stubs=[nested_nested_class_stub],
+        )
+
+        # outermost class
+        class_stub = ClassStub(
+            "Test",
+            function_stubs=(cm_stub, im_stub),
+            attribute_stubs=[
+                AttributeStub("foo", int),
+                AttributeStub("bar", str),
+            ],
+            class_stubs=[nested_class_stub],
+        )
+        expected = "\n".join(
+            [
+                "class Test:",
+                "    bar: str",
+                "    foo: int",
+                "    @classmethod",
+                "    def a_class_method(cls, foo: Any) -> Optional[frame]: ...",
+                "    def an_instance_method(self, foo: Any, bar: Any) -> Optional[frame]: ...",
+                "    class TestNested:",
+                "        bar: str",
+                "        foo: int",
+                "        @classmethod",
+                "        def a_class_method(cls, foo: Any) -> Optional[frame]: ...",
+                "        def an_instance_method(self, foo: Any, bar: Any) -> Optional[frame]: ...",
+                "        class TestNestedNested:",
+                "            bar: str",
+                "            foo: int",
+                "            @classmethod",
+                "            def a_class_method(cls, foo: Any) -> Optional[frame]: ...",
+                "            def an_instance_method(self, foo: Any, bar: Any) -> Optional[frame]: ...",
+            ]
+        )
         assert class_stub.render() == expected
 
 
@@ -562,7 +620,22 @@ class TestModuleStub:
         im_stub = _func_stub_from_callable(Dummy.an_instance_method)
         sig_stub = _func_stub_from_callable(Dummy.has_complex_signature)
         func_stubs = (cm_stub, im_stub, sig_stub)
-        test_stub = ClassStub('Test', function_stubs=func_stubs)
+        test_stub = ClassStub(
+            'Test',
+            function_stubs=func_stubs,
+            class_stubs=[
+                ClassStub(
+                    'Nested1',
+                    attribute_stubs=[AttributeStub('a', int)],
+                    class_stubs=[
+                        ClassStub(
+                            'Nested2',
+                            attribute_stubs=[AttributeStub('b', str)],
+                            function_stubs=[im_stub]
+                        )]
+                )
+            ]
+        )
         test2_stub = ClassStub('Test2', function_stubs=func_stubs)
         other_class_stubs = module_stub_for_method_with_typed_dict['tests.util'].class_stubs.values()
         class_stubs = (*other_class_stubs, test_stub, test2_stub)
@@ -625,6 +698,11 @@ class TestModuleStub:
             '        g: Any = ...,',
             '        **h: Any',
             '    ) -> Optional[frame]: ...',
+            '    class Nested1:',
+            '        a: int',
+            '        class Nested2:',
+            '            b: str',
+            '            def an_instance_method(self, foo: Any, bar: Any) -> Optional[frame]: ...',
             '',
             '',
             'class Test2:',
@@ -858,6 +936,46 @@ class TestBuildModuleStubs:
         )
         entries = [function]
         expected = module_stub_for_method_with_typed_dict
+        self.maxDiff = None
+        assert build_module_stubs(entries) == expected
+
+    def test_build_module_stubs_with_nested_classes(self):
+        entries = [
+            FunctionDefinition.from_callable(Dummy.a_static_method),
+            FunctionDefinition.from_callable(Dummy.a_class_method.__func__),
+            FunctionDefinition.from_callable(Dummy.an_instance_method),
+            FunctionDefinition.from_callable(simple_add),
+            FunctionDefinition.from_callable(Dummy.Nested1.an_instance_method),
+            FunctionDefinition.from_callable(Dummy.Nested1.Nested2.an_instance_method),
+        ]
+
+        to_strip = ['typing']
+
+        nested2_stub = ClassStub('Nested2', function_stubs=[
+            _func_stub_from_callable(Dummy.Nested1.Nested2.an_instance_method, to_strip),
+        ])
+
+        nested_stub = ClassStub(
+            'Nested1',
+            function_stubs=[_func_stub_from_callable(Dummy.Nested1.an_instance_method, to_strip)],
+            class_stubs=[nested2_stub],
+        )
+
+        simple_add_stub = _func_stub_from_callable(simple_add)
+        dummy_stub = ClassStub(
+            'Dummy',
+            function_stubs=[
+                _func_stub_from_callable(Dummy.a_class_method.__func__, to_strip),
+                _func_stub_from_callable(Dummy.an_instance_method, to_strip),
+                _func_stub_from_callable(Dummy.a_static_method, to_strip),
+            ],
+            class_stubs=[nested_stub],
+        )
+        imports = {'typing': {'Any', 'Optional'}}
+        expected = {
+            'tests.test_stubs': ModuleStub(function_stubs=[simple_add_stub]),
+            'tests.util': ModuleStub(class_stubs=[dummy_stub], imports_stub=ImportBlockStub(imports)),
+        }
         self.maxDiff = None
         assert build_module_stubs(entries) == expected
 
