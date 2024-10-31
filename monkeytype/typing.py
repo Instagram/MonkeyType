@@ -24,6 +24,7 @@ from typing import (
     Type,
     TypeVar,
     Union,
+    Self
 )
 
 from mypy_extensions import TypedDict
@@ -243,6 +244,7 @@ def get_type(obj, max_typed_dict_size):
 
 
 NoneType = type(None)
+SelfType = Self
 NotImplementedType = type(NotImplemented)
 mappingproxy = type(range.__dict__)
 
