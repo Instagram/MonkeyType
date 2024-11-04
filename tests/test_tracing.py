@@ -21,8 +21,11 @@ from monkeytype.tracing import (
     get_func,
     trace_calls,
 )
-from monkeytype.typing import NoneType
 
+from monkeytype.typing import (
+    NoneType,
+    SelfType
+)
 
 class TraceCollector(CallTraceLogger):
     def __init__(self):
@@ -136,6 +139,15 @@ def call_method_on_locally_defined_class(n: int) -> Tuple[type, Callable]:
             return n * n
     Math().square(n)
     return Math, Math.square
+
+def call_method_returning_instance() -> Callable[[SelfType, int], SelfType]:
+    class Math:
+        sq = 0
+        def square(self, n: int) -> SelfType:
+            self.sq = n * n
+            return self
+
+    return Math.square
 
 
 def call_locally_defined_function(n: int) -> Callable:
@@ -286,6 +298,13 @@ class TestTraceCalls:
             CallTrace(explicit_return_none, {}, NoneType),
         ]
         assert collector.traces == expected
+
+    def test_selftype_annotation(self, collector):
+        """Ensure traces have a return_type of SelfType for functions that return instance objects"""
+        with trace_calls(collector, max_typed_dict_size=0):
+            function = call_method_returning_instance()
+        assert len(collector.traces) == 1
+        assert collector.traces[0] == CallTrace(function, {'n': int, 'self': SelfType}, SelfType, None)
 
     def test_access_property(self, collector):
         """Check that we correctly trace functions decorated with @property"""
