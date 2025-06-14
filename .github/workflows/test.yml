@@ -40,13 +40,13 @@ jobs:
         pip install pipenv
         pipenv install -d
 
-    - name: Lint with flake8
+    - name: Lint with ruff
       run: |
-        pipenv run flake8
+        pipenv run ruff check monkeytype
 
-    - name: Format with black
+    - name: Format with ruff and black
       run: |
-        pipenv run black --check --diff monkeytype
+        pipenv run ruff format --check --diff monkeytype
 
     - name: Format with isort
       run: |
