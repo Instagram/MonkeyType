@@ -61,7 +61,7 @@ jobs:
         pipenv run pytest
 
     - name: Upload htmldoc
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: htmlcov
         path: htmlcov
@@ -72,7 +72,7 @@ jobs:
         pipenv run make html
 
     - name: Upload doc
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: doc
         path: doc/_build/html
