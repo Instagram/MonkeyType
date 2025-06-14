@@ -5,14 +5,13 @@
 # LICENSE file in the root directory of this source tree.
 import inspect
 import logging
+import opcode
 import random
 import sys
 from abc import ABCMeta, abstractmethod
 from contextlib import contextmanager
 from types import CodeType, FrameType
 from typing import Any, Callable, Dict, Iterator, Optional, Union, cast
-
-import opcode
 
 from monkeytype.compat import cached_property
 from monkeytype.typing import get_type

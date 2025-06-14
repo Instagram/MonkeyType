@@ -4,10 +4,7 @@ verify_ssl = true
 name = "pypi"
 
 [dev-packages]
-black = "*"
 isort = "*"
-flake8 = "*"
-# necessary to work with flake8 6.0.0
 pycodestyle = "<2.11"
 pytest = "*"
 exceptiongroup = {markers="python_version < '3.11.0'"}
@@ -19,3 +16,6 @@ tox = "*"
 setuptools_rust = "*"
 libcst = "*"
 importlib_metadata = "*"
+ruff = "*"
+
+[packages]

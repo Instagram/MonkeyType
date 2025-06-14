@@ -56,9 +56,7 @@ def make_query(
     FROM {table}
     WHERE
         module == ?
-    """.format(
-        table=table
-    )
+    """.format(table=table)
     values: List[QueryValue] = [module]
     if qualname is not None:
         raw_query += " AND qualname LIKE ? || '%'"
@@ -122,8 +120,6 @@ class SQLiteStore(CallTraceStore):
                         SELECT module FROM {table}
                         GROUP BY module
                         ORDER BY date(created_at) DESC
-                        """.format(
-                    table=self.table
-                )
+                        """.format(table=self.table)
             )
             return [row[0] for row in cur.fetchall() if row[0]]
