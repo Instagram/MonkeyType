@@ -28,7 +28,10 @@ class CallTraceStore(metaclass=ABCMeta):
 
     @abstractmethod
     def filter(
-        self, module: str, qualname_prefix: Optional[str] = None, limit: int = 2000
+        self,
+        module: str,
+        qualname_prefix: Optional[str] = None,
+        limit: int = 2000,
     ) -> List[CallTraceThunk]:
         """Query the backing store for any traces that match the supplied query.
 

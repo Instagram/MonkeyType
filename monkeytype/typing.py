@@ -82,7 +82,9 @@ def is_anonymous_typed_dict(typ: type) -> bool:
     return is_typed_dict(typ) and typ.__name__ == DUMMY_TYPED_DICT_NAME
 
 
-def shrink_typed_dict_types(typed_dicts: List[type], max_typed_dict_size: int) -> type:
+def shrink_typed_dict_types(
+    typed_dicts: List[type], max_typed_dict_size: int
+) -> type:
     """Shrink a list of TypedDicts into one with the required fields and the optional fields.
     Required fields are keys that appear as a required field in all the TypedDicts.
     Optional fields are those that appear as a required field in only some
@@ -198,7 +200,8 @@ def get_dict_type(dct, max_typed_dict_size):
         )
     else:
         key_type = shrink_types(
-            (get_type(k, max_typed_dict_size) for k in dct.keys()), max_typed_dict_size
+            (get_type(k, max_typed_dict_size) for k in dct.keys()),
+            max_typed_dict_size,
         )
         val_type = shrink_types(
             (get_type(v, max_typed_dict_size) for v in dct.values()),
@@ -230,7 +233,8 @@ def get_type(obj, max_typed_dict_size):
         return get_dict_type(obj, max_typed_dict_size)
     elif typ is defaultdict:
         key_type = shrink_types(
-            (get_type(k, max_typed_dict_size) for k in obj.keys()), max_typed_dict_size
+            (get_type(k, max_typed_dict_size) for k in obj.keys()),
+            max_typed_dict_size,
         )
         val_type = shrink_types(
             (get_type(v, max_typed_dict_size) for v in obj.values()),
@@ -342,7 +346,9 @@ class GenericTypeRewriter(Generic[T], ABC):
             typname = name_of_generic(typ)
         else:
             typname = getattr(typ, "__name__", None)
-        rewriter = getattr(self, "rewrite_" + typname, None) if typname else None
+        rewriter = (
+            getattr(self, "rewrite_" + typname, None) if typname else None
+        )
         if rewriter:
             return rewriter(typ)
         if isinstance(typ, TypeVar):
@@ -397,7 +403,9 @@ class RemoveEmptyContainers(TypeRewriter):
         return args and all(is_any(e) for e in args)
 
     def rewrite_Union(self, union):
-        elems = tuple(self.rewrite(e) for e in union.__args__ if not self._is_empty(e))
+        elems = tuple(
+            self.rewrite(e) for e in union.__args__ if not self._is_empty(e)
+        )
         if elems:
             return Union[elems]
         return union
@@ -466,7 +474,9 @@ class RewriteAnonymousTypedDictToDict(TypeRewriter):
         if not all_value_types:
             # Special-case this because we can't justify any type.
             return Dict[Any, Any]
-        return Dict[str, Union[tuple(self.rewrite(typ) for typ in all_value_types)]]
+        return Dict[
+            str, Union[tuple(self.rewrite(typ) for typ in all_value_types)]
+        ]
 
 
 class ChainedRewriter(TypeRewriter):

@@ -38,7 +38,9 @@ def get_func_in_module(module: str, qualname: str) -> Callable[..., Any]:
                     f"Property {module}.{qualname} has setter or deleter."
                 )
         else:
-            raise InvalidTypeError(f"Property {module}.{qualname} is missing getter")
+            raise InvalidTypeError(
+                f"Property {module}.{qualname} is missing getter"
+            )
     elif cached_property and isinstance(func, cached_property):
         func = func.func
     elif not isinstance(func, (types.FunctionType, types.BuiltinFunctionType)):
@@ -78,5 +80,7 @@ def get_name_in_module(
 
 def pascal_case(s: str) -> str:
     return "".join(
-        a[0].upper() + a[1:] for a in re.split("([^a-zA-Z0-9])", s) if a.isalnum()
+        a[0].upper() + a[1:]
+        for a in re.split("([^a-zA-Z0-9])", s)
+        if a.isalnum()
     )
