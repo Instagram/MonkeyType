@@ -113,9 +113,13 @@ def default_code_filter(code: CodeType) -> bool:
                 break
             except ValueError:
                 pass
-        return any(m == filename.stem or m in filename.parts for m in trace_modules)
+        return any(
+            m == filename.stem or m in filename.parts for m in trace_modules
+        )
     else:
-        return not any(_startswith(filename, lib_path) for lib_path in LIB_PATHS)
+        return not any(
+            _startswith(filename, lib_path) for lib_path in LIB_PATHS
+        )
 
 
 class DefaultConfig(Config):

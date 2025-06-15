@@ -5,7 +5,17 @@
 # LICENSE file in the root directory of this source tree.
 import json
 import logging
-from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple, Type, TypeVar
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    Iterable,
+    List,
+    Optional,
+    Tuple,
+    Type,
+    TypeVar,
+)
 
 from mypy_extensions import TypedDict
 
@@ -13,7 +23,12 @@ from monkeytype.compat import is_any, is_generic, is_union, qualname_of_generic
 from monkeytype.db.base import CallTraceThunk
 from monkeytype.exceptions import InvalidTypeError
 from monkeytype.tracing import CallTrace
-from monkeytype.typing import NoneType, NotImplementedType, is_typed_dict, mappingproxy
+from monkeytype.typing import (
+    NoneType,
+    NotImplementedType,
+    is_typed_dict,
+    mappingproxy,
+)
 from monkeytype.util import get_func_in_module, get_name_in_module
 
 logger = logging.getLogger(__name__)
@@ -94,7 +109,8 @@ _HIDDEN_BUILTIN_TYPES: Dict[str, type] = {
 
 def typed_dict_from_dict(d: TypeDict) -> type:
     return TypedDict(
-        d["qualname"], {k: type_from_dict(v) for k, v in d["elem_types"].items()}
+        d["qualname"],
+        {k: type_from_dict(v) for k, v in d["elem_types"].items()},
     )
 
 
@@ -148,13 +164,17 @@ def arg_types_to_json(arg_types: Dict[str, type]) -> str:
 def arg_types_from_json(arg_types_json: str) -> Dict[str, type]:
     """Reify the encoded argument types from the format produced by arg_types_to_json."""
     arg_types = json.loads(arg_types_json)
-    return {name: type_from_dict(type_dict) for name, type_dict in arg_types.items()}
+    return {
+        name: type_from_dict(type_dict) for name, type_dict in arg_types.items()
+    }
 
 
 TypeEncoder = Callable[[type], str]
 
 
-def maybe_encode_type(encode: TypeEncoder, typ: Optional[type]) -> Optional[str]:
+def maybe_encode_type(
+    encode: TypeEncoder, typ: Optional[type]
+) -> Optional[str]:
     if typ is None:
         return None
     return encode(typ)
@@ -163,7 +183,9 @@ def maybe_encode_type(encode: TypeEncoder, typ: Optional[type]) -> Optional[str]
 TypeDecoder = Callable[[str], type]
 
 
-def maybe_decode_type(decode: TypeDecoder, encoded: Optional[str]) -> Optional[type]:
+def maybe_decode_type(
+    decode: TypeDecoder, encoded: Optional[str]
+) -> Optional[type]:
     if (encoded is None) or (encoded == "null"):
         return None
     return decode(encoded)
