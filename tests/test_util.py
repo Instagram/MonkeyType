@@ -28,8 +28,7 @@ NOT_A_FUNCTION = "not_a_function"
 
 class TestGetNameInModule:
     def test_get_existing_name(self):
-        obj = get_name_in_module(
-            a_module_func.__module__, a_module_func.__qualname__)
+        obj = get_name_in_module(a_module_func.__module__, a_module_func.__qualname__)
         assert obj == a_module_func
         # Make sure we handle nested classes
         obj = get_name_in_module(Outer.__module__, Outer.Inner.f.__qualname__)
@@ -37,12 +36,11 @@ class TestGetNameInModule:
 
     def test_get_nonexistent_module(self):
         with pytest.raises(NameLookupError):
-            get_name_in_module('xxx.dontexist', 'foo')
+            get_name_in_module("xxx.dontexist", "foo")
 
     def test_get_nonexistent_qualname(self):
         with pytest.raises(NameLookupError):
-            get_name_in_module(
-                a_module_func.__module__, 'Outer.xxx_i_dont_exist_xxx')
+            get_name_in_module(a_module_func.__module__, "Outer.xxx_i_dont_exist_xxx")
 
 
 class TestGetFuncInModule:
@@ -75,7 +73,7 @@ class TestGetFuncInModule:
     def test_get_non_function(self):
         """Raise an error if lookup returns something that isn't a function"""
         with pytest.raises(InvalidTypeError):
-            get_func_in_module(__name__, 'NOT_A_FUNCTION')
+            get_func_in_module(__name__, "NOT_A_FUNCTION")
 
 
 class Derived(Dummy):
@@ -85,7 +83,7 @@ class Derived(Dummy):
 
 class TestPascalCase:
     @pytest.mark.parametrize(
-        'input_string, expected',
+        "input_string, expected",
         [
             ("foo", "Foo"),
             ("foo_bar", "FooBar"),

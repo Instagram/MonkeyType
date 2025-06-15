@@ -46,8 +46,8 @@ def uses_kw_only_arg(a: int, *, b: int) -> int:
 
 
 def has_locals(foo: str) -> Optional[FrameType]:
-        bar = 'baz'  # noqa - Needed to ensure non-argument locals are present in the returned frame
-        return inspect.currentframe()
+    bar = "baz"  # noqa - Needed to ensure non-argument locals are present in the returned frame
+    return inspect.currentframe()
 
 
 class GetFuncHelper:
@@ -67,6 +67,7 @@ class GetFuncHelper:
         return inspect.currentframe()
 
     if cached_property:
+
         @cached_property
         def a_cached_property(self) -> Optional[FrameType]:
             return inspect.currentframe()
@@ -85,16 +86,18 @@ class TestGetFunc:
         (GetFuncHelper().a_property, GetFuncHelper.a_property.fget),
     ]
     if cached_property:
-        cases.append((GetFuncHelper().a_cached_property, GetFuncHelper.a_cached_property.func))
+        cases.append(
+            (GetFuncHelper().a_cached_property, GetFuncHelper.a_cached_property.func)
+        )
 
-    @pytest.mark.parametrize('frame, expected_func', cases)
+    @pytest.mark.parametrize("frame, expected_func", cases)
     def test_get_func(self, frame, expected_func):
         assert get_func(frame) == expected_func
 
 
 def throw(should_recover: bool) -> None:
     try:
-        raise Exception('Testing 123')
+        raise Exception("Testing 123")
     except Exception:
         if should_recover:
             return None
@@ -103,7 +106,7 @@ def throw(should_recover: bool) -> None:
 
 def nested_throw(should_recover: bool) -> str:
     throw(should_recover)
-    return 'Testing 123'
+    return "Testing 123"
 
 
 def recover_from_nested_throw() -> str:
@@ -111,7 +114,7 @@ def recover_from_nested_throw() -> str:
         throw(False)
     except Exception:
         pass
-    return 'Testing 123'
+    return "Testing 123"
 
 
 def squares(n: int) -> Iterator[int]:
@@ -134,6 +137,7 @@ def call_method_on_locally_defined_class(n: int) -> Tuple[type, Callable]:
     class Math:
         def square(self, n: int) -> int:
             return n * n
+
     Math().square(n)
     return Math, Math.square
 
@@ -141,6 +145,7 @@ def call_method_on_locally_defined_class(n: int) -> Tuple[type, Callable]:
 def call_locally_defined_function(n: int) -> Callable:
     def square(n: int) -> int:
         return n * n
+
     square(n)
     return square
 
@@ -202,12 +207,14 @@ class TestTraceCalls:
     def test_simple_call(self, collector):
         with trace_calls(collector, max_typed_dict_size=0):
             simple_add(1, 2)
-        assert collector.traces == [CallTrace(simple_add, {'a': int, 'b': int}, int)]
+        assert collector.traces == [CallTrace(simple_add, {"a": int, "b": int}, int)]
 
     def test_kw_only_arg(self, collector):
         with trace_calls(collector, max_typed_dict_size=0):
             uses_kw_only_arg(1, b=2)
-        assert collector.traces == [CallTrace(uses_kw_only_arg, {'a': int, 'b': int}, int)]
+        assert collector.traces == [
+            CallTrace(uses_kw_only_arg, {"a": int, "b": int}, int)
+        ]
 
     def test_flushes(self, collector):
         with trace_calls(collector, max_typed_dict_size=0):
@@ -221,7 +228,7 @@ class TestTraceCalls:
                 throw(should_recover=False)
             except Exception:
                 pass
-        assert collector.traces == [CallTrace(throw, {'should_recover': bool})]
+        assert collector.traces == [CallTrace(throw, {"should_recover": bool})]
 
     def test_nested_callee_throws_caller_doesnt_recover(self, collector):
         with trace_calls(collector, max_typed_dict_size=0):
@@ -230,22 +237,24 @@ class TestTraceCalls:
             except Exception:
                 pass
         expected = [
-            CallTrace(throw, {'should_recover': bool}),
-            CallTrace(nested_throw, {'should_recover': bool}),
+            CallTrace(throw, {"should_recover": bool}),
+            CallTrace(nested_throw, {"should_recover": bool}),
         ]
         assert collector.traces == expected
 
     def test_callee_throws_recovers(self, collector):
         with trace_calls(collector, max_typed_dict_size=0):
             throw(should_recover=True)
-        assert collector.traces == [CallTrace(throw, {'should_recover': bool}, NoneType)]
+        assert collector.traces == [
+            CallTrace(throw, {"should_recover": bool}, NoneType)
+        ]
 
     def test_nested_callee_throws_recovers(self, collector):
         with trace_calls(collector, max_typed_dict_size=0):
             nested_throw(should_recover=True)
         expected = [
-            CallTrace(throw, {'should_recover': bool}, NoneType),
-            CallTrace(nested_throw, {'should_recover': bool}, str),
+            CallTrace(throw, {"should_recover": bool}, NoneType),
+            CallTrace(nested_throw, {"should_recover": bool}, str),
         ]
         assert collector.traces == expected
 
@@ -253,7 +262,7 @@ class TestTraceCalls:
         with trace_calls(collector, max_typed_dict_size=0):
             recover_from_nested_throw()
         expected = [
-            CallTrace(throw, {'should_recover': bool}),
+            CallTrace(throw, {"should_recover": bool}),
             CallTrace(recover_from_nested_throw, {}, str),
         ]
         assert collector.traces == expected
@@ -262,19 +271,19 @@ class TestTraceCalls:
         with trace_calls(collector, max_typed_dict_size=0):
             for _ in squares(3):
                 pass
-        assert collector.traces == [CallTrace(squares, {'n': int}, NoneType, int)]
+        assert collector.traces == [CallTrace(squares, {"n": int}, NoneType, int)]
 
     def test_locally_defined_class_trace(self, collector):
         with trace_calls(collector, max_typed_dict_size=0):
             cls, method = call_method_on_locally_defined_class(3)
         assert len(collector.traces) == 2
-        assert collector.traces[0] == CallTrace(method, {'self': cls, 'n': int}, int)
+        assert collector.traces[0] == CallTrace(method, {"self": cls, "n": int}, int)
 
     def test_locally_defined_function_trace(self, collector):
         with trace_calls(collector, max_typed_dict_size=0):
             function = call_locally_defined_function(3)
         assert len(collector.traces) == 2
-        assert collector.traces[0] == CallTrace(function, {'n': int}, int)
+        assert collector.traces[0] == CallTrace(function, {"n": int}, int)
 
     def test_return_none(self, collector):
         """Ensure traces have a return_type of NoneType for functions that return a value of None"""
@@ -292,14 +301,20 @@ class TestTraceCalls:
         o = Oracle()
         with trace_calls(collector, max_typed_dict_size=0):
             o.meaning_of_life
-        assert collector.traces == [CallTrace(Oracle.meaning_of_life.fget, {'self': Oracle}, int)]
+        assert collector.traces == [
+            CallTrace(Oracle.meaning_of_life.fget, {"self": Oracle}, int)
+        ]
 
     def test_filtering(self, collector):
         """If supplied, the code filter should decide which code objects are traced"""
-        with trace_calls(collector, max_typed_dict_size=0, code_filter=lambda code: code.co_name == 'simple_add'):
+        with trace_calls(
+            collector,
+            max_typed_dict_size=0,
+            code_filter=lambda code: code.co_name == "simple_add",
+        ):
             simple_add(1, 2)
             explicit_return_none()
-        assert collector.traces == [CallTrace(simple_add, {'a': int, 'b': int}, int)]
+        assert collector.traces == [CallTrace(simple_add, {"a": int, "b": int}, int)]
 
     def test_lazy_value(self, collector):
         """Check that function lookup does not invoke custom descriptors.

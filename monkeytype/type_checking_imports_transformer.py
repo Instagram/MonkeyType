@@ -76,9 +76,7 @@ class MoveImportsToTypeCheckingBlockVisitor(ContextAwareTransformer):
             body=import_module.body,
         )
 
-    def _split_module(
-        self, module: Module
-    ) -> Tuple[
+    def _split_module(self, module: Module) -> Tuple[
         List[Union[SimpleStatementLine, BaseCompoundStatement]],
         List[Union[SimpleStatementLine, BaseCompoundStatement]],
     ]:

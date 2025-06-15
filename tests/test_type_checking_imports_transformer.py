@@ -38,8 +38,8 @@ class TestMoveImportsToTypeCheckingBlockVisitor(CodemodTest):
             import c.C
         """
         import_items_to_be_moved = [
-            ImportItem('a', 'B'),
-            ImportItem('c.C'),
+            ImportItem("a", "B"),
+            ImportItem("c.C"),
         ]
         expected = """
             from __future__ import annotations
@@ -65,8 +65,8 @@ class TestMoveImportsToTypeCheckingBlockVisitor(CodemodTest):
                 from d import E
         """
         import_items_to_be_moved = [
-            ImportItem('a', 'B'),
-            ImportItem('c.C'),
+            ImportItem("a", "B"),
+            ImportItem("c.C"),
         ]
         expected = """
             from __future__ import annotations
@@ -92,8 +92,8 @@ class TestMoveImportsToTypeCheckingBlockVisitor(CodemodTest):
             from a import B
         """
         import_items_to_be_moved = [
-            ImportItem('typing', 'List'),
-            ImportItem('a', 'B'),
+            ImportItem("typing", "List"),
+            ImportItem("a", "B"),
         ]
         expected = """
             from __future__ import annotations
@@ -133,12 +133,12 @@ class TestMoveImportsToTypeCheckingBlockVisitor(CodemodTest):
                 pass
         """
         import_items_to_be_moved = [
-            ImportItem('a', 'B'),
-            ImportItem('a', 'C'),
-            ImportItem('e'),
-            ImportItem('h', 'I'),
-            ImportItem('typing', 'List'),
-            ImportItem('typing', 'Dict'),
+            ImportItem("a", "B"),
+            ImportItem("a", "C"),
+            ImportItem("e"),
+            ImportItem("h", "I"),
+            ImportItem("typing", "List"),
+            ImportItem("typing", "Dict"),
         ]
         expected = """
             from __future__ import annotations

@@ -53,58 +53,106 @@ VERY_LARGE_MAX_TYPED_DICT_SIZE = 200
 
 class TestTypesEqual:
     @pytest.mark.parametrize(
-        'typ, other_type, expected_output',
+        "typ, other_type, expected_output",
         [
             (Any, Any, True),
             (Any, int, False),
             (Union[int, str], Union[int, str], True),
             (Union[int, str], Union[int], False),
             (Union[int, str], int, False),
-            (make_typed_dict(required_fields={'a': int}),
-             make_typed_dict(required_fields={'a': int}),
-             True),
-            (make_typed_dict(required_fields={'a': int}),
-             make_typed_dict(required_fields={'b': int}),
-             False),
-            (make_typed_dict(required_fields={'a': int}), int, False),
-            (List[make_typed_dict(required_fields={'a': int})],
-             List[make_typed_dict(required_fields={'a': int})],
-             True),
-            (List[make_typed_dict(required_fields={'a': make_typed_dict(required_fields={'a': int})})],
-             List[make_typed_dict(required_fields={'a': make_typed_dict(required_fields={'a': int})})],
-             True),
-            (List[make_typed_dict(required_fields={'a': List[make_typed_dict(required_fields={'a': int})]})],
-             List[make_typed_dict(required_fields={'a': List[make_typed_dict(required_fields={'a': int})]})],
-             True),
-            (List[make_typed_dict(required_fields={'a': int})], List[int], False),
-            (typing_Tuple[make_typed_dict(required_fields={'a': int})],
-             typing_Tuple[make_typed_dict(required_fields={'a': int})],
-             True),
-            (typing_Tuple[make_typed_dict(required_fields={'a': int}), int],
-             typing_Tuple[make_typed_dict(required_fields={'a': int})],
-             False),
-            (List[make_typed_dict(required_fields={'a': int})],
-             typing_Tuple[make_typed_dict(required_fields={'a': int})],
-             False),
-            (Dict[str, make_typed_dict(required_fields={'a': int})],
-             Dict[str, make_typed_dict(required_fields={'a': int})],
-             True),
-            (Dict[str, make_typed_dict(required_fields={'a': int})],
-             Dict[str, make_typed_dict(required_fields={'b': int})],
-             False),
-            (Set[make_typed_dict(required_fields={'a': int})],
-             Set[make_typed_dict(required_fields={'a': int})],
-             True),
-            (Set[make_typed_dict(required_fields={'a': int})],
-             Set[make_typed_dict(required_fields={'b': int})],
-             False),
+            (
+                make_typed_dict(required_fields={"a": int}),
+                make_typed_dict(required_fields={"a": int}),
+                True,
+            ),
+            (
+                make_typed_dict(required_fields={"a": int}),
+                make_typed_dict(required_fields={"b": int}),
+                False,
+            ),
+            (make_typed_dict(required_fields={"a": int}), int, False),
+            (
+                List[make_typed_dict(required_fields={"a": int})],
+                List[make_typed_dict(required_fields={"a": int})],
+                True,
+            ),
+            (
+                List[
+                    make_typed_dict(
+                        required_fields={
+                            "a": make_typed_dict(required_fields={"a": int})
+                        }
+                    )
+                ],
+                List[
+                    make_typed_dict(
+                        required_fields={
+                            "a": make_typed_dict(required_fields={"a": int})
+                        }
+                    )
+                ],
+                True,
+            ),
+            (
+                List[
+                    make_typed_dict(
+                        required_fields={
+                            "a": List[make_typed_dict(required_fields={"a": int})]
+                        }
+                    )
+                ],
+                List[
+                    make_typed_dict(
+                        required_fields={
+                            "a": List[make_typed_dict(required_fields={"a": int})]
+                        }
+                    )
+                ],
+                True,
+            ),
+            (List[make_typed_dict(required_fields={"a": int})], List[int], False),
+            (
+                typing_Tuple[make_typed_dict(required_fields={"a": int})],
+                typing_Tuple[make_typed_dict(required_fields={"a": int})],
+                True,
+            ),
+            (
+                typing_Tuple[make_typed_dict(required_fields={"a": int}), int],
+                typing_Tuple[make_typed_dict(required_fields={"a": int})],
+                False,
+            ),
+            (
+                List[make_typed_dict(required_fields={"a": int})],
+                typing_Tuple[make_typed_dict(required_fields={"a": int})],
+                False,
+            ),
+            (
+                Dict[str, make_typed_dict(required_fields={"a": int})],
+                Dict[str, make_typed_dict(required_fields={"a": int})],
+                True,
+            ),
+            (
+                Dict[str, make_typed_dict(required_fields={"a": int})],
+                Dict[str, make_typed_dict(required_fields={"b": int})],
+                False,
+            ),
+            (
+                Set[make_typed_dict(required_fields={"a": int})],
+                Set[make_typed_dict(required_fields={"a": int})],
+                True,
+            ),
+            (
+                Set[make_typed_dict(required_fields={"a": int})],
+                Set[make_typed_dict(required_fields={"b": int})],
+                False,
+            ),
         ],
     )
     def test_types_equal(self, typ, other_type, expected_output):
-        assert (types_equal(typ, other_type) == expected_output)
+        assert types_equal(typ, other_type) == expected_output
 
     @pytest.mark.parametrize(
-        'typ, expected',
+        "typ, expected",
         [
             (List[int], True),
             (typing_Tuple[int], False),
@@ -117,180 +165,223 @@ class TestTypesEqual:
 
 class TestMakeTypedDict:
     @pytest.mark.parametrize(
-        'required_fields, optional_fields, expected_type',
+        "required_fields, optional_fields, expected_type",
         [
             (
-                {'a': int, 'b': str}, {'c': int},
-                TypedDict(DUMMY_TYPED_DICT_NAME, {
-                    'required_fields': TypedDict(DUMMY_REQUIRED_TYPED_DICT_NAME, {'a': int, 'b': str}),
-                    'optional_fields': TypedDict(DUMMY_OPTIONAL_TYPED_DICT_NAME, {'c': int}),
-                })
+                {"a": int, "b": str},
+                {"c": int},
+                TypedDict(
+                    DUMMY_TYPED_DICT_NAME,
+                    {
+                        "required_fields": TypedDict(
+                            DUMMY_REQUIRED_TYPED_DICT_NAME, {"a": int, "b": str}
+                        ),
+                        "optional_fields": TypedDict(
+                            DUMMY_OPTIONAL_TYPED_DICT_NAME, {"c": int}
+                        ),
+                    },
+                ),
             ),
         ],
     )
     def test_make_typed_dict(self, required_fields, optional_fields, expected_type):
-        actual = make_typed_dict(required_fields=required_fields,
-                                 optional_fields=optional_fields)
+        actual = make_typed_dict(
+            required_fields=required_fields, optional_fields=optional_fields
+        )
         assert actual == expected_type
 
     @pytest.mark.parametrize(
-        'required_fields, optional_fields',
+        "required_fields, optional_fields",
         [
-            ({'a': int, 'b': str}, {'c': int}),
+            ({"a": int, "b": str}, {"c": int}),
         ],
     )
     def test_field_annotations(self, required_fields, optional_fields):
-        typed_dict = make_typed_dict(required_fields=required_fields,
-                                     optional_fields=optional_fields)
+        typed_dict = make_typed_dict(
+            required_fields=required_fields, optional_fields=optional_fields
+        )
         assert field_annotations(typed_dict) == (required_fields, optional_fields)
 
 
 class TestShrinkType:
     @pytest.mark.parametrize(
-        'types, expected_type',
+        "types, expected_type",
         [
             (
                 (
-                    make_typed_dict(required_fields={'a': int, 'b': int}),
-                    make_typed_dict(required_fields={'a': int, 'b': int}),
+                    make_typed_dict(required_fields={"a": int, "b": int}),
+                    make_typed_dict(required_fields={"a": int, "b": int}),
                 ),
-                make_typed_dict(required_fields={'a': int, 'b': int}),
+                make_typed_dict(required_fields={"a": int, "b": int}),
             ),
             (
                 (
-                    make_typed_dict(required_fields={'a': int, 'b': int}),
-                    make_typed_dict(required_fields={'a': int}),
+                    make_typed_dict(required_fields={"a": int, "b": int}),
+                    make_typed_dict(required_fields={"a": int}),
                 ),
-                make_typed_dict(required_fields={'a': int}, optional_fields={'b': int}),
+                make_typed_dict(required_fields={"a": int}, optional_fields={"b": int}),
             ),
             (
                 (
-                    make_typed_dict(required_fields={'a': int, 'b': int}),
-                    make_typed_dict(required_fields={'a': int, 'c': int}),
+                    make_typed_dict(required_fields={"a": int, "b": int}),
+                    make_typed_dict(required_fields={"a": int, "c": int}),
                 ),
-                make_typed_dict(required_fields={'a': int}, optional_fields={'b': int, 'c': int}),
+                make_typed_dict(
+                    required_fields={"a": int}, optional_fields={"b": int, "c": int}
+                ),
             ),
             (
                 (
-                    make_typed_dict(required_fields={'a': str}),
-                    make_typed_dict(required_fields={'a': int}),
+                    make_typed_dict(required_fields={"a": str}),
+                    make_typed_dict(required_fields={"a": int}),
                 ),
-                make_typed_dict(required_fields={'a': Union[str, int]}, optional_fields={}),
+                make_typed_dict(
+                    required_fields={"a": Union[str, int]}, optional_fields={}
+                ),
             ),
             (
                 (
-                    make_typed_dict(required_fields={'a': str}),
-                    make_typed_dict(required_fields={'a': int}),
-                    make_typed_dict(required_fields={'b': int}),
+                    make_typed_dict(required_fields={"a": str}),
+                    make_typed_dict(required_fields={"a": int}),
+                    make_typed_dict(required_fields={"b": int}),
                 ),
-                make_typed_dict(required_fields={}, optional_fields={'a': Union[str, int], 'b': int}),
+                make_typed_dict(
+                    required_fields={}, optional_fields={"a": Union[str, int], "b": int}
+                ),
             ),
             # Cases where the input TypedDict has optional fields.
             (
                 (
-                    make_typed_dict(optional_fields={'a': int, 'b': int}),
-                    make_typed_dict(optional_fields={'a': int, 'b': int}),
+                    make_typed_dict(optional_fields={"a": int, "b": int}),
+                    make_typed_dict(optional_fields={"a": int, "b": int}),
                 ),
-                make_typed_dict(optional_fields={'a': int, 'b': int}),
+                make_typed_dict(optional_fields={"a": int, "b": int}),
             ),
             (
                 (
-                    make_typed_dict(optional_fields={'a': int, 'b': int}),
-                    make_typed_dict(optional_fields={'a': int, 'c': int}),
+                    make_typed_dict(optional_fields={"a": int, "b": int}),
+                    make_typed_dict(optional_fields={"a": int, "c": int}),
                 ),
-                make_typed_dict(optional_fields={'a': int, 'b': int, 'c': int}),
+                make_typed_dict(optional_fields={"a": int, "b": int, "c": int}),
             ),
             (
                 (
-                    make_typed_dict(optional_fields={'a': str}),
-                    make_typed_dict(optional_fields={'a': int}),
+                    make_typed_dict(optional_fields={"a": str}),
+                    make_typed_dict(optional_fields={"a": int}),
                 ),
-                make_typed_dict(optional_fields={'a': Union[str, int]}),
+                make_typed_dict(optional_fields={"a": Union[str, int]}),
             ),
             (
                 (
-                    make_typed_dict(optional_fields={'a': str}),
-                    make_typed_dict(optional_fields={'b': int}),
+                    make_typed_dict(optional_fields={"a": str}),
+                    make_typed_dict(optional_fields={"b": int}),
                 ),
-                make_typed_dict(optional_fields={'a': str, 'b': int}),
+                make_typed_dict(optional_fields={"a": str, "b": int}),
             ),
             (
                 (
-                    make_typed_dict(required_fields={'a': str}),
-                    make_typed_dict(optional_fields={'a': str}),
+                    make_typed_dict(required_fields={"a": str}),
+                    make_typed_dict(optional_fields={"a": str}),
                 ),
-                make_typed_dict(optional_fields={'a': str}),
+                make_typed_dict(optional_fields={"a": str}),
             ),
             # The shrunk TypedDict is too large, so fall back to Dict.
             (
                 (
-                    make_typed_dict(required_fields={'a1': int}),
-                    make_typed_dict(required_fields={'a2': int}),
-                    make_typed_dict(required_fields={'a3': int}),
-                    make_typed_dict(required_fields={'a4': int}),
-                    make_typed_dict(required_fields={'a5': int}),
-                    make_typed_dict(required_fields={'a6': int}),
-                    make_typed_dict(required_fields={'a7': int}),
-                    make_typed_dict(required_fields={'a8': int}),
-                    make_typed_dict(required_fields={'a9': int}),
-                    make_typed_dict(required_fields={'a10': int}),
-                    make_typed_dict(required_fields={'a11': int}),
+                    make_typed_dict(required_fields={"a1": int}),
+                    make_typed_dict(required_fields={"a2": int}),
+                    make_typed_dict(required_fields={"a3": int}),
+                    make_typed_dict(required_fields={"a4": int}),
+                    make_typed_dict(required_fields={"a5": int}),
+                    make_typed_dict(required_fields={"a6": int}),
+                    make_typed_dict(required_fields={"a7": int}),
+                    make_typed_dict(required_fields={"a8": int}),
+                    make_typed_dict(required_fields={"a9": int}),
+                    make_typed_dict(required_fields={"a10": int}),
+                    make_typed_dict(required_fields={"a11": int}),
                 ),
                 Dict[str, int],
             ),
             (
                 (
-                    make_typed_dict(required_fields={'a1': int, 'a2': int, 'a3': int, 'a4': int, 'a5': int}),
-                    make_typed_dict(required_fields={'a6': int, 'a7': int, 'a8': int, 'a9': int, 'a10': int}),
-                    make_typed_dict(required_fields={'a11': int}),
+                    make_typed_dict(
+                        required_fields={
+                            "a1": int,
+                            "a2": int,
+                            "a3": int,
+                            "a4": int,
+                            "a5": int,
+                        }
+                    ),
+                    make_typed_dict(
+                        required_fields={
+                            "a6": int,
+                            "a7": int,
+                            "a8": int,
+                            "a9": int,
+                            "a10": int,
+                        }
+                    ),
+                    make_typed_dict(required_fields={"a11": int}),
                 ),
                 Dict[str, int],
             ),
             # Nested TypedDict.
             (
                 (
-                    make_typed_dict(required_fields={
-                        'foo': make_typed_dict(required_fields={
-                            'a': int,
-                            'b': str
-                        }),
-                    }),
-                    make_typed_dict(required_fields={
-                        'foo': make_typed_dict(required_fields={
-                            'a': int,
-                            'b': str
-                        }),
-                    }),
+                    make_typed_dict(
+                        required_fields={
+                            "foo": make_typed_dict(
+                                required_fields={"a": int, "b": str}
+                            ),
+                        }
+                    ),
+                    make_typed_dict(
+                        required_fields={
+                            "foo": make_typed_dict(
+                                required_fields={"a": int, "b": str}
+                            ),
+                        }
+                    ),
                 ),
-                make_typed_dict(required_fields={
-                    'foo': make_typed_dict(required_fields={
-                        'a': int,
-                        'b': str
-                    }),
-                }),
+                make_typed_dict(
+                    required_fields={
+                        "foo": make_typed_dict(required_fields={"a": int, "b": str}),
+                    }
+                ),
             ),
             # Nested TypedDict with differing types.
             (
                 (
-                    make_typed_dict(required_fields={
-                        'foo': make_typed_dict(required_fields={
-                            'a': int,
-                            'b': str
-                        }),
-                    }),
-                    make_typed_dict(required_fields={
-                        'foo': make_typed_dict(required_fields={
-                            'a': str,
-                        }),
-                    }),
+                    make_typed_dict(
+                        required_fields={
+                            "foo": make_typed_dict(
+                                required_fields={"a": int, "b": str}
+                            ),
+                        }
+                    ),
+                    make_typed_dict(
+                        required_fields={
+                            "foo": make_typed_dict(
+                                required_fields={
+                                    "a": str,
+                                }
+                            ),
+                        }
+                    ),
                 ),
-                make_typed_dict(required_fields={
-                    'foo': make_typed_dict(required_fields={
-                        'a': Union[int, str],
-                    }, optional_fields={
-                        'b': str,
-                    }),
-                }),
+                make_typed_dict(
+                    required_fields={
+                        "foo": make_typed_dict(
+                            required_fields={
+                                "a": Union[int, str],
+                            },
+                            optional_fields={
+                                "b": str,
+                            },
+                        ),
+                    }
+                ),
             ),
         ],
     )
@@ -299,68 +390,93 @@ class TestShrinkType:
         assert actual == expected_type
 
     @pytest.mark.parametrize(
-        'types, expected_type',
+        "types, expected_type",
         [
             # Sanity-check that it works for primitive types.
             (
-                (int, str), Union[int, str],
+                (int, str),
+                Union[int, str],
             ),
             # Non-TypedDict type with just one trace.
             (
-                (
-                    List[make_typed_dict(required_fields={'a': int})],
-                ),
-                List[make_typed_dict(required_fields={'a': int})],
+                (List[make_typed_dict(required_fields={"a": int})],),
+                List[make_typed_dict(required_fields={"a": int})],
             ),
             # Same non-TypedDict types.
             (
                 (
-                    List[make_typed_dict(required_fields={'a': int})],
-                    List[make_typed_dict(required_fields={'a': int})],
+                    List[make_typed_dict(required_fields={"a": int})],
+                    List[make_typed_dict(required_fields={"a": int})],
                 ),
-                List[make_typed_dict(required_fields={'a': int})],
+                List[make_typed_dict(required_fields={"a": int})],
             ),
             # Non-TypedDict types but not all the same - convert anonymous TypedDicts to Dicts.
             (
                 (
-                    List[make_typed_dict(required_fields={'a': int})],
+                    List[make_typed_dict(required_fields={"a": int})],
                     List[Dict[str, int]],
                 ),
                 List[Dict[str, int]],
             ),
             (
                 (
-                    List[make_typed_dict(required_fields={'a': int})],
-                    List[make_typed_dict(required_fields={'b': int})],
+                    List[make_typed_dict(required_fields={"a": int})],
+                    List[make_typed_dict(required_fields={"b": int})],
                 ),
-                List[make_typed_dict(optional_fields={'a': int, 'b': int})],
+                List[make_typed_dict(optional_fields={"a": int, "b": int})],
             ),
             (
                 (
-                    make_typed_dict(required_fields={"foo": List[make_typed_dict(required_fields={'a': int})]}),
-                    make_typed_dict(required_fields={"foo": List[make_typed_dict(required_fields={'a': int})]}),
+                    make_typed_dict(
+                        required_fields={
+                            "foo": List[make_typed_dict(required_fields={"a": int})]
+                        }
+                    ),
+                    make_typed_dict(
+                        required_fields={
+                            "foo": List[make_typed_dict(required_fields={"a": int})]
+                        }
+                    ),
                 ),
-                make_typed_dict(required_fields={"foo": List[make_typed_dict(required_fields={'a': int})]}),
+                make_typed_dict(
+                    required_fields={
+                        "foo": List[make_typed_dict(required_fields={"a": int})]
+                    }
+                ),
             ),
             (
                 (
-                    make_typed_dict(required_fields={"foo": List[make_typed_dict(required_fields={'a': int})]}),
-                    make_typed_dict(required_fields={"foo": List[make_typed_dict(required_fields={'b': int})]}),
+                    make_typed_dict(
+                        required_fields={
+                            "foo": List[make_typed_dict(required_fields={"a": int})]
+                        }
+                    ),
+                    make_typed_dict(
+                        required_fields={
+                            "foo": List[make_typed_dict(required_fields={"b": int})]
+                        }
+                    ),
                 ),
-                make_typed_dict(required_fields={"foo": List[make_typed_dict(optional_fields={'a': int, 'b': int})]}),
+                make_typed_dict(
+                    required_fields={
+                        "foo": List[
+                            make_typed_dict(optional_fields={"a": int, "b": int})
+                        ]
+                    }
+                ),
             ),
             (
                 (
-                    typing_Tuple[make_typed_dict(required_fields={'a': int})],
-                    typing_Tuple[make_typed_dict(required_fields={'a': int})],
+                    typing_Tuple[make_typed_dict(required_fields={"a": int})],
+                    typing_Tuple[make_typed_dict(required_fields={"a": int})],
                 ),
-                typing_Tuple[make_typed_dict(required_fields={'a': int})],
+                typing_Tuple[make_typed_dict(required_fields={"a": int})],
             ),
             # We don't currently shrink the inner types for Tuples.
             (
                 (
-                    typing_Tuple[make_typed_dict(required_fields={'a': int})],
-                    typing_Tuple[make_typed_dict(required_fields={'b': int})],
+                    typing_Tuple[make_typed_dict(required_fields={"a": int})],
+                    typing_Tuple[make_typed_dict(required_fields={"b": int})],
                 ),
                 typing_Tuple[Dict[str, int]],
             ),
@@ -368,20 +484,68 @@ class TestShrinkType:
             # Keep any nested anonymous TypedDicts, though.
             (
                 (
-                    make_typed_dict(required_fields={'a1': make_typed_dict(required_fields={'b': str})}),
-                    make_typed_dict(required_fields={'a2': make_typed_dict(required_fields={'b': str})}),
-                    make_typed_dict(required_fields={'a3': make_typed_dict(required_fields={'b': str})}),
-                    make_typed_dict(required_fields={'a4': make_typed_dict(required_fields={'b': str})}),
-                    make_typed_dict(required_fields={'a5': make_typed_dict(required_fields={'b': str})}),
-                    make_typed_dict(required_fields={'a6': make_typed_dict(required_fields={'b': str})}),
-                    make_typed_dict(required_fields={'a7': make_typed_dict(required_fields={'b': str})}),
-                    make_typed_dict(required_fields={'a8': make_typed_dict(required_fields={'b': str})}),
-                    make_typed_dict(required_fields={'a9': make_typed_dict(required_fields={'b': str})}),
-                    make_typed_dict(required_fields={'a10': make_typed_dict(required_fields={'b': str})}),
-                    make_typed_dict(required_fields={'a11': make_typed_dict(required_fields={'b': str})}),
-                    make_typed_dict(required_fields={'a11': make_typed_dict(required_fields={'c': int})}),
+                    make_typed_dict(
+                        required_fields={
+                            "a1": make_typed_dict(required_fields={"b": str})
+                        }
+                    ),
+                    make_typed_dict(
+                        required_fields={
+                            "a2": make_typed_dict(required_fields={"b": str})
+                        }
+                    ),
+                    make_typed_dict(
+                        required_fields={
+                            "a3": make_typed_dict(required_fields={"b": str})
+                        }
+                    ),
+                    make_typed_dict(
+                        required_fields={
+                            "a4": make_typed_dict(required_fields={"b": str})
+                        }
+                    ),
+                    make_typed_dict(
+                        required_fields={
+                            "a5": make_typed_dict(required_fields={"b": str})
+                        }
+                    ),
+                    make_typed_dict(
+                        required_fields={
+                            "a6": make_typed_dict(required_fields={"b": str})
+                        }
+                    ),
+                    make_typed_dict(
+                        required_fields={
+                            "a7": make_typed_dict(required_fields={"b": str})
+                        }
+                    ),
+                    make_typed_dict(
+                        required_fields={
+                            "a8": make_typed_dict(required_fields={"b": str})
+                        }
+                    ),
+                    make_typed_dict(
+                        required_fields={
+                            "a9": make_typed_dict(required_fields={"b": str})
+                        }
+                    ),
+                    make_typed_dict(
+                        required_fields={
+                            "a10": make_typed_dict(required_fields={"b": str})
+                        }
+                    ),
+                    make_typed_dict(
+                        required_fields={
+                            "a11": make_typed_dict(required_fields={"b": str})
+                        }
+                    ),
+                    make_typed_dict(
+                        required_fields={
+                            "a11": make_typed_dict(required_fields={"c": int})
+                        }
+                    ),
                 ),
-                Dict[str, make_typed_dict(optional_fields={'b': str, 'c': int})],
+                Dict[str, make_typed_dict(optional_fields={"b": str, "c": int})],
             ),
         ],
     )
@@ -390,7 +554,7 @@ class TestShrinkType:
         assert types_equal(actual, expected_type)
 
     @pytest.mark.parametrize(
-        'types, expected_type',
+        "types, expected_type",
         [
             ([], Any),
             ((int,), int),
@@ -404,43 +568,47 @@ class TestShrinkType:
         assert shrink_types(types, max_typed_dict_size=0) == expected_type
 
     @pytest.mark.parametrize(
-        'types, expected_type',
+        "types, expected_type",
         [
             # If all are anonymous TypedDicts, we get the shrunk TypedDict.
             (
                 (
-                    make_typed_dict(required_fields={'a': int, 'b': int}),
-                    make_typed_dict(required_fields={'a': int, 'b': int}),
+                    make_typed_dict(required_fields={"a": int, "b": int}),
+                    make_typed_dict(required_fields={"a": int, "b": int}),
                 ),
-                make_typed_dict(required_fields={'a': int, 'b': int}),
+                make_typed_dict(required_fields={"a": int, "b": int}),
             ),
             # If not all are anonymous TypedDicts, we get the Dict equivalents.
             (
-                (
-                    make_typed_dict(required_fields={'a': int, 'b': int}),
-                    Dict[int, int]
-                ),
+                (make_typed_dict(required_fields={"a": int, "b": int}), Dict[int, int]),
                 Union[Dict[str, int], Dict[int, int]],
             ),
             # If not all are anonymous TypedDicts, we convert any nested TypedDicts to Dicts as well.
             (
                 (
-                    make_typed_dict(required_fields={'a': make_typed_dict(required_fields={'b': int})}),
-                    Dict[str, int]
+                    make_typed_dict(
+                        required_fields={
+                            "a": make_typed_dict(required_fields={"b": int})
+                        }
+                    ),
+                    Dict[str, int],
                 ),
                 Union[Dict[str, Dict[str, int]], Dict[str, int]],
             ),
         ],
     )
     def test_shrink_types_mixed_dicts(self, types, expected_type):
-        assert shrink_types(types, max_typed_dict_size=VERY_LARGE_MAX_TYPED_DICT_SIZE) == expected_type
+        assert (
+            shrink_types(types, max_typed_dict_size=VERY_LARGE_MAX_TYPED_DICT_SIZE)
+            == expected_type
+        )
 
 
 class TestTypedDictHelpers:
     @pytest.mark.parametrize(
-        'typ, expected',
+        "typ, expected",
         [
-            (TypedDict(DUMMY_TYPED_DICT_NAME, {'a': int, 'b': int}), True),
+            (TypedDict(DUMMY_TYPED_DICT_NAME, {"a": int, "b": int}), True),
             (Dict[str, int], False),
             # Regression test.
             (lambda x: x, False),
@@ -450,42 +618,50 @@ class TestTypedDictHelpers:
         assert is_typed_dict(typ) == expected
 
     @pytest.mark.parametrize(
-        'type1, type2, expected_value',
+        "type1, type2, expected_value",
         [
             (
-                TypedDict(DUMMY_TYPED_DICT_NAME, {'a': int, 'b': int}),
-                TypedDict(DUMMY_TYPED_DICT_NAME, {'a': int, 'b': int}),
+                TypedDict(DUMMY_TYPED_DICT_NAME, {"a": int, "b": int}),
+                TypedDict(DUMMY_TYPED_DICT_NAME, {"a": int, "b": int}),
                 True,
             ),
             (
-                TypedDict(DUMMY_TYPED_DICT_NAME, {'a': int, 'b': int}, total=False),
-                TypedDict(DUMMY_TYPED_DICT_NAME, {'a': int, 'b': int}),
+                TypedDict(DUMMY_TYPED_DICT_NAME, {"a": int, "b": int}, total=False),
+                TypedDict(DUMMY_TYPED_DICT_NAME, {"a": int, "b": int}),
                 False,
             ),
             (
-                TypedDict(DUMMY_TYPED_DICT_NAME, {'a': int, 'b': int}),
+                TypedDict(DUMMY_TYPED_DICT_NAME, {"a": int, "b": int}),
                 Dict[str, int],
                 False,
             ),
             (
                 Dict[str, int],
-                TypedDict(DUMMY_TYPED_DICT_NAME, {'a': int, 'b': int}),
+                TypedDict(DUMMY_TYPED_DICT_NAME, {"a": int, "b": int}),
                 False,
             ),
             (Dict[str, int], Dict[str, int], True),
             # Recursive equality checks.
             (
-                TypedDict(DUMMY_TYPED_DICT_NAME,
-                          {'a': TypedDict(DUMMY_TYPED_DICT_NAME, {'a': int, 'b': str})}),
-                TypedDict(DUMMY_TYPED_DICT_NAME,
-                          {'a': TypedDict(DUMMY_TYPED_DICT_NAME, {'a': int, 'b': str})}),
+                TypedDict(
+                    DUMMY_TYPED_DICT_NAME,
+                    {"a": TypedDict(DUMMY_TYPED_DICT_NAME, {"a": int, "b": str})},
+                ),
+                TypedDict(
+                    DUMMY_TYPED_DICT_NAME,
+                    {"a": TypedDict(DUMMY_TYPED_DICT_NAME, {"a": int, "b": str})},
+                ),
                 True,
             ),
             (
-                TypedDict(DUMMY_TYPED_DICT_NAME,
-                          {'a': TypedDict(DUMMY_TYPED_DICT_NAME, {'a': int, 'b': str})}),
-                TypedDict(DUMMY_TYPED_DICT_NAME,
-                          {'a': TypedDict(DUMMY_TYPED_DICT_NAME, {'a': str, 'b': str})}),
+                TypedDict(
+                    DUMMY_TYPED_DICT_NAME,
+                    {"a": TypedDict(DUMMY_TYPED_DICT_NAME, {"a": int, "b": str})},
+                ),
+                TypedDict(
+                    DUMMY_TYPED_DICT_NAME,
+                    {"a": TypedDict(DUMMY_TYPED_DICT_NAME, {"a": str, "b": str})},
+                ),
                 False,
             ),
         ],
@@ -515,25 +691,25 @@ def get_nested_default_dict(key, value):
 
 
 def get_default_dict_with_dict(key, value):
-    m = defaultdict(lambda: {'a': 1, 'b': 2})
-    m[key]['a'] = value
+    m = defaultdict(lambda: {"a": 1, "b": 2})
+    m[key]["a"] = value
     return m
 
 
 class TestGetType:
 
     @pytest.mark.parametrize(
-        'value, expected_type',
+        "value, expected_type",
         [
             (1, int),
-            ('foo', str),
+            ("foo", str),
             (Dummy, Type[Dummy]),
             (1.1, float),
             ((), typing_Tuple[()]),
-            (('a', 1, True), typing_Tuple[str, int, bool]),
+            (("a", 1, True), typing_Tuple[str, int, bool]),
             (set(), Set[Any]),
-            ({'a', 'b', 'c'}, Set[str]),
-            ({'a', 1}, Set[Union[str, int]]),
+            ({"a", "b", "c"}, Set[str]),
+            ({"a", 1}, Set[Union[str, int]]),
             ([], List[Any]),
             ([1, 2, 3], List[int]),
             ([1, True], List[Union[int, bool]]),
@@ -547,90 +723,130 @@ class TestGetType:
     )
     def test_builtin_types(self, value, expected_type):
         """Return the appropriate type for builtins"""
-        assert get_type(value, max_typed_dict_size=VERY_LARGE_MAX_TYPED_DICT_SIZE) == expected_type
+        assert (
+            get_type(value, max_typed_dict_size=VERY_LARGE_MAX_TYPED_DICT_SIZE)
+            == expected_type
+        )
         assert get_type(value, max_typed_dict_size=0) == expected_type
 
     @pytest.mark.parametrize(
-        'value, expected_when_max_size_is_zero, expected_when_max_size_is_none',
+        "value, expected_when_max_size_is_zero, expected_when_max_size_is_none",
         [
             ({}, Dict[Any, Any], Dict[Any, Any]),
-            ({'a': 1, 'b': 2}, Dict[str, int],
-             make_typed_dict(required_fields={'a': int, 'b': int})),
-            ({'a': 1, 2: 'b'}, Dict[Union[str, int], Union[str, int]], Dict[Union[str, int], Union[str, int]]),
-            (get_default_dict(key=1, value=1), DefaultDict[int, int], DefaultDict[int, int]),
-            (get_nested_default_dict(key=1, value=1.0),
-             DefaultDict[int, DefaultDict[int, float]],
-             DefaultDict[int, DefaultDict[int, float]]),
-            ({
-                'foo': {
-                    'a': 1,
-                    'b': "hello"
-                }
-            },
-             Dict[str, Dict[str, Union[str, int]]],
-             make_typed_dict(required_fields={
-                 'foo': make_typed_dict(required_fields={
-                     'a': int,
-                     'b': str
-                 }),
-             })),
+            (
+                {"a": 1, "b": 2},
+                Dict[str, int],
+                make_typed_dict(required_fields={"a": int, "b": int}),
+            ),
+            (
+                {"a": 1, 2: "b"},
+                Dict[Union[str, int], Union[str, int]],
+                Dict[Union[str, int], Union[str, int]],
+            ),
+            (
+                get_default_dict(key=1, value=1),
+                DefaultDict[int, int],
+                DefaultDict[int, int],
+            ),
+            (
+                get_nested_default_dict(key=1, value=1.0),
+                DefaultDict[int, DefaultDict[int, float]],
+                DefaultDict[int, DefaultDict[int, float]],
+            ),
+            (
+                {"foo": {"a": 1, "b": "hello"}},
+                Dict[str, Dict[str, Union[str, int]]],
+                make_typed_dict(
+                    required_fields={
+                        "foo": make_typed_dict(required_fields={"a": int, "b": str}),
+                    }
+                ),
+            ),
         ],
     )
-    def test_dict_type(self, value, expected_when_max_size_is_zero, expected_when_max_size_is_none):
+    def test_dict_type(
+        self, value, expected_when_max_size_is_zero, expected_when_max_size_is_none
+    ):
         """Return the appropriate type for dictionaries."""
         assert get_type(value, max_typed_dict_size=0) == expected_when_max_size_is_zero
-        assert get_type(value, max_typed_dict_size=VERY_LARGE_MAX_TYPED_DICT_SIZE) == expected_when_max_size_is_none
+        assert (
+            get_type(value, max_typed_dict_size=VERY_LARGE_MAX_TYPED_DICT_SIZE)
+            == expected_when_max_size_is_none
+        )
 
     @pytest.mark.parametrize(
-        'value, expected_when_max_size_is_zero, expected_when_max_size_is_none',
+        "value, expected_when_max_size_is_zero, expected_when_max_size_is_none",
         [
-            (get_default_dict_with_dict(key=1, value=3),
-             DefaultDict[int, Dict[str, int]],
-             DefaultDict[int, make_typed_dict(required_fields={'a': int, 'b': int})]),
-            ([{'a': 1, 'b': 2}], List[Dict[str, int]], List[make_typed_dict(required_fields={'a': int, 'b': int})]),
-            ([{'a': 1, 'b': 2}, {'a': 1}], List[Dict[str, int]],
-             List[make_typed_dict(required_fields={'a': int}, optional_fields={'b': int})]),
-            (({'a': 1, 'b': 2},),
-             typing_Tuple[Dict[str, int]],
-             typing_Tuple[make_typed_dict(required_fields={'a': int, 'b': int})]),
-
+            (
+                get_default_dict_with_dict(key=1, value=3),
+                DefaultDict[int, Dict[str, int]],
+                DefaultDict[int, make_typed_dict(required_fields={"a": int, "b": int})],
+            ),
+            (
+                [{"a": 1, "b": 2}],
+                List[Dict[str, int]],
+                List[make_typed_dict(required_fields={"a": int, "b": int})],
+            ),
+            (
+                [{"a": 1, "b": 2}, {"a": 1}],
+                List[Dict[str, int]],
+                List[
+                    make_typed_dict(
+                        required_fields={"a": int}, optional_fields={"b": int}
+                    )
+                ],
+            ),
+            (
+                ({"a": 1, "b": 2},),
+                typing_Tuple[Dict[str, int]],
+                typing_Tuple[make_typed_dict(required_fields={"a": int, "b": int})],
+            ),
         ],
     )
-    def test_dict_nested_within_generic(self, value, expected_when_max_size_is_zero, expected_when_max_size_is_none):
+    def test_dict_nested_within_generic(
+        self, value, expected_when_max_size_is_zero, expected_when_max_size_is_none
+    ):
         """Return the appropriate type for dictionaries."""
         actual_when_zero = get_type(value, max_typed_dict_size=0)
-        actual_when_none = get_type(value, max_typed_dict_size=VERY_LARGE_MAX_TYPED_DICT_SIZE)
+        actual_when_none = get_type(
+            value, max_typed_dict_size=VERY_LARGE_MAX_TYPED_DICT_SIZE
+        )
 
-        assert (types_equal(actual_when_zero, expected_when_max_size_is_zero))
-        assert (types_equal(actual_when_none, expected_when_max_size_is_none))
+        assert types_equal(actual_when_zero, expected_when_max_size_is_zero)
+        assert types_equal(actual_when_none, expected_when_max_size_is_none)
 
     @pytest.mark.parametrize(
-        'value, max_typed_dict_size, expected',
+        "value, max_typed_dict_size, expected",
         [
-            ({'a': 1, 'b': 2}, 1, Dict[str, int]),
-            ({
-                'foo': {
-                    'a': 1,
-                    'b': "hello"
-                }
-            }, 1,
-             make_typed_dict(required_fields={'foo': Dict[str, Union[str, int]]})),
-        ]
+            ({"a": 1, "b": 2}, 1, Dict[str, int]),
+            (
+                {"foo": {"a": 1, "b": "hello"}},
+                1,
+                make_typed_dict(required_fields={"foo": Dict[str, Union[str, int]]}),
+            ),
+        ],
     )
     def test_dict_type_with_other_max_sizes(self, value, max_typed_dict_size, expected):
         assert get_type(value, max_typed_dict_size) == expected
 
     def test_instance_type(self):
         """Return appropriate type for an instance of a user defined class"""
-        assert get_type(Dummy(), max_typed_dict_size=VERY_LARGE_MAX_TYPED_DICT_SIZE) == Dummy
+        assert (
+            get_type(Dummy(), max_typed_dict_size=VERY_LARGE_MAX_TYPED_DICT_SIZE)
+            == Dummy
+        )
 
     def test_class_type(self):
         """Return the correct type for classes"""
-        assert get_type(Dummy, max_typed_dict_size=VERY_LARGE_MAX_TYPED_DICT_SIZE) == Type[Dummy]
+        assert (
+            get_type(Dummy, max_typed_dict_size=VERY_LARGE_MAX_TYPED_DICT_SIZE)
+            == Type[Dummy]
+        )
 
 
 class Tuple:
     """A name conflict that is not generic."""
+
     pass
 
 
@@ -639,6 +855,7 @@ T = TypeVar("T")
 
 class RewriteListToInt(TypeRewriter):
     """Dummy rewriter for testing."""
+
     def rewrite_List(self, lst):
         return int
 
@@ -648,18 +865,33 @@ class RewriteListToInt(TypeRewriter):
 
 class TestTypeRewriter:
     @pytest.mark.parametrize(
-        'typ, expected',
+        "typ, expected",
         [
             (List[str], int),
-            (TypedDict('Foo', {'a': List[str], 'b': int}), TypedDict('Foo', {'a': int, 'b': int})),
-            (TypedDict('Foo', {'a': List[str], 'b': int}, total=False),
-             TypedDict('Foo', {'a': int, 'b': int}, total=False)),
-            (TypedDict('Foo', {'a': TypedDict('Bar', {'b': List[str]})}),
-             TypedDict('Foo', {'a': TypedDict('Bar', {'b': int})})),
-            (make_typed_dict(required_fields={'a': make_typed_dict(required_fields={'b': List[str]})},
-                             optional_fields={'c': List[str]}),
-             make_typed_dict(required_fields={'a': make_typed_dict(required_fields={'b': int})},
-                             optional_fields={'c': int})),
+            (
+                TypedDict("Foo", {"a": List[str], "b": int}),
+                TypedDict("Foo", {"a": int, "b": int}),
+            ),
+            (
+                TypedDict("Foo", {"a": List[str], "b": int}, total=False),
+                TypedDict("Foo", {"a": int, "b": int}, total=False),
+            ),
+            (
+                TypedDict("Foo", {"a": TypedDict("Bar", {"b": List[str]})}),
+                TypedDict("Foo", {"a": TypedDict("Bar", {"b": int})}),
+            ),
+            (
+                make_typed_dict(
+                    required_fields={
+                        "a": make_typed_dict(required_fields={"b": List[str]})
+                    },
+                    optional_fields={"c": List[str]},
+                ),
+                make_typed_dict(
+                    required_fields={"a": make_typed_dict(required_fields={"b": int})},
+                    optional_fields={"c": int},
+                ),
+            ),
             (T, Dict[str, T]),
             (Dict[str, T], Dict[str, Dict[str, T]]),
         ],
@@ -671,7 +903,7 @@ class TestTypeRewriter:
 
 class TestRemoveEmptyContainers:
     @pytest.mark.parametrize(
-        'typ, expected',
+        "typ, expected",
         [
             (Union[Set[Any], Set[int]], Set[int]),
             (Union[Dict[Any, Any], Dict[int, int]], Dict[int, int]),
@@ -693,7 +925,7 @@ class TestRemoveEmptyContainers:
 
 class TestRewriteConfigDict:
     @pytest.mark.parametrize(
-        'typ,expected',
+        "typ,expected",
         [
             # Not all dictionaries; shouldn't rewrite
             (
@@ -707,11 +939,7 @@ class TestRewriteConfigDict:
             ),
             # Should rewrite
             (
-                Union[
-                    Dict[str, int],
-                    Dict[str, str],
-                    Dict[str, Union[int, str]]
-                ],
+                Union[Dict[str, int], Dict[str, str], Dict[str, Union[int, str]]],
                 Dict[str, Union[int, str]],
             ),
         ],
@@ -741,7 +969,7 @@ class TestRewriteMostSpecificCommonBase:
         pass
 
     @pytest.mark.parametrize(
-        'typ, expected',
+        "typ, expected",
         [
             (
                 Union[FirstDerived, SecondDerived],
@@ -759,8 +987,8 @@ class TestRewriteMostSpecificCommonBase:
                 Union[FirstDerived, Unrelated],
                 Union[FirstDerived, Unrelated],
             ),
-
-        ])
+        ],
+    )
     def test_rewrite(self, typ, expected):
         rewritten = RewriteMostSpecificCommonBase().rewrite(typ)
         assert rewritten == expected
@@ -836,7 +1064,7 @@ class TestRewriteLargeUnion:
         pass
 
     @pytest.mark.parametrize(
-        'typ, expected',
+        "typ, expected",
         [
             # Too few elements; shouldn't rewrite
             (Union[int, str], Union[int, str]),
@@ -860,9 +1088,7 @@ class TestRewriteLargeUnion:
             ),
             # Should rewrite to Tuple[G, ...]
             (
-                Union[
-                    typing_Tuple[G, G], typing_Tuple[G, G, G], typing_Tuple[G]
-                ],
+                Union[typing_Tuple[G, G], typing_Tuple[G, G, G], typing_Tuple[G]],
                 typing_Tuple[G, ...],
             ),
             (Union[B, D, E], B),
@@ -877,16 +1103,14 @@ class TestRewriteLargeUnion:
 
 class TestRewriteGenerator:
     @pytest.mark.parametrize(
-        'typ, expected',
+        "typ, expected",
         [
             # Should not rewrite
             (Generator[int, None, int], Generator[int, None, int]),
-
             # Should not rewrite
             (Generator[int, int, None], Generator[int, int, None]),
-
             # Should rewrite to Iterator[int]
-            (Generator[int, NoneType, NoneType], Iterator[int])
+            (Generator[int, NoneType, NoneType], Iterator[int]),
         ],
     )
     def test_rewrite(self, typ, expected):
@@ -896,14 +1120,22 @@ class TestRewriteGenerator:
 
 class TestRewriteAnonymousTypedDictToDict:
     @pytest.mark.parametrize(
-        'typ, expected',
+        "typ, expected",
         [
-            (make_typed_dict(required_fields={'a': int, 'b': str}), Dict[str, Union[int, str]]),
+            (
+                make_typed_dict(required_fields={"a": int, "b": str}),
+                Dict[str, Union[int, str]],
+            ),
             (make_typed_dict(required_fields={}), Dict[Any, Any]),
             # Regular TypedDict is left untouched.
-            (TypedDict('Foo', {'a': TypedDict('Bar', {'b': int})}),
-             TypedDict('Foo', {'a': TypedDict('Bar', {'b': int})})),
-            (Dict[str, make_typed_dict(required_fields={'a': int})], Dict[str, Dict[str, int]]),
+            (
+                TypedDict("Foo", {"a": TypedDict("Bar", {"b": int})}),
+                TypedDict("Foo", {"a": TypedDict("Bar", {"b": int})}),
+            ),
+            (
+                Dict[str, make_typed_dict(required_fields={"a": int})],
+                Dict[str, Dict[str, int]],
+            ),
         ],
     )
     def test_rewrite(self, typ, expected):
