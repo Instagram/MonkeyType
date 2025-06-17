@@ -28,6 +28,7 @@ from monkeytype.config import Config
 from monkeytype.exceptions import MonkeyTypeError
 from monkeytype.stubs import (
     ExistingAnnotationStrategy,
+    RenderContext,
     Stub,
     build_module_stubs_from_traces,
 )
@@ -215,7 +216,7 @@ def apply_stub_handler(
 
     source_path = Path(inspect.getfile(mod))
     source_with_types = apply_stub_using_libcst(
-        stub=stub.render(),
+        stub=stub.render(context=RenderContext()),
         source=source_path.read_text(),
         overwrite_existing_annotations=args.existing_annotation_strategy
         == ExistingAnnotationStrategy.IGNORE,
@@ -235,8 +236,11 @@ def get_diff(
     if stub is None or stub_ignore_anno is None:
         return None
     diff = []
-    seq1 = (s + "\n" for s in stub.render().split("\n\n\n"))
-    seq2 = (s + "\n" for s in stub_ignore_anno.render().split("\n\n\n"))
+    seq1 = (s + "\n" for s in stub.render(context=RenderContext()).split("\n\n\n"))
+    seq2 = (
+        s + "\n"
+        for s in stub_ignore_anno.render(context=RenderContext()).split("\n\n\n")
+    )
     for stub1, stub2 in zip(seq1, seq2):
         if stub1 != stub2:
             stub_diff = "".join(
@@ -257,7 +261,7 @@ def print_stub_handler(
     else:
         stub = get_stub(args, stdout, stderr)
         if stub is not None:
-            output = stub.render()
+            output = stub.render(context=RenderContext())
     if output is None:
         complain_about_no_traces(args, stderr)
         return
