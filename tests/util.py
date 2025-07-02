@@ -58,6 +58,16 @@ class Dummy:
         def a_cached_property(self) -> Optional[FrameType]:
             return inspect.currentframe()
 
+    class Nested1:
+
+        def an_instance_method(self, foo: str) -> Optional[FrameType]:
+            return inspect.currentframe()
+
+        class Nested2:
+
+            def an_instance_method(self, bar: str) -> Optional[FrameType]:
+                return inspect.currentframe()
+
 
 class Outer:
     class Inner:
