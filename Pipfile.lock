@@ -969,11 +969,12 @@
         },
         "urllib3": {
             "hashes": [
-                "sha256:414bc6535b787febd7567804cc015fee39daab8ad86268f1310a9250697de466",
-                "sha256:4e16665048960a0900c702d4a66415956a584919c03361cac9f1df5c5dd7e813"
+                "sha256:c90f7a39f716c572c4e3e58509581ebd83f9b59cced005b7db7ad2d22b0db99f",
+                "sha256:cb9bcef5a4b345d5da5d145dc3e30834f58e8018828cbc724d30b4cb7d4d49f1"
             ],
+            "index": "pypi",
             "markers": "python_version >= '3.9'",
-            "version": "==2.4.0"
+            "version": "==2.6.0"
         },
         "virtualenv": {
             "hashes": [
