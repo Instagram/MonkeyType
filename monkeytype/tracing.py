@@ -250,7 +250,16 @@ class CallTracer:
         # the last instruction that was executed should always be a return or a
         # yield.
         typ = get_type(arg, max_typed_dict_size=self.max_typed_dict_size)
-        last_opcode = frame.f_code.co_code[frame.f_lasti]
+        try:
+            last_opcode = frame.f_code.co_code[frame.f_lasti]
+        except IndexError:
+            # f_lasti can be -1 for frames from C extensions or Cython code,
+            # which makes the bytecode index invalid. We can't determine the
+            # opcode, so clean up and bail.
+            trace = self.traces.pop(frame, None)
+            if trace is not None:
+                self.logger.log(trace)
+            return
         trace = self.traces.get(frame)
         if trace is None:
             return

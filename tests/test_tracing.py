@@ -11,6 +11,7 @@ from typing import (
     Optional,
     Tuple,
 )
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -18,6 +19,7 @@ from monkeytype.compat import cached_property
 from monkeytype.tracing import (
     CallTrace,
     CallTraceLogger,
+    CallTracer,
     get_func,
     trace_calls,
 )
@@ -323,3 +325,20 @@ class TestTraceCalls:
         lazy_val = LazyValue(explicit_return_none)
         with trace_calls(collector, max_typed_dict_size=0):
             lazy_val.value
+
+
+class TestHandleReturnIndexError:
+    def test_invalid_f_lasti_does_not_crash(self):
+        """Regression test for #120: f_lasti can be -1 for C extension frames."""
+        collector = TraceCollector()
+        tracer = CallTracer(collector, max_typed_dict_size=0)
+
+        # Create a mock frame where co_code[f_lasti] raises IndexError
+        mock_code = MagicMock()
+        mock_code.co_code.__getitem__ = MagicMock(side_effect=IndexError("index out of range"))
+        mock_frame = MagicMock()
+        mock_frame.f_code = mock_code
+        mock_frame.f_lasti = -1
+
+        # Should not raise — just bail gracefully
+        tracer.handle_return(mock_frame, None)
