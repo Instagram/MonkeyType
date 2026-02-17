@@ -67,7 +67,7 @@ def type_to_dict(typ: type) -> TypeDict:
     elif is_generic(typ):
         qualname = qualname_of_generic(typ)
     else:
-        qualname = typ.__qualname__
+        qualname = getattr(typ, '__qualname__', None) or getattr(typ, '__name__', str(typ))
     d: TypeDict = {
         "module": typ.__module__,
         "qualname": qualname,
