@@ -275,3 +275,13 @@ class TestSerializeTraces:
         ]
         assert rows == expected
         assert [r.msg for r in caplog.records] == ["Failed to serialize trace"]
+
+
+class TestTypeVarEncoding:
+    def test_typevar_does_not_crash(self):
+        """Regression test for #96: TypeVar has no __qualname__."""
+        from typing import TypeVar
+        T = TypeVar('T')
+        d = type_to_dict(T)
+        assert d['qualname'] == 'T'
+        assert d['module'] == 'tests.test_encoding'
