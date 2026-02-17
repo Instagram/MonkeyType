@@ -29,6 +29,8 @@ from monkeytype.encoding import (
 from mypy_extensions import TypedDict
 from monkeytype.exceptions import InvalidTypeError
 from monkeytype.tracing import CallTrace
+import types
+
 from monkeytype.typing import DUMMY_TYPED_DICT_NAME, NoneType, NotImplementedType, mappingproxy
 from .util import Outer
 
@@ -47,6 +49,9 @@ class TestTypeConversion:
             NoneType,
             NotImplementedType,
             mappingproxy,
+            types.CoroutineType,
+            types.AsyncGeneratorType,
+            types.GeneratorType,
             int,
             Outer,
             Outer.Inner,

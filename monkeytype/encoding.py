@@ -5,6 +5,7 @@
 # LICENSE file in the root directory of this source tree.
 import json
 import logging
+import types
 from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple, Type, TypeVar
 
 from mypy_extensions import TypedDict
@@ -89,6 +90,9 @@ _HIDDEN_BUILTIN_TYPES: Dict[str, type] = {
     "NoneType": NoneType,
     "NotImplementedType": NotImplementedType,
     "mappingproxy": mappingproxy,
+    "coroutine": types.CoroutineType,
+    "async_generator": types.AsyncGeneratorType,
+    "generator": types.GeneratorType,
 }
 
 
