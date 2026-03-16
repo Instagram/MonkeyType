@@ -23,7 +23,7 @@ from libcst.codemod.visitors import (
     ImportItem,
 )
 
-from monkeytype import trace
+from monkeytype import __version__, trace
 from monkeytype.config import Config
 from monkeytype.exceptions import MonkeyTypeError
 from monkeytype.stubs import (
@@ -330,6 +330,11 @@ def main(argv: List[str], stdout: IO[str], stderr: IO[str]) -> int:
             " (default: monkeytype_config:CONFIG if it exists, "
             "else monkeytype.config:DefaultConfig())"
         ),
+    )
+    parser.add_argument(
+        "--version",
+        action="version",
+        version=f"MonkeyType {__version__}",
     )
 
     subparsers = parser.add_subparsers(title="commands", dest="command")

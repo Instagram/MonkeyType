@@ -102,6 +102,15 @@ def stderr():
     return io.StringIO()
 
 
+def test_version_flag(capsys, stdout, stderr):
+    with pytest.raises(SystemExit) as excinfo:
+        cli.main(['--version'], stdout, stderr)
+    assert excinfo.value.code == 0
+    captured = capsys.readouterr()
+    assert captured.out == 'MonkeyType 23.3.1.dev1\n'
+    assert captured.err == ''
+
+
 def test_generate_stub(store, db_file, stdout, stderr):
     traces = [
         CallTrace(func, {'a': int, 'b': str}, NoneType),
