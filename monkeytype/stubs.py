@@ -320,6 +320,9 @@ class RenderAnnotation(GenericTypeRewriter[str]):
             f" but was called with name={name}, annotations={annotations}, total={total}."
         )
 
+    def rewrite_TypedDict(self, typed_dict: type) -> str:
+        return self.generic_rewrite(typed_dict)
+
     def generic_rewrite(self, typ: Any) -> str:
         if hasattr(typ, "__supertype__"):
             rendered = str(typ.__name__)

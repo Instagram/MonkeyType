@@ -212,6 +212,12 @@ class TestRenderAnnotation:
     def test_render_annotation(self, annotation, expected):
         assert render_annotation(annotation) == expected
 
+    def test_render_annotation_builtin_typed_dict(self):
+        class RunInfo(TypedDict):
+            revision: str
+
+        assert render_annotation(RunInfo) == f"{RunInfo.__module__}.{RunInfo.__qualname__}"
+
 
 class TestFunctionStub:
     def test_classmethod(self):
