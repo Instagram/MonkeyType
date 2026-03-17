@@ -855,7 +855,7 @@ def build_module_stubs(entries: Iterable[FunctionDefinition]) -> Dict[str, Modul
         imports = get_imports_for_signature(entry.signature)
         # Import TypedDict, if needed.
         if entry.typed_dict_class_stubs:
-            imports["mypy_extensions"].add("TypedDict")
+            imports["typing_extensions"].add("TypedDict")
         func_stub = FunctionStub(
             name, entry.signature, entry.kind, list(imports.keys()), entry.is_async
         )

@@ -26,7 +26,7 @@ from typing import (
     Union,
 )
 
-from mypy_extensions import TypedDict
+from typing_extensions import TypedDict
 
 from monkeytype.compat import (
     is_any,
@@ -574,3 +574,4 @@ DEFAULT_REWRITER = ChainedRewriter(
         RewriteGenerator(),
     )
 )
+

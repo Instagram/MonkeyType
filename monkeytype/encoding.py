@@ -7,7 +7,7 @@ import json
 import logging
 from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple, Type, TypeVar
 
-from mypy_extensions import TypedDict
+from typing_extensions import TypedDict
 
 from monkeytype.compat import is_any, is_generic, is_union, qualname_of_generic
 from monkeytype.db.base import CallTraceThunk
@@ -235,3 +235,4 @@ def serialize_traces(traces: Iterable[CallTrace]) -> Iterable[CallTraceRow]:
             yield CallTraceRow.from_trace(trace)
         except Exception:
             logger.exception("Failed to serialize trace")
+

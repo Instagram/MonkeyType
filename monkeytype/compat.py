@@ -5,7 +5,7 @@
 # LICENSE file in the root directory of this source tree.
 from typing import Any, ForwardRef, Union, _GenericAlias  # type: ignore[attr-defined]
 
-from mypy_extensions import _TypedDictMeta  # type: ignore[attr-defined]
+from typing_extensions import _TypedDictMeta
 
 try:
     from django.utils.functional import cached_property as cp
@@ -102,3 +102,4 @@ def types_equal(typ: type, other_type: type) -> bool:
 # HACK: MonkeyType monkey-patches _TypedDictMeta!
 # We need this to compare TypedDicts recursively.
 _TypedDictMeta.__eq__ = __are_typed_dict_types_equal
+

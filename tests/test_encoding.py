@@ -26,7 +26,7 @@ from monkeytype.encoding import (
     type_to_json,
     serialize_traces,
 )
-from mypy_extensions import TypedDict
+from typing_extensions import TypedDict
 from monkeytype.exceptions import InvalidTypeError
 from monkeytype.tracing import CallTrace
 from monkeytype.typing import DUMMY_TYPED_DICT_NAME, NoneType, NotImplementedType, mappingproxy
@@ -275,3 +275,4 @@ class TestSerializeTraces:
         ]
         assert rows == expected
         assert [r.msg for r in caplog.records] == ["Failed to serialize trace"]
+

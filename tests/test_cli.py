@@ -369,8 +369,8 @@ def test_apply_stub_using_libcst():
           return None
     """
     stub = """
-        from mypy_extensions import TypedDict
         from typing import Union
+        from typing_extensions import TypedDict
         def my_test_function(a: int, b: str) -> bool: ...
 
         def has_return_type(a: int, b: int) -> bool: ...
@@ -386,8 +386,8 @@ def test_apply_stub_using_libcst():
           year: int
     """
     expected = """
-        from mypy_extensions import TypedDict
         from typing import Union
+        from typing_extensions import TypedDict
 
         class Foo: ...
 
@@ -518,3 +518,4 @@ def test_get_newly_imported_items():
         parse_module(textwrap.dedent(stub)),
         parse_module(textwrap.dedent(source)),
     ))
+

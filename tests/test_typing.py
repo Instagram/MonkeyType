@@ -43,7 +43,7 @@ from monkeytype.typing import (
     DUMMY_TYPED_DICT_NAME,
 )
 
-from mypy_extensions import TypedDict
+from typing_extensions import TypedDict
 
 from .util import Dummy
 
@@ -909,3 +909,4 @@ class TestRewriteAnonymousTypedDictToDict:
     def test_rewrite(self, typ, expected):
         rewritten = RewriteAnonymousTypedDictToDict().rewrite(typ)
         assert rewritten == expected
+
