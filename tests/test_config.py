@@ -16,7 +16,7 @@ class TestDefaultCodeFilter:
         assert not config.default_code_filter(sysconfig.get_path.__code__)
 
     def test_excludes_site_packages(self):
-        assert not config.default_code_filter(pytest.skip.__code__)
+        assert not config.default_code_filter(pytest.main.__code__)
 
     def test_includes_otherwise(self):
         assert config.default_code_filter(config.default_code_filter.__wrapped__.__code__)
