@@ -3,6 +3,7 @@
 #
 # This source code is licensed under the BSD-style license found in the
 # LICENSE file in the root directory of this source tree.
+import typing_inspect
 from typing import Any, ForwardRef, Union, _GenericAlias  # type: ignore[attr-defined]
 
 from mypy_extensions import _TypedDictMeta  # type: ignore[attr-defined]
@@ -26,7 +27,7 @@ def is_any(typ: Any) -> bool:
 
 
 def is_union(typ: Any) -> bool:
-    return typ is Union or is_generic(typ) and typ.__origin__ is Union
+    return typing_inspect.is_union_type(typ)
 
 
 try:
