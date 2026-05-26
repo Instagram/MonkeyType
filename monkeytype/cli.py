@@ -298,6 +298,11 @@ def main(argv: List[str], stdout: IO[str], stderr: IO[str]) -> int:
         description="Generate and apply stub files from collected type information.",
     )
     parser.add_argument(
+        "--version",
+        action="version",
+        version="MonkeyType 23.3.1.dev1",
+    )
+    parser.add_argument(
         "--disable-type-rewriting",
         action="store_true",
         default=False,
