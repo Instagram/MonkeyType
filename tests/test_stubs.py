@@ -189,6 +189,7 @@ class TestRenderAnnotation:
             (List[make_forward_ref('Foo')], 'List[\'Foo\']'),
             (List[List[make_forward_ref('Foo')]], 'List[List[\'Foo\']]'),
             (Optional[int], 'Optional[int]'),
+            (Union[int, str], 'Union[int, str]'),
             (List[Optional[int]], 'List[Optional[int]]'),
             (UserId, 'UserId'),
             (List[UserId], 'List[UserId]'),

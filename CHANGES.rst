@@ -4,6 +4,8 @@ Changelog
 main
 ----
 
+* Fix invalid ``<class 'Union'>`` annotations in generated stubs on Python 3.14.
+
 * Add ``RewriteMostSpecificCommonBase`` type rewriter to replace union of derived classes with common
   base class (not enabled by default.) Merge of #311, fixes #298. Thanks Christoph Hansknecht.
 
