@@ -45,6 +45,12 @@ Running ``monkeytype stub some.module`` will output a stub:
 
   def add(a: int, b: int) -> int: ...
 
+This output can be directly saved to a separate file using standard shell redirection:
+
+.. code:: bash
+
+  $ monkeytype stub some.module > some.module.pyi
+
 Running  ``monkeytype apply some.module`` will modify ``some/module.py`` to:
 
 .. code:: python
