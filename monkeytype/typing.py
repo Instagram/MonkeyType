@@ -29,6 +29,7 @@ from typing import (
 from mypy_extensions import TypedDict
 
 from monkeytype.compat import (
+    UnionType,
     is_any,
     is_generic,
     is_generic_of,
@@ -276,7 +277,7 @@ class GenericTypeRewriter(Generic[T], ABC):
     def rewrite_type_variable(self, type_variable): ...
 
     def _rewrite_container(self, cls, container):
-        if container.__module__ != "typing":
+        if container.__module__ != "typing" and not isinstance(container, UnionType):
             return self.rewrite_malformed_container(container)
         args = getattr(container, "__args__", None)
         if args is None:

@@ -25,8 +25,18 @@ def is_any(typ: Any) -> bool:
     return typ is Any
 
 
+try:
+    from types import UnionType
+except ImportError:
+    UnionType = ()  # type: ignore[assignment, misc]
+
+
 def is_union(typ: Any) -> bool:
-    return typ is Union or is_generic(typ) and typ.__origin__ is Union
+    return (
+        typ is Union
+        or isinstance(typ, UnionType)
+        or (is_generic(typ) and typ.__origin__ is Union)
+    )
 
 
 try:
@@ -38,12 +48,17 @@ try:
             typ is Union
             or isinstance(typ, _GenericAlias)
             or isinstance(typ, _SpecialGenericAlias)
+            or isinstance(typ, UnionType)
         )
 
 except ImportError:
 
     def is_generic(typ: Any) -> bool:
-        return typ is Union or isinstance(typ, _GenericAlias)
+        return (
+            typ is Union
+            or isinstance(typ, _GenericAlias)
+            or isinstance(typ, UnionType)
+        )
 
 
 def is_generic_of(typ: Any, gen: Any) -> bool:

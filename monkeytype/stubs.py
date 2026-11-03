@@ -25,6 +25,7 @@ from typing import (
 )
 
 from monkeytype.compat import (
+    UnionType,
     cached_property,
     is_any,
     is_forward_ref,
@@ -126,13 +127,16 @@ def get_imports_for_annotation(anno: Any) -> ImportMap:
         elem_type = _get_optional_elem(anno)
         elem_imports = get_imports_for_annotation(elem_type)
         imports.merge(elem_imports)
+    elif is_union(anno):
+        imports["typing"].add("Union")
+        elem_types = getattr(anno, "__args__", None) or []
+        for et in elem_types:
+            elem_imports = get_imports_for_annotation(et)
+            imports.merge(elem_imports)
     elif is_generic(anno):
-        if is_union(anno):
-            imports["typing"].add("Union")
-        else:
-            imports[anno.__module__].add(
-                _get_import_for_qualname(qualname_of_generic(anno))
-            )
+        imports[anno.__module__].add(
+            _get_import_for_qualname(qualname_of_generic(anno))
+        )
         elem_types = getattr(anno, "__args__", None) or []
         for et in elem_types:
             elem_imports = get_imports_for_annotation(et)
@@ -341,6 +345,8 @@ class RenderAnnotation(GenericTypeRewriter[str]):
         return rendered
 
     def rewrite_container_type(self, container_type: Any) -> str:
+        if container_type is Union:
+            return "typing.Union"
         return repr(container_type)
 
     def rewrite_malformed_container(self, container: Any) -> str:
@@ -372,6 +378,7 @@ class RenderAnnotation(GenericTypeRewriter[str]):
         rendered = super().rewrite(typ)
         if getattr(typ, "__module__", None) == "typing":
             rendered = rendered.replace("typing.", "")
+        rendered = rendered.replace("typing.Union[", "Union[")
         # Temporary hacky workaround for #76 to fix remaining NoneType hints by search-replace
         rendered = rendered.replace("NoneType", "None")
         return rendered
@@ -587,7 +594,7 @@ class ReplaceTypedDictsWithStubs(TypeRewriter):
 
         Otherwise, Tuple[TypedDict(...), TypedDict(...)] would give the same
         name for both the generated classes."""
-        if container.__module__ != "typing":
+        if container.__module__ != "typing" and not isinstance(container, UnionType):
             return container
         args = getattr(container, "__args__", None)
         if args is None:

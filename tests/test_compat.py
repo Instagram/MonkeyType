@@ -5,9 +5,15 @@
 # LICENSE file in the root directory of this source tree.
 from typing import Union
 
-from monkeytype.compat import name_of_generic
+from monkeytype.compat import is_generic, is_union, name_of_generic
 
 
 def test_name_of_union():
     typ = Union[int, str]
     assert name_of_generic(typ) == "Union"
+
+
+def test_is_union_and_is_generic():
+    typ = Union[int, str]
+    assert is_union(typ)
+    assert is_generic(typ)

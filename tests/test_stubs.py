@@ -29,7 +29,7 @@ from unittest import skipIf
 
 import pytest
 
-from monkeytype.compat import cached_property, make_forward_ref
+from monkeytype.compat import UnionType, cached_property, make_forward_ref
 from monkeytype.stubs import (
     AttributeStub,
     ClassStub,
@@ -189,6 +189,7 @@ class TestRenderAnnotation:
             (List[make_forward_ref('Foo')], 'List[\'Foo\']'),
             (List[List[make_forward_ref('Foo')]], 'List[List[\'Foo\']]'),
             (Optional[int], 'Optional[int]'),
+            (Union[int, str], 'Union[int, str]'),
             (List[Optional[int]], 'List[Optional[int]]'),
             (UserId, 'UserId'),
             (List[UserId], 'List[UserId]'),
@@ -211,6 +212,12 @@ class TestRenderAnnotation:
     )
     def test_render_annotation(self, annotation, expected):
         assert render_annotation(annotation) == expected
+
+    def test_render_union_type(self):
+        if not UnionType:
+            pytest.skip("types.UnionType requires Python 3.10+")
+        u = eval("int | str")
+        assert render_annotation(u) == "Union[int, str]"
 
 
 class TestFunctionStub:
@@ -1270,6 +1277,12 @@ class TestGetImportsForAnnotation:
     def test_special_case_types(self, anno, expected):
         """Any and Union do not have module/qualname and need to be treated specially"""
         assert get_imports_for_annotation(anno) == expected
+
+    def test_union_type(self):
+        if not UnionType:
+            pytest.skip("types.UnionType requires Python 3.10+")
+        u = eval("int | str")
+        assert get_imports_for_annotation(u) == {"typing": {"Union"}}
 
     def test_callable(self):
         assert get_imports_for_annotation(Callable) == {'typing': {'Callable'}}
