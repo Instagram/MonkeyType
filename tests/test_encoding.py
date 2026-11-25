@@ -3,6 +3,7 @@
 #
 # This source code is licensed under the BSD-style license found in the
 # LICENSE file in the root directory of this source tree.
+import sys
 from typing import (
     Any,
     Dict,
@@ -64,6 +65,7 @@ class TestTypeConversion:
             Tuple[()],  # empty tuple
             Type[Outer],
             Union[Outer.Inner, str, None],
+            Union[int, str],
             # Nested generics
             Dict[str, Union[str, int]],
             List[Optional[str]],
@@ -81,6 +83,15 @@ class TestTypeConversion:
     def test_type_round_trip(self, typ):
         assert type_from_dict(type_to_dict(typ)) == typ
         assert type_from_json(type_to_json(typ)) == typ
+
+    @pytest.mark.skipif(
+        sys.version_info < (3, 10),
+        reason="PEP 604 requires Python 3.10+",
+    )
+    def test_pep604_union_round_trip(self):
+        for typ in (int | str, int | None):
+            assert type_from_dict(type_to_dict(typ)) == typ
+            assert type_from_json(type_to_json(typ)) == typ
 
     @pytest.mark.parametrize(
         'typ, expected',

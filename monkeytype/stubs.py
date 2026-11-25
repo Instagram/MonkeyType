@@ -340,6 +340,8 @@ class RenderAnnotation(GenericTypeRewriter[str]):
         return rendered
 
     def rewrite_container_type(self, container_type: Any) -> str:
+        if is_union(container_type):
+            return "Union"
         return repr(container_type)
 
     def rewrite_malformed_container(self, container: Any) -> str:

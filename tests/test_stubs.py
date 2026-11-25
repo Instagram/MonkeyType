@@ -4,6 +4,7 @@
 # This source code is licensed under the BSD-style license found in the
 # LICENSE file in the root directory of this source tree.
 import inspect
+import sys
 from inspect import (
     Parameter,
     Signature,
@@ -190,6 +191,7 @@ class TestRenderAnnotation:
             (List[List[make_forward_ref('Foo')]], 'List[List[\'Foo\']]'),
             (Optional[int], 'Optional[int]'),
             (List[Optional[int]], 'List[Optional[int]]'),
+            (Union[int, str], 'Union[int, str]'),
             (UserId, 'UserId'),
             (List[UserId], 'List[UserId]'),
             (List[int], 'List[int]'),
@@ -211,6 +213,11 @@ class TestRenderAnnotation:
     )
     def test_render_annotation(self, annotation, expected):
         assert render_annotation(annotation) == expected
+
+    @skipIf(sys.version_info < (3, 10), "PEP 604 requires Python 3.10+")
+    def test_render_pep604_union_annotation(self):
+        assert render_annotation(int | str) == 'Union[int, str]'
+        assert render_annotation(int | None) == 'Optional[int]'
 
 
 class TestFunctionStub:

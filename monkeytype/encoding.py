@@ -61,15 +61,19 @@ def type_to_dict(typ: type) -> TypeDict:
 
     # Union and Any are special cases that aren't actually types.
     if is_union(typ):
+        module = "typing"
         qualname = "Union"
     elif is_any(typ):
+        module = typ.__module__
         qualname = "Any"
     elif is_generic(typ):
+        module = typ.__module__
         qualname = qualname_of_generic(typ)
     else:
+        module = typ.__module__
         qualname = typ.__qualname__
     d: TypeDict = {
-        "module": typ.__module__,
+        "module": module,
         "qualname": qualname,
     }
     elem_types = getattr(typ, "__args__", None)
