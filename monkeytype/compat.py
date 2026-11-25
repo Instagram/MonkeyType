@@ -3,7 +3,9 @@
 #
 # This source code is licensed under the BSD-style license found in the
 # LICENSE file in the root directory of this source tree.
-from typing import Any, ForwardRef, Union, _GenericAlias  # type: ignore[attr-defined]
+import types
+from typing import Any, ForwardRef, Optional, Tuple, Union
+from typing import _GenericAlias  # type: ignore[attr-defined]
 
 from mypy_extensions import _TypedDictMeta  # type: ignore[attr-defined]
 
@@ -25,32 +27,41 @@ def is_any(typ: Any) -> bool:
     return typ is Any
 
 
-def is_union(typ: Any) -> bool:
-    return typ is Union or is_generic(typ) and typ.__origin__ is Union
-
+_UnionType: Optional[type] = getattr(types, "UnionType", None)
+_GENERIC_TYPES: Tuple[type, ...] = (_GenericAlias,)
 
 try:
     # Python 3.9
     from typing import _SpecialGenericAlias  # type: ignore[attr-defined]
 
-    def is_generic(typ: Any) -> bool:
-        return (
-            typ is Union
-            or isinstance(typ, _GenericAlias)
-            or isinstance(typ, _SpecialGenericAlias)
-        )
-
+    _GENERIC_TYPES = (*_GENERIC_TYPES, _SpecialGenericAlias)
 except ImportError:
+    pass
 
-    def is_generic(typ: Any) -> bool:
-        return typ is Union or isinstance(typ, _GenericAlias)
+if _UnionType is not None:
+    _GENERIC_TYPES = (*_GENERIC_TYPES, _UnionType)
+
+
+def is_union(typ: Any) -> bool:
+    return (
+        typ is Union
+        or (_UnionType is not None and isinstance(typ, _UnionType))
+        or (is_generic(typ) and getattr(typ, "__origin__", None) is Union)
+    )
+
+
+def is_generic(typ: Any) -> bool:
+    return typ is Union or isinstance(typ, _GENERIC_TYPES)
 
 
 def is_generic_of(typ: Any, gen: Any) -> bool:
-    return is_generic(typ) and typ.__origin__ is gen.__origin__
+    origin = getattr(typ, "__origin__", None)
+    return is_generic(typ) and origin is gen.__origin__
 
 
 def qualname_of_generic(typ: Any) -> str:
+    if is_union(typ):
+        return "Union"
     return str(
         getattr(typ, "_name", None)
         or getattr(typ.__origin__, "_name", None)
@@ -59,6 +70,8 @@ def qualname_of_generic(typ: Any) -> str:
 
 
 def name_of_generic(typ: Any) -> str:
+    if is_union(typ):
+        return "Union"
     return str(
         getattr(typ, "_name", None)
         or getattr(typ.__origin__, "_name", None)
