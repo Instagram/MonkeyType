@@ -739,7 +739,7 @@ class FunctionDefinition:
     ) -> "FunctionDefinition":
         kind = FunctionKind.from_callable(func)
         sig = inspect.Signature.from_callable(func)
-        is_async = asyncio.iscoroutinefunction(func)
+        is_async = inspect.iscoroutinefunction(func)
         return FunctionDefinition(
             func.__module__, func.__qualname__, kind, sig, is_async
         )
